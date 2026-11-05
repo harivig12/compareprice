@@ -1,0 +1,57 @@
+{
+  "name": "comparebasket",
+  "version": "1.0.0",
+  "description": "Compare a grocery basket across Blinkit, Zepto, BigBasket and Amazon Now — live prices, pack-size normalized, powered by webcmd",
+  "type": "module",
+  "license": "MIT",
+  "author": "Soubhik Halder",
+  "homepage": "https://github.com/aizen2006/comparebasket#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aizen2006/comparebasket.git"
+  },
+  "bugs": {
+    "url": "https://github.com/aizen2006/comparebasket/issues"
+  },
+  "bin": {
+    "basket": "src/cli.js"
+  },
+  "files": [
+    "src/**/*",
+    "scripts/build-adapters.js",
+    "basket.txt",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "setup": "node src/cli.js setup",
+    "doctor": "node src/cli.js doctor",
+    "serve": "node src/cli.js serve",
+    "compare": "node src/cli.js basket.txt",
+    "ui": "node src/cli.js basket.txt --ui",
+    "web": "node src/cli.js basket.txt --web",
+    "mcp": "node src/mcp-server.js",
+    "build:adapters": "node scripts/build-adapters.js",
+    "probe": "node scripts/probe.js",
+    "test": "node --test test/normalize.test.js test/matching.test.js test/ranking.test.js test/server.test.js"
+  },
+  "keywords": [
+    "webcmd",
+    "grocery",
+    "price-comparison",
+    "quick-commerce",
+    "blinkit",
+    "zepto",
+    "bigbasket",
+    "instamart",
+    "mcp",
+    "india",
+    "cli"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
