@@ -1,0 +1,20 @@
+# Basket service. The UI has no login, so it is published on 127.0.0.1 only.
+# To reach it from other devices on your home network, change the port line
+# to "7777:7777" — anyone on that network can then run comparisons.
+services:
+  basket:
+    build: .
+    image: compareprice:latest
+    container_name: basket
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:7777:7777"
+    volumes:
+      # Host folder, so results/runs.jsonl and results/*.json can be read
+      # directly for cross-checking. Must be writable by uid 1000.
+      - ${BASKET_DATA:-~/basket-data}:/data
+    environment:
+      TZ: Asia/Kolkata
+    # Chrome needs more than Docker's default 64 MB /dev/shm.
+    shm_size: 1gb
+    init: false # tini is the image entrypoint
