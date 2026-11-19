@@ -75,7 +75,7 @@ Checked without submitting a number:
   Both themes keep the same meaning: dark green is cheapest, light green is second.
 - **Contrast:** checked for AA (4.5:1) on price text in both themes.
 
-**Gate:** per standing preference, show a light-mode mockup of the main screen before building. **Shown 2026-11-19 (artifact "Req 2 — light mode mockup"). Req 2 and req 3 approved in principle; waiting on OK of the light palette.**
+**Gate:** per standing preference, show a light-mode mockup first. **Shown and approved 2026-11-19.** The palette is the one in the mockup: background `#ffffff`, panel `#f6f8fa`, text `#1f2328`, cheapest `#1a7f37` with white text, second `#dafbe1` with `#0f5323` text, ▼ `#1a7f37`, ▲ `#cf222e`, warning `#9a6700`.
 
 **Files:** `src/ui/basket.html`, `src/ui/settings.html`.
 **Evidence:** screenshots of light and dark at 1280 and 390 px; the no-horizontal-scroll check in both.
@@ -127,7 +127,16 @@ Checked without submitting a number:
 - **Suggestions dropdown** also shows the best rate of the latest date, e.g. "onion 1kg · ₹6.38/100g · 19/11/26".
 - **Phones:** the per-date columns collapse to "latest + ▲▼".
 
-**Decision (2026-11-19): last 3 dates that have data.** Each value is the lowest rate that site had that date. Layout: see the mockup options (A date columns / B trend line / C card per date). Waiting on your pick.
+**Decision (2026-11-19): last 3 dates that have data.** Each value is the lowest rate that site had that date.
+
+**Layout chosen: option B, a compact trend line, one line per vendor.**
+- Every site with saved data gets its own row: Zepto, Flipkart, BigBasket, Instamart, Blinkit, KPN, JioMart, and Amazon once it has data.
+- Columns: **Site · Trend (3 dates) · Now · Lowest ever**.
+- **Trend** is three small bars plus the three rates, e.g. `6.55 → 6.55 → 6.90`, with "—" where that site had no data on a date.
+- **Dates** are shown once, in the box header (e.g. "18/11 → 19/11 → 20/11"), and on hover for each value. Hovering a value also shows the pack price and product, e.g. "₹20 · Organically Grown Onion 500 g · 19/11 10:00".
+- **Now** is the latest rate with ▼/▲ against the previous saved value (decision 2).
+- **Ordering and colour:** rows are sorted by **Now**, cheapest first, and the cheapest row is green.
+- **Phones:** the bars shrink and the "Lowest ever" column drops; the text trend stays.
 
 **Files:** `src/store.js`, `src/server.js` (`/api/lookup`, `/api/suggest`), `src/ui/basket.html`.
 **Tests:** 3 dates picked across 4 days of data; the lowest of the day is used; a gap gives null; ordering is oldest to newest.
@@ -172,16 +181,72 @@ Checked without submitting a number:
 
 ---
 
+## Task 6: Performance (from measurements, see `docs/diagnosis/2026-11-19-resource-use-and-otp-step.md`)
+
+**Finding:**
+- The Node code is light: 67 MB and about 0% CPU.
+- The warm Chrome left open between runs uses **about 1 GB and 50–75% of a core while idle**. JioMart's home page alone uses about 361 ms/s of main-thread time.
+- Runs happen three times a day, about a minute each.
+
+**Design:**
+1. **Idle shutdown:** `BrowserPool.closeWhenIdle(ms)`. When the job queue has been empty for `browser.idleCloseMs` (default 5 min, set in config), close Chrome. The next job relaunches it, and the needed tabs warm up in parallel as they do today. Profile, cookies, location and sign-ins stay on disk.
+2. **Park tabs after each job:** a tab whose site wasn't in the job, or a login tab after sign-in finishes, goes to `about:blank` or is closed. That stops the Milkbasket login tab staying open.
+3. **Lighter pages while warm:** block images, media and fonts via CDP (`Network.setBlockedURLs` / request interception), only on tabs used for API calls. The DOM-scrape fallback still works without images.
+4. **Disk:**
+   - Cap the Chrome cache (`--disk-cache-size=50000000`).
+   - Keep `results/*.json` for 60 days (`results.keepDays` in config); `runs.jsonl` stays.
+   - Run the store's startup clean-ups (matcher and outlier prune) once per schema version instead of on every start.
+5. **Image (optional):** drop `fonts-noto-color-emoji` (about 10 MB). Not worth more than that.
+
+**Expected:** near 0% CPU and about 70 MB idle. Each run gains about 10–25 s of warm-up. **Trade-off:** the first manual "Get fresh prices" after idle takes about 20 s longer.
+
+**Tests:** the pool closes after the idle time with a fake clock, a job during the countdown cancels the close, a job after a close relaunches Chrome, results older than `keepDays` are deleted while newer ones stay, and the prune runs once per version.
+**Evidence:** `docker stats` idle before and after, recorded in the diagnosis doc.
+
+## Task 7: Code review pass
+
+There's no need for a broad refactor, but a focused review of the riskier areas is worthwhile before merging. After the code is written, run the repo's **code-review skill** (standards and spec, in parallel) on the branch, with focus on:
+- `src/score.js` / `src/pricecheck.js`: `pickBest` is called repeatedly per item and site (cheap at current sizes); check correctness of the new `bigger-pack` / `suspect` paths.
+- `src/engine/login.js`: selectors, masking, and that no number or OTP is written to disk or logs.
+- `src/server.js`: route count is growing; it's fine as one file for now, but split into `routes/` if it passes about 500 lines.
+- `src/cli.js` (860 lines): leave as is unless touched.
+
+Fix what the review finds before merging.
+
+## Branch, commits, docs
+
+- **Branch:** `feature/signin-theme-trends-mcp` off `main`.
+- **Commits** (one logical change each, Conventional Commits):
+  - `fix(engine): detect OTP screen and type OTP into split boxes`
+  - `feat(ui): OTP step with verify, resend and live status`
+  - `feat(ui): light, dark and auto theme`
+  - `feat(store): last-3-dates rates and change vs previous price`
+  - `feat(ui): price change arrows and trend lookup`
+  - `feat(mcp): MCP server as a client of the running service`
+  - `perf(engine): close idle browser and park unused tabs`
+  - `chore(store): results retention and one-time prune`
+  - `docs: …` updates in the same commits as the code
+- **Docs updated in the same commits:**
+  - `README.md`: theme, sign-in steps, lookup trend, MCP setup for Kiro and Claude
+  - `docs/API.md`: async login state; lookup `dates`/`rates`; history fields `prev`, `change`, `changePct`
+  - `docs/ENGINE.md`: login detection, idle shutdown, blocked resource types
+  - `docs/OPERATIONS.md`: idle behaviour, `browser.idleCloseMs`, `results.keepDays`, MCP troubleshooting
+  - `docs/evidence/<date>-ui/`: light and dark at 1280 and 390, the OTP dialog states, the lookup trend
+  - `CHANGELOG.md`
+- **PR:** into `main` with what was tested, plus what wasn't verified live (the Amazon OTP and the session lifetime).
+
 ## Order and effort (all code in one pass after sign-off)
 
 | # | Task | Depends on | Size |
 |---|---|---|---|
-| 0 | Light-mode mockup → your OK | none | small |
+| 0 | Light-mode mockup → your OK | ✅ done | — |
 | 4 | Last-3-dates store and API | none | small |
 | 3 | ▲▼ in `annotate` and cells | Task 4's store helpers | small |
 | 2 | Theme variables and toggle | mockup OK | small–medium |
 | 1 | OTP step 2, async login, logging | none | medium |
 | 5 | MCP as a client of the service | Task 4's API | medium |
+| 6 | Idle browser shutdown, tab parking, retention | none | small–medium |
+| 7 | Code review on the branch and fixes | all above | small |
 | — | Docs (README, API, ENGINE, OPERATIONS), evidence screenshots, full test run, redeploy | all | small |
 
 One live check needs you: the Zepto OTP (Task 1).
@@ -193,7 +258,10 @@ One live check needs you: the Zepto OTP (Task 1).
 4. MCP: saved by default, plus an option for a live search.
 5. Light-mode mockup: shown.
 
-Still open: **req 4 layout (A, B or C)** and **OK on the light palette**.
+6. Req 4 layout: **option B**, one line per vendor.
+7. Light palette: **approved**.
+
+Nothing open. **Coding starts only after your approval of this plan.**
 
 ## Earlier open questions (answered above)
 1. **Task 1:** keep Amazon in the sign-in list (greyed, not serviceable), or hide it?
