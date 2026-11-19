@@ -1,17 +1,17 @@
 {
-  "name": "comparebasket",
+  "name": "compareprice",
   "version": "1.0.0",
   "description": "Compare a grocery basket across Instamart, BigBasket, Zepto, Blinkit, KPN Fresh and more — a warm headless-Chrome engine, price history, daily scheduler and web UI",
   "type": "module",
   "license": "MIT",
   "author": "Soubhik Halder",
-  "homepage": "https://github.com/aizen2006/comparebasket#readme",
+  "homepage": "https://github.com/harivig12/prototype/tree/main/compareprice#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/aizen2006/comparebasket.git"
+    "url": "git+https://github.com/harivig12/prototype.git"
   },
   "bugs": {
-    "url": "https://github.com/aizen2006/comparebasket/issues"
+    "url": "https://github.com/harivig12/prototype/issues"
   },
   "bin": {
     "basket": "src/cli.js"

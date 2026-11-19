@@ -4,7 +4,7 @@
 services:
   basket:
     build: .
-    image: comparebasket:latest
+    image: compareprice:latest
     container_name: basket
     restart: unless-stopped
     ports:

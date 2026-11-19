@@ -1,4 +1,4 @@
-# Basket
+# compareprice
 
 You give it a grocery list. It checks **Instamart, BigBasket, Zepto, Blinkit, KPN Fresh, JioMart and Flipkart Minutes** at your delivery location and normalizes pack sizes. It tells you which site is cheapest for the **whole basket** and for **each item**. It remembers the **lowest price each site has ever shown** for every item, with the date.
 
@@ -27,9 +27,9 @@ node scripts/verify-runs.js       # did today's scheduled runs happen?
 `docker compose` needs the compose plugin. With plain `docker` the equivalent is:
 
 ```bash
-docker build -t comparebasket:latest .
+docker build -t compareprice:latest .
 docker run -d --name basket --restart unless-stopped -p 127.0.0.1:7777:7777 \
-  -v ~/basket-data:/data -e TZ=Asia/Kolkata --shm-size=1g comparebasket:latest
+  -v ~/basket-data:/data -e TZ=Asia/Kolkata --shm-size=1g compareprice:latest
 ```
 
 ### Native
@@ -177,7 +177,7 @@ Operations, monitoring and troubleshooting: **[docs/OPERATIONS.md](docs/OPERATIO
 ## MCP
 
 ```bash
-claude mcp add basket -- node /path/to/comparebasket/src/mcp-server.js
+claude mcp add basket -- node /path/to/compareprice/src/mcp-server.js
 ```
 
 The tools are `compare_basket`, `search_product`, `open_basket_view` and `open_platform`. They call the same `compareBasket()`, so they get the same engine, errors and numbers.

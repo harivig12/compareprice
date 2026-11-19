@@ -1,6 +1,6 @@
 > **SUPERSEDED (2026-11-18):** this pre-dates the engine rewrite. See AGENTS.md, docs/ENGINE.md and docs/superpowers/plans/2026-11-16-basket-service-STATUS.md.
 
-# comparebasket — Design & Mechanics Findings
+# compareprice — Design & Mechanics Findings
 
 **Investigation scope:** READ-ONLY. Source read in full; offline unit suite run (`npm test`). The live CLI, webcmd, and any browser/network paths were **not** exercised. Project root: `/home/a/Downloads/git/compareprice`. Upstream: https://github.com/aizen2006/comparebasket.
 
@@ -8,7 +8,7 @@
 
 ## Summary answer (how it works and how it was designed)
 
-`comparebasket` ("basket") is a Node.js ESM CLI (`type: module`, `engines.node >= 20`, one runtime dep `@modelcontextprotocol/sdk`) that compares a grocery **basket** across Indian quick-commerce platforms (Blinkit, Zepto, BigBasket, Amazon Now) using **live** prices and tells you which platform is cheapest for the whole basket.
+`compareprice` ("basket") is a Node.js ESM CLI (`type: module`, `engines.node >= 20`, one runtime dep `@modelcontextprotocol/sdk`) that compares a grocery **basket** across Indian quick-commerce platforms (Blinkit, Zepto, BigBasket, Amazon Now) using **live** prices and tells you which platform is cheapest for the whole basket.
 
 The architecture is a clean layered pipeline funnelled through **one entry point**, `compareBasket()` in `src/compare.js`. Every surface — CLI (`src/cli.js`), web server (`src/server.js`), and MCP server (`src/mcp-server.js`) — calls that single function and only differs in how it renders the returned object. The design intent, stated repeatedly in both code comments and the README, is **honesty over completeness**: live data only, no baked prices or fees, and a matcher that refuses to compare the wrong products rather than producing a confident-but-wrong answer.
 
