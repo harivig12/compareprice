@@ -1,4 +1,4 @@
-# Working on comparebasket
+# Working on compareprice
 
 Read these first:
 - `README.md`: what it does and how to run it

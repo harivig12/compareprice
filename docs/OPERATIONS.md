@@ -77,9 +77,9 @@ docker exec basket node src/cli.js history "toor dal 1kg"
 ## Upgrading
 
 ```bash
-docker build -t comparebasket:latest . && docker rm -f basket && \
+docker build -t compareprice:latest . && docker rm -f basket && \
 docker run -d --name basket --restart unless-stopped -p 127.0.0.1:7777:7777 \
-  -v ~/basket-data:/data -e TZ=Asia/Kolkata --shm-size=1g comparebasket:latest
+  -v ~/basket-data:/data -e TZ=Asia/Kolkata --shm-size=1g compareprice:latest
 ```
 
 The data dir survives upgrades.
