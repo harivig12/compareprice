@@ -1,0 +1,64 @@
+{
+  "name": "comparebasket",
+  "version": "1.0.0",
+  "description": "Compare a grocery basket across Instamart, BigBasket, Zepto, Blinkit, KPN Fresh and more — a warm headless-Chrome engine, price history, daily scheduler and web UI",
+  "type": "module",
+  "license": "MIT",
+  "author": "Soubhik Halder",
+  "homepage": "https://github.com/aizen2006/comparebasket#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aizen2006/comparebasket.git"
+  },
+  "bugs": {
+    "url": "https://github.com/aizen2006/comparebasket/issues"
+  },
+  "bin": {
+    "basket": "src/cli.js"
+  },
+  "files": [
+    "src/**/*",
+    "scripts/build-adapters.js",
+    "basket.txt",
+    "README.md",
+    "LICENSE",
+    "Dockerfile",
+    "docker-compose.yml",
+    "docs/**/*"
+  ],
+  "scripts": {
+    "serve": "node src/cli.js serve",
+    "run-now": "node src/cli.js run-now",
+    "compare": "node src/cli.js basket.txt",
+    "ui": "node src/cli.js basket.txt --ui",
+    "web": "node src/cli.js basket.txt --web",
+    "mcp": "node src/mcp-server.js",
+    "test": "node --test test/*.test.js",
+    "test:live": "LIVE=1 node --test test/engine-sites.test.js test/engine-chrome.test.js",
+    "setup": "node src/cli.js setup",
+    "doctor": "node src/cli.js doctor",
+    "build:adapters": "node scripts/build-adapters.js",
+    "probe": "node scripts/probe.js"
+  },
+  "keywords": [
+    "grocery",
+    "price-comparison",
+    "quick-commerce",
+    "blinkit",
+    "zepto",
+    "bigbasket",
+    "instamart",
+    "mcp",
+    "india",
+    "cli",
+    "kpn",
+    "headless-chrome",
+    "price-history"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=22.13"
+  }
+}

@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Basket — settings &amp; schedule</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --panel2:#1c2230; --line:#30363d; --text:#e6edf3; --dim:#8b949e; --bad:#f85149; --ok:#3fb950; --accent:#58a6ff; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  a { color:var(--accent); }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 16px; }
+  header { display:flex; align-items:baseline; gap:16px; margin-bottom: 12px; }
+  header h1 { font-size: 20px; margin: 0; }
+  header nav { margin-left:auto; }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:12px; }
+  h2 { font-size: 15px; margin: 0 0 10px; }
+  .grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px 14px; }
+  @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+  label { display:block; font-weight:600; margin-bottom:4px; }
+  input[type=text], input[type=tel], input[type=number], textarea, select { width:100%; background:var(--bg); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:7px 9px; font: inherit; }
+  textarea { min-height: 140px; font: 13px/1.5 ui-monospace, Menlo, monospace; }
+  .hint { color: var(--dim); font-size: 12px; margin-top: 3px; }
+  .err { color: var(--bad); font-size: 12px; margin-top: 3px; min-height: 1em; }
+  .bad { border-color: var(--bad) !important; }
+  .sites { display:grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap: 2px 10px; }
+  .sites label { font-weight: 400; display:flex; gap: 6px; align-items:center; }
+  .sched { background: var(--panel2); border:1px solid var(--line); border-radius: 10px; padding: 10px; margin-bottom: 10px; }
+  .row { display:flex; gap: 10px; align-items:end; flex-wrap: wrap; }
+  .row > div { flex: 1 1 180px; }
+  button { background:#238636; color:#fff; border:1px solid #2ea043; border-radius:8px; padding:8px 14px; font-weight:600; cursor:pointer; font-size: 14px; }
+  button.secondary { background:var(--panel2); border-color:var(--line); color:var(--text); }
+  button.danger { background: transparent; border-color: var(--bad); color: #ffb4ad; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .bar { display:flex; gap: 10px; align-items:center; flex-wrap: wrap; position: sticky; bottom: 0; background: var(--bg); padding: 10px 0; }
+  #status { color: var(--dim); }
+  #status.ok { color: var(--ok); }
+  #status.bad { color: var(--bad); }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1>Settings &amp; schedule</h1><nav><a href="/">← Compare</a></nav></header>
+
+  <form id="f" novalidate>
+    <section class="panel">
+      <h2>Delivery location</h2>
+      <div class="grid">
+        <div><label for="label">Place name</label><input id="label" type="text" data-field="location.label"><div class="hint">Typed into site address pickers (Zepto, BigBasket)</div><div class="err" data-err="location.label"></div></div>
+        <div><label for="searchText">Address search text</label><input id="searchText" type="text" data-field="location.searchText"><div class="hint">e.g. "Marutham Prestige Tambaram"</div></div>
+        <div><label for="lat">Latitude</label><input id="lat" type="number" step="any" data-field="location.lat"><div class="err" data-err="location.lat"></div></div>
+        <div><label for="lng">Longitude</label><input id="lng" type="number" step="any" data-field="location.lng"><div class="err" data-err="location.lng"></div></div>
+        <div><label for="pincode">Pincode</label><input id="pincode" type="text" inputmode="numeric" data-field="location.pincode"><div class="err" data-err="location.pincode"></div></div>
+        <div><label for="phone">Phone (only for optional site logins)</label><input id="phone" type="tel" data-field="phone"><div class="err" data-err="phone"></div></div>
+      </div>
+      <div style="margin-top:8px"><label for="address">Full address</label><input id="address" type="text" data-field="location.address"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Default sites for manual runs</h2>
+      <div class="sites" id="sites"></div>
+      <div class="err" data-err="sites"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Default list (used by scheduled runs)</h2>
+      <label for="basket" class="sr">List</label>
+      <textarea id="basket" data-field="basket" spellcheck="false"></textarea>
+      <div class="err" data-err="basket"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Schedules <span class="hint" id="tz"></span></h2>
+      <div id="schedules"></div>
+      <div class="err" data-err="schedules"></div>
+      <button type="button" class="secondary" id="add">+ Add schedule</button>
+    </section>
+
+    <div class="bar">
+      <button type="submit">Save</button>
+      <button type="button" class="secondary" id="runnow">Run the list now</button>
+      <span id="status" role="status" aria-live="polite"></span>
+    </div>
+  </form>
+</div>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+let META, CFG;
+const get = (o, path) => path.split('.').reduce((a, k) => a?.[k], o);
+function set(o, path, v) { const ks = path.split('.'); const last = ks.pop(); ks.reduce((a, k) => (a[k] ??= {}), o)[last] = v; }
+
+function siteBoxes(name, selected) {
+  return META.platforms.map((p) => `<label><input type="checkbox" name="${name}" value="${esc(p)}" ${selected.includes(p) ? 'checked' : ''}> ${esc(META.labels[p] || p)}</label>`).join('');
+}
+
+function schedHtml(s, i) {
+  return `<div class="sched" data-i="${i}">
+    <div class="row">
+      <div><label for="sn${i}">Name</label><input id="sn${i}" type="text" class="s-name" value="${esc(s.name)}"><div class="err" data-err="schedules[${i}].name"></div></div>
+      <div><label for="st${i}">Times (24h, comma-separated)</label><input id="st${i}" type="text" class="s-times" value="${esc((s.times || []).join(', '))}" placeholder="07:00, 21:00"><div class="err" data-err="schedules[${i}].times"></div></div>
+      <div style="flex:0 0 auto"><label><input type="checkbox" class="s-on" ${s.enabled === false ? '' : 'checked'}> enabled</label></div>
+      <div style="flex:0 0 auto"><button type="button" class="danger s-del" aria-label="Remove schedule ${esc(s.name)}">Remove</button></div>
+    </div>
+    <fieldset style="border:0;padding:0;margin:8px 0 0"><legend class="hint">Sites for this schedule</legend><div class="sites">${siteBoxes('s' + i, s.sites || [])}</div></fieldset>
+    <div class="err" data-err="schedules[${i}].sites"></div>
+  </div>`;
+}
+
+function renderSchedules(list) {
+  $('schedules').innerHTML = list.map(schedHtml).join('');
+  document.querySelectorAll('.s-del').forEach((b) => b.addEventListener('click', () => {
+    const list = readSchedules(); list.splice(Number(b.closest('.sched').dataset.i), 1); renderSchedules(list);
+  }));
+}
+
+function readSchedules() {
+  return [...document.querySelectorAll('.sched')].map((el) => ({
+    name: el.querySelector('.s-name').value.trim(),
+    times: el.querySelector('.s-times').value.split(/[,\s]+/).map((t) => t.trim()).filter(Boolean).map((t) => /^\d:\d\d$/.test(t) ? '0' + t : t),
+    sites: [...el.querySelectorAll(`input[name=s${el.dataset.i}]:checked`)].map((x) => x.value),
+    enabled: el.querySelector('.s-on').checked,
+  }));
+}
+
+async function load() {
+  META = await (await fetch('/api/meta')).json();
+  CFG = await (await fetch('/api/config')).json();
+  document.querySelectorAll('[data-field]').forEach((el) => { el.value = get(CFG, el.dataset.field) ?? ''; });
+  $('sites').innerHTML = siteBoxes('site', CFG.sites || []);
+  $('tz').textContent = `(times in ${CFG.timezone})`;
+  renderSchedules(CFG.schedules || []);
+}
+
+function clearErrors() {
+  document.querySelectorAll('[data-err]').forEach((e) => { e.textContent = ''; });
+  document.querySelectorAll('.bad').forEach((e) => e.classList.remove('bad'));
+}
+
+$('add').addEventListener('click', () => {
+  const list = readSchedules();
+  list.push({ name: `run-${list.length + 1}`, times: ['12:00'], sites: CFG.sites || [], enabled: true });
+  renderSchedules(list);
+});
+
+$('f').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  clearErrors();
+  const body = structuredClone(CFG);
+  document.querySelectorAll('[data-field]').forEach((el) => {
+    const v = el.type === 'number' ? Number(el.value) : el.value;
+    set(body, el.dataset.field, v);
+  });
+  body.sites = [...document.querySelectorAll('input[name=site]:checked')].map((x) => x.value);
+  body.schedules = readSchedules();
+  const res = await fetch('/api/config', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  const out = await res.json();
+  if (res.status === 200) {
+    CFG = out;
+    $('status').className = 'ok';
+    $('status').textContent = `Saved ${new Date().toLocaleTimeString()}`;
+    return;
+  }
+  $('status').className = 'bad';
+  $('status').textContent = out.error || 'Could not save';
+  const slot = document.querySelector(`[data-err="${CSS.escape(out.field || '')}"]`);
+  if (slot) {
+    slot.textContent = out.error;
+    const input = document.querySelector(`[data-field="${CSS.escape(out.field)}"]`) || slot.parentElement.querySelector('input');
+    input?.classList.add('bad');
+    input?.focus();
+  }
+});
+
+$('runnow').addEventListener('click', async () => {
+  const res = await fetch('/api/compare', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ items: CFG.basket, platforms: CFG.sites }) });
+  const out = await res.json();
+  $('status').className = res.status === 202 ? 'ok' : 'bad';
+  $('status').innerHTML = res.status === 202 ? `Run #${out.jobId} queued — <a href="/">watch it</a>` : esc(out.error);
+});
+
+load();
+</script>
+</body>
+</html>
