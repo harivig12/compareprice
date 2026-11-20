@@ -18,6 +18,7 @@
  *   check(site, count)  says how long a *manual* request must wait, so the UI
  *                       can show "wait 10s…" instead of silently stalling
  */
+import { SiteError } from './engine/errors.js';
 
 export const DEFAULT_LIMITS = Object.freeze({
   default: { minGapMs: 2500, perMinute: 15, perHour: 240, cooldownMs: 5 * 60_000 },
@@ -88,11 +89,21 @@ export class SiteLimiter {
     return wait > 0 ? { ok: false, waitMs: Math.ceil(wait), reason } : { ok: true, waitMs: 0, reason: null };
   }
 
-  /** Wait until one search is allowed, then count it. */
+  /**
+   * Wait until one search is allowed, then count it. A site resting after a
+   * block is NOT waited for: that held the whole queue for 33 minutes
+   * (2026-11-20, BigBasket's Akamai wall). It fails at once as `blocked`, the
+   * runner skips the site's remaining items, and the other sites carry on.
+   */
   async acquire(site, { signal, onWait } = {}) {
     for (;;) {
       const r = this.check(site, 1);
       if (r.ok) break;
+      const cd = this.cooldown.get(site);
+      if (cd && cd.until > this.now()) {
+        const at = new Date(cd.until).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Kolkata' });
+        throw new SiteError('blocked', `${site}: resting until ${at} (${cd.reason}); skipped this run`, { site, code: 'resting' });
+      }
       onWait?.(r);
       await this.sleep(Math.min(r.waitMs, 5000), signal);
     }

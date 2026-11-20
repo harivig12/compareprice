@@ -270,6 +270,40 @@ function categoriesIn(tokens) {
   return new Set(tokens.filter((t) => CATEGORY_TOKENS.includes(t)));
 }
 
+/**
+ * The query without its brand: "tata salt 1kg" -> "salt 1kg", or null when it
+ * names no brand. Used for the "cheaper: other brand" hint (option A, 2026-11-20).
+ */
+export function withoutBrand(query) {
+  const found = brandsIn(tokenizeRaw(query));
+  if (!found.size) return null;
+  // Cut the brand out of the original text, so pack sizes and numbers stay.
+  let text = ` ${String(query).toLowerCase()} `;
+  for (const b of found) text = text.replace(new RegExp(`(^|[^a-z])${b.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=[^a-z]|$)`, 'g'), '$1');
+  const out = text.replace(/\s+/g, ' ').trim();
+  return out && tokenizeRaw(out).length ? out : null;
+}
+
+/**
+ * Words that make a product a different kind of the same thing: rock / black
+ * salt aren't table salt, full cream isn't toned milk. An "other brand" hint
+ * may not add one that neither the search nor the chosen product has.
+ */
+const KIND_WORDS = new Set([
+  'rock', 'pink', 'black', 'himalayan', 'sendha', 'kala', 'sea', 'lite', 'light', 'low', 'sodium',
+  'flavoured', 'flavored', 'masala', 'spicy', 'organic', 'sugarfree', 'diet', 'zero',
+  'full', 'cream', 'skimmed', 'double', 'toned', 'slim', 'buffalo', 'cow', 'a2',
+  'cold', 'pressed', 'blended', 'filtered', 'virgin', 'extra',
+  'brown', 'white', 'multigrain', 'wholewheat', 'whole', 'split', 'broken', 'unpolished', 'polished',
+  'roasted', 'salted', 'unsalted', 'instant', 'kids', 'baby',
+]);
+
+/** Does `alt` add a kind word that neither `query` nor `chosen` has? */
+export function addsKind(query, chosen, alt) {
+  const have = new Set([...tokenizeRaw(query), ...tokenizeRaw(chosen)]);
+  return tokenizeRaw(alt).some((w) => KIND_WORDS.has(w) && !have.has(w));
+}
+
 /** Find brand names present in a token list (phrases allowed). */
 function brandsIn(tokens) {
   const joined = ' ' + tokens.join(' ') + ' ';

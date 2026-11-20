@@ -19,6 +19,11 @@
 | `results/runs.jsonl` | One summary line per job, with per-site outcome, error kind and new lows |
 | `last-result.json` | The latest result (the page loads it on open) |
 | `chrome-profile/` | Headless Chrome profile: guest sessions and the chosen delivery location. Deleting it means the sites are re-located on the next run. |
+| `profiles/<site>-<id>/` | One Chrome profile per extra account (Instamart, Milkbasket). Removing the account in the popup deletes it. Launched only while that account is in use. |
+| `accounts.json` | Accounts per site: name, masked hint, signed-in time, profile. Replaces `sessions.json`, which is read once and left untouched. |
+| `basket.db` › `prices.hidden` | Rows set aside instead of deleted (since 2026-11-20): `rejected` (✕), `no-match` / `outlier` (clean-ups), `removed` (an entered price taken out). `SELECT hidden, COUNT(*) FROM prices GROUP BY 1` shows them. |
+| `master/` | The master price list run (`scripts/master-list.js`, run on the host): `state.json` (progress, so it can resume), `run.log`, `run.lock`, `master-<date>.csv` / `.md` (the reports). |
+| `cache/milkbasket-catalog-<hub>.json` | Milkbasket's catalogue (product names, prices, packs only), refreshed after 20 h. Safe to delete; the next search rebuilds it in ~4 min. |
 
 ## Schedules
 
@@ -31,7 +36,19 @@ How firing works:
 
 Scheduled jobs use `config.basket` and the schedule's sites. They share the queue with manual runs, which wait their turn.
 
-**Configured on 2026-11-18:** `daily-check` at 07:00, 09:00 and 12:00 on instamart, bigbasket, zepto, blinkit and kpn.
+**Configured on 2026-11-18:** `daily-check` at 07:00, 09:00 and 12:00 on instamart, bigbasket, zepto, blinkit and kpn. **Changed on 2026-11-19:** 07:00, 10:00 and 12:00, now also on jiomart and flipkart_minutes.
+
+## Resource use and retention
+
+| Config key | Default | What it does |
+|---|---|---|
+| `browser.idleCloseMs` | `300000` (5 min) | Close Chrome after this long with nothing to do (no running or queued job, no sign-in in progress). `0` keeps it always on. The log says `browser closed after N min idle; it reopens with the next job`. |
+| `browser.blockMedia` | `true` | Search tabs skip images, fonts and video. |
+| `results.keepDays` | `60` | `results/*.json` older than this are deleted at startup. `runs.jsonl` and `basket.db` are kept. |
+
+Measured on 2026-11-19 (docs/diagnosis/2026-11-19-resource-use-and-otp-step.md): with Chrome warm and idle the container used ~1 GB and 50–75% of a core. After the idle close the service is Node alone. The first search after a close takes longer, because Chrome starts and the site pages load again; sessions and chosen addresses stay in `chrome-profile/`.
+
+One-time store clean-ups (spelling folds, refused rows) run once per `CLEANUP_VERSION` (recorded in `basket.db`'s `meta` table), not on every start.
 
 ## History-first searches
 
@@ -44,7 +61,8 @@ On startup the store:
 ## Waiting, pacing and sign-ins
 
 - **"Wait 3s…" on the page:** a chosen site was searched moments ago, or is resting after the site blocked us. The page retries by itself. Budgets are in `src/limits.js` and can be overridden in `config.json → limits`. Current usage is at `/api/limits`.
-- **Sign-ins:** use the page's *Sign in…* (Milkbasket, Zepto, Amazon). The session lives in `chrome-profile/`, and `sessions.json` notes when. Deleting `chrome-profile/` signs everything out.
+- **Sign-ins:** use the page's *Sign in…* (Milkbasket, Zepto, Amazon). Enter the number and press **Send OTP**; when the site shows its OTP screen, an OTP box appears and the button becomes **Verify**. *Resend OTP* unlocks after 30 s; 3 requests per site per hour is the cap. The session lives in `chrome-profile/`, and `sessions.json` notes when. Deleting `chrome-profile/` signs everything out. The log shows `login <site>: …` lines with only the last 4 digits of the number.
+- **Zepto at Krishna Nagar asks for sign-in** before it shows search results. Until it is signed in, Zepto reports `session … asks you to sign in`.
 
 ## Checking that it works
 
@@ -73,6 +91,18 @@ docker exec basket node src/cli.js history "toor dal 1kg"
 | `parse … product cards but no prices parsed` | The payload shape changed. Capture a new fixture and update `parse`. |
 | JioMart / Flipkart Minutes `results never rendered` | Expected. These are beta page scrapes with no working guest location (see docs/ENGINE.md). Leave them out of schedules. |
 | A run sits in `queued` | Another job is running. Check `/api/jobs`. A stuck job can be stopped with `POST /api/stop`. |
+| `milkbasket: sign in (main account) to search … (no session token / no hub / guest city)` | The session expired or the sign-in never happened. Sign in again from the popup. "guest city" means the account has no society saved. |
+| The first Milkbasket search takes ~4 minutes | Expected once a day: it reads the whole catalogue (~300 paced calls). Later searches use `cache/`. |
+| `<site>: direct API call refused (HTTP 403); using the browser tab instead` in the log | The site stopped accepting direct calls; that tab now uses the page as before. No action needed. If it happens every day, set the site's `direct` to false. |
+| Deals section says `<site> · <name>: …` | That account's offer check failed (often an expired session). Sign that account in again; the other accounts still count. |
+| `409 busy, try again after the current run` on Sign out / Remove | A run or offer check is using that browser. Wait for it to finish. |
+| Sign-in popup stays on "Asking … to send an OTP" | The background step is still loading the site's page (up to ~30 s on a cold Chrome). If it ends in `error`, the message says which step failed. A site may have changed its sign-in page; see `LOGIN_SITES` in `src/engine/login.js`. |
+| First fresh search of the day is slow | Expected after the idle close: Chrome relaunches and reloads the sites. Raise `browser.idleCloseMs` or set it to `0` if that matters more than the memory. |
+| MCP tool says "The basket service isn't reachable at …" | The container is stopped (`docker start basket`) or `BASKET_URL` in the MCP config points elsewhere. `curl -s localhost:7777/health` should answer. |
+| Amazon sign-in: `amazon: Amazon is showing a puzzle (CAPTCHA)…` | Amazon wants a human check this time. Sign in once at amazon.in in a normal browser on this network, wait a while, then try the popup again. Repeated attempts make it more likely. |
+| Amazon sign-in: `3 wrong passwords. Stopped…` | The popup stops after 3 wrong passwords in one sign-in so Amazon doesn't lock the account. Check the password, then start again. |
+| Zepto `session … page never issued a search request` right after signing in | Fixed 2026-11-19: signed-in Zepto searches with `POST …/user-search-service/api/v3/search`, and the engine now copies that request as well as the guest `GET …/v1/search`. |
+| MCP `compare_basket fresh=true` says a site needs a pause | The same per-site budget as the page. The tool shows the saved prices meanwhile; ask again after the wait. |
 
 ## Upgrading
 

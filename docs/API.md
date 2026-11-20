@@ -15,13 +15,14 @@ Served by `src/server.js` (started by `basket serve` / the Docker image). The ba
 | GET | `/api/events` | | Server-Sent Events, see below |
 | GET | `/api/result` | `?jobId=` (optional) | The `compareBasket()` result for that job, or the latest one. 204 if there isn't one. |
 | GET | `/api/jobs` | `?limit=20` | `{ current, pending: Job[], jobs: Job[] }` |
+| GET | `/ui/theme.css`, `/ui/theme.js` | | Shared light/dark theme for both pages. A fixed whitelist; nothing else under `src/ui` is served. |
 | GET | `/api/history` | `?q=<item>` | `{ query, sites: { [site]: { lowUnitPrice, unit, lowPrice, product, pack, seenAt, lastUnitPrice, lastSeenAt } } }` |
-| GET | `/api/suggest` | `?q=&limit=8` | Saved items whose text contains `q`, prefix matches first: `[{ query, sites, seenAt }]` |
-| GET | `/api/lookup` | `?q=<item>` | What each site last charged: `{ query, per: '100 g'\|'100 ml'\|'piece', sites: [{ site, rate, lastPrice, pack, product, seenAt, lowRate, lowSeenAt, url }], options }`, cheapest rate first. `q` may be partial ("onion"). 404 if nothing is saved. |
+| GET | `/api/suggest` | `?q=&limit=8` | Saved items whose text contains `q`, prefix matches first: `[{ query, sites, seenAt, best: { site, rate, per, date } \| null }]`. `best` is the cheapest site on the latest date with data. |
+| GET | `/api/lookup` | `?q=<item>` | What each site last charged, cheapest rate first. `q` may be partial ("onion"). 404 if nothing is saved. See **Lookup** below. |
 | GET | `/api/limits` | | Per-site request budget: `{ [site]: { ok, waitMs, reason, lastMinute, lastHour, limits, cooldownMs, cooldownReason } }` |
-| GET | `/api/login` | | Sign-in status per site: `[{ id, label, why, loggedIn, since, phoneHint, pending }]` |
-| POST | `/api/login/start` | `{ site, phone }` | Opens the site's sign-in page, enters the number and asks for the OTP: `{ step: 'otp', message }`. Returns 429 after 3 OTP requests per site per hour. |
-| POST | `/api/login/verify` | `{ site, otp }` | Enters the OTP: `{ loggedIn: true }`, or 400 `{ error, kind }` (e.g. "the site rejected that OTP") |
+| GET | `/api/login` | | Sign-in status per site: `[{ id, label, why, loggedIn, since, phoneHint, method: 'otp'\|'password', acceptsEmail, secret: 'otp'\|'password'\|'approve', state, message, error, pending, resendInMs }]`. `phoneHint` is a masked number (`••••••0494`) or email (`a•••@gmail.com`). `secret` is what the second step asks for right now. See **Sign-in** below. |
+| POST | `/api/login/start` | `{ site, id }` (`phone` is still accepted) | `id` is a 10-digit mobile, or an email where the site takes one (`acceptsEmail`, Amazon). **202** `{ state: 'sending', message }` at once; the site's page is driven in the background. 400 for an unknown site or a bad number/email. **429** `{ error, kind: 'blocked' }` inside the 30 s resend gap or after 3 starts per site per hour. |
+| POST | `/api/login/verify` | `{ site, otp }`, `{ site, password }`, or `{ site }` | The second step, per `state`: the OTP (one box or split boxes), the password (`password_needed`), or a check after approving on the phone (`approve_needed`). `{ loggedIn: true }`, `{ step: 'otp'\|'approve', message }` when the site asks for one more step, or 400 `{ error, kind }`. The password is passed to the site's page only, never stored, logged or echoed. |
 | GET | `/api/config` | | The full config (see README) |
 | PUT | `/api/config` | partial or full config | `200` with the saved config, or `400 { field, error }`, e.g. `{ "field": "schedules[0].times", "error": "\"25:00\" is not a 24-hour HH:MM time" }` |
 | POST | `/api/stop` | `{ jobId? }` (defaults to the running job) | `{ ok, stopped, jobId }` |
@@ -32,6 +33,62 @@ Served by `src/server.js` (started by `basket serve` / the Docker image). The ba
 - Jobs run one at a time, in order. Sites inside a job run in parallel.
 - A request made while a job is running is queued. It is never refused.
 - On restart, jobs that were `running` or `queued` become `interrupted`.
+
+## Lookup (`GET /api/lookup`)
+
+```js
+{
+  query, per: '100 g'|'100 ml'|'piece',
+  dates: ['2026-11-17', '2026-11-18', '2026-11-19'],   // last 3 dates that have data (service time zone), oldest first
+  sites: [{
+    site, rate, lastPrice, pack, product, seenAt, lowRate, lowSeenAt, url,
+    trend: [{ rate, price, product, pack, seenAt } | null, …],   // one per `dates`; the LOWEST rate that site had that date
+    change: 'down'|'up'|'same'|null, changePct,                  // latest saved price vs the one saved before it
+    prev: { unitPrice, price, seenAt, product, pack } | null
+  }],
+  options: [{ query, sites, seenAt, best }]                      // other saved items matching q
+}
+```
+
+`change` compares with the latest earlier saved price, even one from the same day. Under 1% is `same`.
+
+## Accounts, deals and offers
+
+| Method | Path | Body / query | Response |
+|---|---|---|---|
+| POST | `/api/login/start` | `{ site, id, account? }` or `{ site, id, name }` | `account` (default `main`) signs in an existing account; `name` adds a new one on a multi-account site (Instamart, Milkbasket; max 3 per site). 202 `{ state, message, account }`. 400 `other_account` when that account is already signed in with another number, `same_account` when the number is another account's. |
+| POST | `/api/login/verify` | `{ site, account?, otp \| password }` | As before, for that account. |
+| POST | `/api/login/signout` | `{ site, account? }` | Main: clears only that site's cookies and storage in the shared profile. Extra: removes the account and deletes its profile directory. 200 `{ signedOut, removed, account }`, or **409** `{ error: '<site>: busy, try again after the current run' }`. |
+| GET | `/api/login` | | Each site row also has `multiAccount`, `canAdd` and `accounts: [{ id, name, hint, loggedIn, since, state, message, error, pending, resendInMs, secret }]`. The top-level fields describe the main account. |
+| GET | `/api/deals` | | `{ minDiscountPct, checkedAt: { [site]: iso }, groups: [{ site, checkedAt, conditions, deals: Deal[] }], fromSearches: Deal[], errors: [{ site, account, name, error, checkedAt }] }`. `Deal = { site, product, pack, price, mrp, pct, conditions: { maxQty?, minBasket? }, url, source: 'feed'\|'search', seenAt, seenBy: [{ account, name, hint, seenAt }] }`. Feed deals come from each account's latest offer check; search deals are shown for 24 h. |
+| POST | `/api/compare` | `{ items, mode: 'missing', only: { site: [item line, …] } }` | "Get for missing only": queues a job that searches only those pairs (lines must be in `items`). 202 `{ jobId, queued, pairs }`; 400 when nothing is left. |
+| POST | `/api/prices/reject` | `{ site, query, product }` | ✕ on a cell: marks that product's saved prices for the item on that site hidden (kept, not deleted) and never picks it for that item there again. 200 `{ ok, hidden }`. |
+| GET | `/api/entries` | `?limit=50` | Entered "Others" prices, newest first: `[{ id, query, product, price, pack, seenAt, source }]`. |
+| POST | `/api/entries` | `{ item, product?, price, pack?, date?, source? }` | Adds one (date defaults to today; the pack is read from `pack`, else the product name, else the item). 201 `{ id }`, or 400 `{ error }`. |
+| DELETE | `/api/entries?id=` | | Takes it out of view (kept, marked hidden). `{ removed }`. |
+
+Result lines can carry `alternative: { product, price, pack, pricePerUnit, unit, savingPct }`: a cheaper same-kind other brand on that site (hint only). An `others` platform (`others: true`, `total: null`) holds entered prices, with `source` and `entryId` per line.
+| GET | `/api/siteinfo` | | What each site states about delivery, from the last offer check: `{ [site]: { freeDeliveryAbove, feeBelow?, feeName?, seenAt } }`. |
+| POST | `/api/offers/run` | `{ sites? }` | Queues an offer check (`trigger: 'offers'`; it shares the job queue with basket runs). 202 `{ jobId, queued }`, or the job already queued (`already: true`). One also runs after every scheduled job. Its result never replaces the latest basket result; SSE `done` carries `kind: 'offers'`. |
+
+Result lines from a site searched per account (Instamart) carry `product.account` and `accountPrices: [{ account, name, price }]`, cheapest first. A result's `deals: Deal[]` lists the 80%+ candidates seen in that run's searches (never totalled).
+
+## Sign-in (`/api/login*`)
+
+The popup calls `start`, then polls `GET /api/login` about once a second:
+
+| `state` | meaning | next |
+|---|---|---|
+| `idle` | never started (or restarted service) | `start` |
+| `sending` | opening the site's page and asking for the OTP | wait |
+| `otp_sent` | the site shows its OTP (or two-step verification code) screen; `message` is what it said | `verify` with `otp` (or `start` again after `resendInMs`) |
+| `password_needed` | password sites (`method: 'password'`, Amazon): the password page is showing | `verify` with `password`. A wrong one stays here with `error`; the 3rd wrong one ends in `error` so the account isn't locked |
+| `approve_needed` | the site sent a sign-in request to the user's phone | approve it there, then `verify` with just `{ site }` |
+| `verifying` | entering the OTP or password | wait |
+| `signed_in` | the session is in the browser profile | — |
+| `error` | `error` says what went wrong (message starts with the site id) | `start` again |
+
+A wrong OTP returns 400 and goes back to `otp_sent` with `error` set. A wrong password does the same on `password_needed`. The service doesn't write the phone number or OTP to its own files or logs; it keeps only the last 4 digits, for `phoneHint`. (They are typed into the site's page, so the site itself, and Chrome's form state in the profile, are outside this guarantee.)
 
 ## SSE events (`GET /api/events`)
 
@@ -67,7 +124,8 @@ Served by `src/server.js` (started by `basket serve` / the Docker image). The ba
     lines: [{ query, qty, status: 'ok'|'low-confidence'|'no-results'|'no-match'|'out-of-stock'|'bigger-pack'|'suspect'|'not-cached', lineTotal,
               dropped?: [{ name, price, unit, reason }],   // removed by the price check
               product: { name, price, mrp, packLabel, packs, pricePerUnitLabel, confidence, url },
-              history: { low, lowSeenAt, delta, tag: 'new-low'|'at-low'|'above-low' } | null }]
+              history: { low, lowSeenAt, delta, tag: 'new-low'|'at-low'|'above-low',
+                         change: 'down'|'up'|'same'|null, changePct, prev } | null }]
   }],
   unavailable: [{ platform, label, error, errorKind }],
   winner, runnerUp, saving, likeForLike, comparedOn, feesKnown
@@ -81,7 +139,7 @@ Served by `src/server.js` (started by `basket serve` / the Docker image). The ba
 
 Each line also gets `cachedAt` (when that price was saved), or `status: 'not-cached'` when no price is saved. A site with no saved prices at all gets `notCached: true`.
 
-`history` is per base unit (₹/kg, ₹/L, ₹/pc) and is compared against what was stored before this run. It is `low: null` on the first sighting.
+`history` is per base unit (₹/kg, ₹/L, ₹/pc) and is compared against what was stored before this run. It is `low: null` on the first sighting. `change`/`changePct`/`prev` compare with the latest earlier saved price for that site (the page's ▼/▲); in a history-first result they compare the saved price with the one saved before it.
 
 ## Examples
 

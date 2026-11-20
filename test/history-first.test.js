@@ -105,14 +105,16 @@ test('cached mode without a store is an error, not a live run', async () => {
   await assert.rejects(() => compareBasket({ items: 'salt', config, cached: true }), /needs the history store/);
 });
 
-test('a skipped site (milkbasket) is reported with its reason and never opens a tab', async () => {
+test('a skipped site is reported with its reason and never opens a tab', async () => {
   let opened = false;
   const pool = { tab: async () => { opened = true; }, refresh: async () => {} };
-  const [r] = await runSearch({ sites: ['milkbasket'], queries: ['toor dal', 'sugar'], pool, sitesImpl: SITES });
+  // Milkbasket was the skipped site until 2026-11-19; the behaviour stays for any site marked skip.
+  const sitesImpl = { ...SITES, gone: { id: 'gone', label: 'Gone', skip: 'needs a login: guests see nothing' } };
+  const [r] = await runSearch({ sites: ['gone'], queries: ['toor dal', 'sugar'], pool, sitesImpl });
   assert.equal(opened, false);
   assert.equal(r.available, false);
   assert.equal(r.errorKind, 'unserviceable');
-  assert.match(r.error, /milkbasket: skipped — needs a login/);
+  assert.match(r.error, /gone: skipped — needs a login/);
   assert.equal(r.failures.length, 2);
 });
 
@@ -153,10 +155,30 @@ test('rows far from what the other sites charge are pruned when the store opens'
   const rec = (site, price) => store.recordResult(liveResult('2026-11-18T01:00:00.000Z', site, 'amul butter 500g', { name: 'Amul Butter', price, packSize: 500, packUnit: 'g', url: 'u' }));
   rec('kpn', 309); rec('blinkit', 325); rec('instamart', 340); rec('jiomart', 79);
   store.close();
+  // Pretend these rows were saved by an older version, before the price check.
+  const raw = new DatabaseSync(file);
+  raw.prepare("UPDATE meta SET value = '0' WHERE key = 'cleanup_version'").run();
+  raw.close();
   store = openStore(file);
   try {
     assert.equal(store.latestFor('amul butter 500g', 'jiomart'), null, 'the ₹79 row is gone');
     assert.equal(store.latestFor('amul butter 500g', 'kpn').price, 309);
     assert.equal(store.historyFor('amul butter 500g').jiomart, undefined, 'and no longer a "low"');
+  } finally { store.close(); rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('the startup clean-up runs once per CLEANUP_VERSION, not on every open', async () => {
+  const { CLEANUP_VERSION } = await import('../src/store.js');
+  const dir = mkdtempSync(join(tmpdir(), 'basket-once-'));
+  const file = join(dir, 'basket.db');
+  let store = openStore(file);
+  const rec = (site, price) => store.recordResult(liveResult('2026-11-18T01:00:00.000Z', site, 'amul butter 500g', { name: 'Amul Butter', price, packSize: 500, packUnit: 'g', url: 'u' }));
+  rec('kpn', 309); rec('blinkit', 325); rec('instamart', 340); rec('jiomart', 79);
+  store.close();
+  store = openStore(file);
+  try {
+    assert.equal(store.latestFor('amul butter 500g', 'jiomart').price, 79, 'already at this version: not re-scanned');
+    const v = store.db.prepare("SELECT value FROM meta WHERE key = 'cleanup_version'").get().value;
+    assert.equal(v, String(CLEANUP_VERSION));
   } finally { store.close(); rmSync(dir, { recursive: true, force: true }); }
 });

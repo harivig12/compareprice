@@ -17,10 +17,11 @@ export class SiteError extends Error {
   /**
    * @param {'session'|'blocked'|'unserviceable'|'timeout'|'parse'|'not_found'|'browser'} kind
    * @param {string} message
-   * @param {{ status?: number, site?: string, cause?: unknown, retryAfterMs?: number }} [opts]
+   * @param {{ status?: number, site?: string, cause?: unknown, retryAfterMs?: number, code?: string }} [opts]
    *   retryAfterMs: how long the runner should wait before its one retry (rate limits)
+   *   code: a finer reason callers branch on (e.g. 'wrong_otp'), so they never match message text
    */
-  constructor(kind, message, { status, site, cause, retryAfterMs } = {}) {
+  constructor(kind, message, { status, site, cause, retryAfterMs, code } = {}) {
     if (!ERROR_KINDS.has(kind)) throw new TypeError(`SiteError: unknown kind "${kind}"`);
     super(message, cause !== undefined ? { cause } : undefined);
     this.name = 'SiteError';
@@ -28,5 +29,6 @@ export class SiteError extends Error {
     if (status !== undefined) this.status = status;
     if (site !== undefined) this.site = site;
     if (retryAfterMs) this.retryAfterMs = retryAfterMs;
+    if (code) this.code = code;
   }
 }

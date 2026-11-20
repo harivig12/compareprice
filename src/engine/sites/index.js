@@ -15,7 +15,7 @@ import kpn from './kpn.js';
 import jiomart from './jiomart.js';
 import flipkart_minutes from './flipkart_minutes.js';
 import amazon from './amazon.js';
-import { milkbasket } from './dom-sites.js';
+import milkbasket from './milkbasket.js';
 
 const api = (s) => ({ mode: 'api', ...s });
 
@@ -28,7 +28,8 @@ export const SITES = Object.freeze({
   jiomart: api(jiomart),
   flipkart_minutes: api(flipkart_minutes),
   amazon: api(amazon),
-  milkbasket,
+  // Signed-in only; reads the catalogue + flash deal over GraphQL (API first).
+  milkbasket: api(milkbasket),
 });
 
 export const SITE_IDS = Object.keys(SITES);

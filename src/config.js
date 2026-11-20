@@ -40,6 +40,20 @@ export const DEFAULT_CONFIG = Object.freeze({
   ],
   server: { host: '127.0.0.1', port: 7777 },
   timezone: 'Asia/Kolkata',
+  browser: {
+    // Close the headless Chrome after this long with no job or sign-in in
+    // flight; the next job relaunches it. Idle Chrome measured ~1 GB and
+    // 50–75% of a core (docs/diagnosis/2026-11-19-resource-use-and-otp-step.md).
+    idleCloseMs: 5 * 60_000,
+    // Skip images, media and fonts on search tabs (API calls don't need them).
+    blockMedia: true,
+  },
+  // A product this far below MRP is a "deal": shown in its own section, never totalled.
+  deals: { minDiscountPct: 80 },
+  results: {
+    // Per-run JSON files under results/ older than this are deleted; runs.jsonl stays.
+    keepDays: 60,
+  },
   // Per-site overrides of the request budget (see src/limits.js), e.g.
   // { "instamart": { "minGapMs": 4000, "perMinute": 10 } }. Empty = defaults.
   limits: {},
@@ -112,6 +126,12 @@ export function validateConfig(cfg, knownSites) {
     if (!Array.isArray(s.times) || s.times.length === 0) return bad(`schedules[${i}].times`, 'each schedule needs at least one time');
     const t = s.times.find((x) => !HHMM.test(String(x)));
     if (t != null) return bad(`schedules[${i}].times`, `"${t}" is not a 24-hour HH:MM time`);
+  }
+  if (cfg.browser && !(Number(cfg.browser.idleCloseMs) >= 0)) return bad('browser.idleCloseMs', 'idle close time must be 0 (never) or more milliseconds');
+  if (cfg.results && !(Number(cfg.results.keepDays) >= 1)) return bad('results.keepDays', 'keep results for at least 1 day');
+  if (cfg.deals) {
+    const pct = Number(cfg.deals.minDiscountPct);
+    if (!(pct >= 50 && pct <= 99)) return bad('deals.minDiscountPct', 'a deal is 50 to 99 percent off MRP');
   }
   const names = cfg.schedules.map((s) => s.name.trim());
   if (new Set(names).size !== names.length) return bad('schedules', 'schedule names must be unique');

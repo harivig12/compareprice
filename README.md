@@ -68,19 +68,32 @@ node src/cli.js basket.txt --ui   # one-shot comparison in the terminal
 **`/` (compare page)**
 1. Paste a list and tick the sites.
 2. Press **Find the cheapest**. This answers at once from **saved prices**: each cell is tagged `as of dd/mm/yy`, items with nothing saved say *no saved price*, and a banner says no site was contacted.
-3. Type in **Check a saved price** (e.g. `onion`) for suggestions, then see what each site charged, per 100 g, with dates and the lowest rate seen.
-4. Press **Get fresh prices** to check the sites live. If a site was searched moments ago (or is resting after a block), a countdown ("wait 3s…") appears and the run starts by itself.
-5. Press **Sign in…** for Milkbasket, Zepto or Amazon: enter the mobile number, then the OTP. The session is kept in the service's browser profile. Each site shows a progress chip, e.g. `BigBasket · 3/5 · moong dal`. When it finishes the chip shows ✓, or ✖ with the exact reason.
+3. Type in **Check a saved price** (e.g. `onion`). Suggestions show the best saved rate. The answer has one row per site, cheapest first (in green): the rate on the **last 3 dates that have data** with small bars (`6.55 → 6.55 → 6.90`), today's rate with ▼/▲, and the lowest rate ever seen.
+4. Press **Get fresh prices** to check the sites live. If a site was searched moments ago (or is resting after a block), a countdown ("wait 3s…") appears and the run starts by itself. Each site shows a progress chip, e.g. `BigBasket · 3/5 · moong dal`. When it finishes the chip shows ✓, or ✖ with the exact reason.
+5. Press **Sign in…** for Milkbasket, Zepto, Instamart or Amazon (Instamart is optional; without it, it searches as a guest):
+   - Pick the site, enter the mobile number, press **Send OTP**.
+   - When the site has sent it, an OTP box appears and the button becomes **Verify**. *Change number* goes back; *Resend OTP* unlocks after 30 s (3 requests per site per hour).
+   - **Amazon uses a password.** Enter the account's mobile number or email and press **Continue**, then the password, then **Sign in**. If Amazon then asks for a verification code, a code box appears; if it sends an approval request to your phone, approve it and press **Check**. A puzzle (CAPTCHA) can't be solved here: sign in once at amazon.in in a normal browser and try again later. After 3 wrong passwords it stops, so the account isn't locked. The password isn't saved or logged (Chrome's password manager is off in this profile).
+   - The session is kept in the service's browser profile. Amazon Now's guest check says it doesn't deliver to 600045, so it may still show no prices after you sign in, unless the account's saved address is covered.
+   - **More than one account (Instamart, Milkbasket):** each site lists its accounts. Press **+ Add account**, give it a name (e.g. "Amma", shown on hover), then the number and OTP. Each account gets its own browser profile, so device ids never mix; up to 3 per site. Instamart searches every signed-in account and keeps the cheapest (hover the price to see which account). Milkbasket's extra accounts are checked for deals only. **Sign out** (main) clears just that site; **Remove** (extra) deletes the account's profile.
+   - **BigBasket** sign-in is optional; if BigBasket shows its bot-protection page, the sign-in stops and searches stay guest.
+6. **Deals · 80%+ off** at the bottom: products at 80% or more off MRP (like Milkbasket's ₹1 vegetables), grouped by site with their conditions (max quantity, minimum basket). Hover a row for the accounts that saw it. Deals never count in a total. They refresh after each scheduled run (an offer check per account, no product search) or when you press **Check offers**. The threshold is `deals.minDiscountPct` in config.
+7. **cheaper: …** inside a cell: you asked for a brand (e.g. tata salt) and that site has a cheaper product of the same kind from another brand. The total stays on your brand; the hint shows the name, price and rate. **Add a price** records what you paid or saw elsewhere (item, price, pack, date, shop); it shows as an **Others** column (shop on hover) and in lookups, and counts in "Best per item". The saved-price lookup has a **Pack price** column next to the rate trend.
+8. **Get for missing only** (next to Get fresh prices) searches just the item/site pairs that have no saved price, then shows the list again.
+8. **✕** next to a product name in a cell: that product is the wrong match for the item. Its saved prices are deleted and it's never picked for that item on that site again.
+9. **Free delivery** row under Total: each site's own free-delivery minimum (from the offer check) and "✓ free" or "₹X more" for that column's total. Green shades mark the cheapest **per 100 g / 100 ml / piece**, not the pack price.
+10. **☀ / ☾ / Auto** in the header switches light and dark. Auto follows the system and is the default; the choice is remembered per browser.
 
 The comparison table:
 - Items are rows and sites are columns. Text wraps, so all columns fit with no horizontal scroll at 1280 px with 6+ sites.
 - The cheapest cell for each item is **dark green** and the second cheapest is **light green**.
 - Each cell shows the price, product, pack and per-unit price, plus a history badge (`new low (was ₹74/kg 12 Nov)`, `at lowest`, `+₹6 vs low`).
+- ▼ (green) or ▲ (red) next to a price compares it with the latest earlier saved price for that site, even one from the same day. Changes under 1% show no arrow.
 - Below 700 px wide, each item becomes a card with its sites sorted by price.
 
 The three verdict boxes above the table show the cheapest single site, the runner-up, and the cheapest mix if you buy each item wherever it's cheapest.
 
-**`/settings`:** edit the location, default sites, default list and schedules (HH:MM, any number per day, each with its own sites). There's also a **Run the list now** button.
+**`/settings`:** edit the location, default sites, default list and schedules (HH:MM, any number per day, each with its own sites). There's also a **Run the list now** button. It shares the theme toggle with the compare page.
 
 There is no login: bind to localhost only (see [Security](#security)).
 
@@ -103,9 +116,13 @@ Config lives in `<data>/config.json` (`~/.basket` natively, `~/basket-data` in D
     { "name": "daily-check", "sites": ["instamart", "bigbasket", "zepto", "blinkit", "kpn", "jiomart", "flipkart_minutes"], "times": ["07:00", "09:00", "12:00"] }
   ],
   "timezone": "Asia/Kolkata",
-  "server": { "host": "127.0.0.1", "port": 7777 }
+  "server": { "host": "127.0.0.1", "port": 7777 },
+  "browser": { "idleCloseMs": 300000, "blockMedia": true },
+  "results": { "keepDays": 60 }
 }
 ```
+
+`browser.idleCloseMs` closes Chrome after 5 idle minutes (`0` keeps it on), `browser.blockMedia` skips images and fonts on search tabs, and `results.keepDays` prunes old per-run JSON files. See [docs/OPERATIONS.md](docs/OPERATIONS.md#resource-use-and-retention).
 
 How each site gets the location:
 - **Instamart and Blinkit** get the coordinates as cookies.
@@ -124,13 +141,13 @@ Changing the location in settings re-locates every site on the next run.
 |---|---|---|---|
 | Instamart | in-page `POST /api/instamart/search/v2` | `userLocation` cookie | Rate-limits bursts (a 200 response with `{"statusCode":429}`). Searches are paced 2.5 s apart. |
 | BigBasket | in-page `GET /listing-svc/v2/products` | guest address picker → `_bb_pin_code` | Guest only. Akamai blocks Node fetch and mismatched UAs. ₹1 promo rows are ignored. |
-| Zepto | in-page `GET bff-gateway…/search-federator-service/api/v1/search` | address picker → `user_position` cookie | Its headers (store ids, csrf, signature) are copied from the page's own request. **Since 2026-11-19 it asks for sign-in to search at Krishna Nagar**; use *Sign in…*. |
+| Zepto | in-page `GET bff-gateway…/search-federator-service/api/v1/search` (guest), or `POST …/user-search-service/api/v3/search` (signed in) | address picker → `user_position` cookie | Its headers (store ids, csrf, signature) and, signed in, its request body are copied from the page's own request. **Since 2026-11-19 it asks for sign-in to search at Krishna Nagar**; use *Sign in…*. |
 | Blinkit | in-page `POST /v1/layout/search` | `gr_1_lat`/`gr_1_lon` cookies | Its headers (auth_key, device id) are copied from the page's own request. |
 | KPN Fresh | `/search?q=` HTML → `__NEXT_DATA__` | Chennai default | One row per pack (250 g / 500 g / 1 kg). |
 | JioMart | in-page `GET /api/service/application/catalog/v1.0/products` (groceries, standard delivery) | `app_location_details` / `app_geolocation` cookies and `x-location-detail` headers, built from config | Quick-delivery prices aren't used: their store ids come only from a signed call. |
 | Flipkart Minutes | `/search?q=&marketplace=HYPERLOCAL` HTML → `__INITIAL_STATE__` | guest address picker, once | The guest session keeps the address (its cookies last 6–12 months). |
 | Amazon Now | in-page `GET /tez/browse/searchByKeyword` | pincode via Amazon's `glow/address-change` | **Doesn't deliver to 600045** (its own `validateLocation` says `isServiceable: false`), so it's reported as `unserviceable`. Opt-in. |
-| Milkbasket | **skipped** | — | Needs a login: guests are fixed to its default city. A web login exists (mobile + OTP at `/login`); supporting it needs one OTP login. |
+| Milkbasket | **signed in only**: GraphQL catalogue (`getProductCategories` → `getCatalogProductList` per subcategory), read once a day and matched locally; flash deal for Deals | the account's society (its saved hub) | Guests are fixed to its default city. The first search of the day reads ~6,200 products in ~4 min (paced); later ones are instant from `<data>/cache/`. Extra accounts only check deals. |
 
 Details on how the engine works, how errors are classified, and how to add a site: **[docs/ENGINE.md](docs/ENGINE.md)**.
 
@@ -152,6 +169,27 @@ Details on how the engine works, how errors are classified, and how to add a sit
 - **Totals are goods only** until you set fees (`basket fees`). The output always says which.
 
 ---
+
+## Master price list (`product list.md`)
+
+`scripts/master-list.js` builds a base price list for every product in `product list.md` (160 items after parsing), slowly, through the running service. It uses the same queue, per-site limits and price history, so every item gets saved prices, trends and lookups like the daily list. It needs no AI or browser of its own.
+
+```bash
+node scripts/master-list.js --dry-run                 # how the list is read (one search item per line)
+nohup node scripts/master-list.js > /dev/null 2>&1 &  # run it in the background (survives closing the terminal)
+tail -f ~/basket-data/master/run.log                  # watch it
+```
+
+How it runs:
+1. Batches of 8 items (`--batch`), 10 minutes apart (`--gap-min`), each a normal fresh job. Rate limits are waited out, and a stopped service is retried every minute.
+2. One more pass over the item/site pairs that still have no price (`--no-missing` skips it).
+3. The report from saved prices: `~/basket-data/master/master-<date>.csv` (every item × site: product, pack, price, MRP, rate, date, cheapest) and `master-<date>.md` (the cheapest site per item).
+
+Progress is saved after every batch (`state.json`), so stopping (`kill`, a reboot) and starting it again carries on where it was. A finished list starts a new round. Only one run at a time (`run.lock`). Sites default to the service's configured ones; add `--sites=…,milkbasket` to include Milkbasket, whose prices come from its daily catalogue at no extra cost. `--report-only` rewrites the report from what's saved.
+
+How a line becomes an item: "Rice: Ponni, Kolam" gives "ponni rice" and "kolam rice"; "Toor dal / Arhar dal" gives "toor dal"; "Maida (refined flour)" gives "maida"; "Green peas, dried" gives "dried green peas"; duplicates are dropped. See `src/masterlist.js`.
+
+Timing: about 20 batches at roughly 12 minutes each, so 4–5 hours for the whole list, plus the missing pass.
 
 ## History and scheduled runs
 
@@ -176,25 +214,57 @@ Operations, monitoring and troubleshooting: **[docs/OPERATIONS.md](docs/OPERATIO
 
 ## MCP
 
-```bash
-claude mcp add basket -- node /path/to/compareprice/src/mcp-server.js
+Lets an AI chatbot ask about prices. The MCP server is a thin client of the **running service**: it answers from the service's saved prices by default, and can ask it for a live search through the same queue and per-site limits. It runs no browser of its own, so the service must be up (`curl -s localhost:7777/health`).
+
+**Kiro** (`.kiro/settings/mcp.json` in the workspace, or `~/.kiro/settings/mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "basket": {
+      "command": "node",
+      "args": ["/path/to/compareprice/src/mcp-server.js"],
+      "env": { "BASKET_URL": "http://127.0.0.1:7777" }
+    }
+  }
+}
 ```
 
-The tools are `compare_basket`, `search_product`, `open_basket_view` and `open_platform`. They call the same `compareBasket()`, so they get the same engine, errors and numbers.
+**Claude Code:**
+
+```bash
+claude mcp add basket --env BASKET_URL=http://127.0.0.1:7777 -- node /path/to/compareprice/src/mcp-server.js
+```
+
+| Tool | What it does |
+|---|---|
+| `lookup_price(item, fresh=false, sites?)` | Saved price of one item on each site: rate, pack, ▼/▲, last 3 dates with data, lowest ever, product URL. Instant. `fresh: true` searches that item live first. |
+| `suggest_items(text)` | Saved items matching some text, with the best saved rate. |
+| `compare_basket(items, sites?, fresh=false, waitSeconds?)` | Cheapest site for a list. Saved prices by default; `fresh: true` runs a live search (waits up to `waitSeconds`, default 180). If a site needs a pause it says how long and shows saved prices meanwhile. |
+| `run_saved_basket(sites?)` | Runs the service's own list live now, like *Run the list now*. |
+| `job_result(jobId)` | Picks up a live run that was still going. |
+| `deals()` | 80%+-off deals from the last offer check, with conditions and accounts. |
+| `site_status()` | Per-site search budget and cool-downs, and which sites are signed in. |
+| `open_basket_view()` | The web page URL (opened on this machine). |
+
+There is no sign-in tool on purpose: OTPs go into the web popup, not a chat transcript. `BASKET_URL` defaults to `http://127.0.0.1:7777`. `node scripts/mcp-smoke.js` lists the tools without a client.
+
+The tools before 2026-11-19 (`search_product`, `open_platform`) ran their own engine with separate data in `~/.basket`. Use `compare_basket` with one item and `fresh: true` instead of `search_product`; the product URLs that `open_platform` opened are in `lookup_price`'s JSON (`sites[].url`).
 
 ---
 
 ## Development
 
 ```bash
-npm test                 # 184 offline tests (fixtures under test/fixtures/sites)
+npm test                 # 266 offline tests (fixtures under test/fixtures/sites)
 npm run test:live        # LIVE=1 searches against the real sites (needs Chrome + network)
 node scripts/mcp-smoke.js
 ```
 
 | Path | Job |
 |---|---|
-| `src/compare.js` | `compareBasket()`, the single entry point (CLI, server, jobs, MCP) |
+| `src/compare.js` | `compareBasket()`, the single entry point (CLI, server, jobs; the MCP reaches it through the server) |
+| `src/mcp-server.js`, `src/mcp/tools.js` | MCP over stdio, a thin HTTP client of the service |
 | `src/engine/` | Chrome launcher, CDP tab, browser pool, self-healing runner, error kinds |
 | `src/engine/sites/` | One module per site (`search`, `parse`, location) |
 | `src/normalize.js`, `src/score.js` | Pack parsing, match confidence, best pick, ranking |

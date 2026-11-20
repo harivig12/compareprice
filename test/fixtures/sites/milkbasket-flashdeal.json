@@ -1,0 +1,764 @@
+{
+ "data": {
+  "getMegaFlashDealProducts": {
+   "products": [
+    {
+     "product": {
+      "id": 124818,
+      "name": "Tomato Desi - (Naatu Thakalli)",
+      "type": 1,
+      "badge": 0,
+      "kind": 1,
+      "recurrence": {
+       "type": "0",
+       "text": null,
+       "__typename": "ProductRecurrence"
+      },
+      "stickerType": null,
+      "category": {
+       "id": 48,
+       "name": null,
+       "subCategory": {
+        "id": 192,
+        "name": "",
+        "type": "",
+        "typeId": "",
+        "pTypeId": "",
+        "__typename": "ProductSubCategoryInfo"
+       },
+       "__typename": "ProductCategoryInfo"
+      },
+      "delivery": {
+       "type": 1,
+       "slot": [
+        "5:00-7:00"
+       ],
+       "plusOne": false,
+       "__typename": "ProductDelivery"
+      },
+      "availability": {
+       "isOos": false,
+       "oos": false,
+       "forcedOos": false,
+       "schedule": false,
+       "maxQuantity": 1,
+       "cutOff": {
+        "time": "",
+        "text": "",
+        "__typename": "ProductCutOff"
+       },
+       "refill": {
+        "text": null,
+        "type": null,
+        "date": null,
+        "__typename": "ProductRefill"
+       },
+       "__typename": "ProductAvailability"
+      },
+      "assets": {
+       "image": {
+        "url": "https://file.milkbasket.com/x.png",
+        "type": 1,
+        "__typename": "ProductImageAssets"
+       },
+       "video": null,
+       "lottie": null,
+       "__typename": "ProductAssets"
+      },
+      "source": null,
+      "tag": null,
+      "weight": {
+       "text": "1 KG - 1.1 KG Approx",
+       "value": null,
+       "unit": null,
+       "__typename": "ProductWeight"
+      },
+      "price": {
+       "currency": "₹",
+       "perUnit": null,
+       "discount": {
+        "amount": "77.00",
+        "value": 77,
+        "percent": 98,
+        "perUnit": 0,
+        "text": "",
+        "displayValue": "98.72%",
+        "__typename": "ProductDiscount"
+       },
+       "dealDiscount": {
+        "amount": "77.00",
+        "value": 77,
+        "percent": 98.72,
+        "perUnit": null,
+        "text": "*98.72% discount on this product",
+        "displayValue": null,
+        "__typename": "ProductDiscount"
+       },
+       "mbeyond": {
+        "amount": "1",
+        "value": 1,
+        "__typename": "ProductPricing"
+       },
+       "mrp": {
+        "amount": "78",
+        "value": 78,
+        "__typename": "ProductPricing"
+       },
+       "price": {
+        "amount": "1",
+        "value": 1,
+        "__typename": "ProductPricing"
+       },
+       "__typename": "ProductPrice"
+      },
+      "bundle": null,
+      "trends": null,
+      "token": null,
+      "offers": {
+       "count": 0,
+       "label": "",
+       "__typename": "ProductPromotionalOffers"
+      },
+      "__typename": "Product"
+     },
+     "variant": null,
+     "__typename": "ProductDossier"
+    },
+    {
+     "product": {
+      "id": 121764,
+      "name": "Potato ( Urulai Kilangu )",
+      "type": 1,
+      "badge": 0,
+      "kind": 1,
+      "recurrence": {
+       "type": "0",
+       "text": null,
+       "__typename": "ProductRecurrence"
+      },
+      "stickerType": null,
+      "category": {
+       "id": 48,
+       "name": null,
+       "subCategory": {
+        "id": 192,
+        "name": "",
+        "type": "",
+        "typeId": "",
+        "pTypeId": "",
+        "__typename": "ProductSubCategoryInfo"
+       },
+       "__typename": "ProductCategoryInfo"
+      },
+      "delivery": {
+       "type": 1,
+       "slot": [
+        "5:00-7:00"
+       ],
+       "plusOne": false,
+       "__typename": "ProductDelivery"
+      },
+      "availability": {
+       "isOos": false,
+       "oos": false,
+       "forcedOos": false,
+       "schedule": false,
+       "maxQuantity": 1,
+       "cutOff": {
+        "time": "",
+        "text": "",
+        "__typename": "ProductCutOff"
+       },
+       "refill": {
+        "text": null,
+        "type": null,
+        "date": null,
+        "__typename": "ProductRefill"
+       },
+       "__typename": "ProductAvailability"
+      },
+      "assets": {
+       "image": {
+        "url": "https://file.milkbasket.com/x.png",
+        "type": 1,
+        "__typename": "ProductImageAssets"
+       },
+       "video": null,
+       "lottie": null,
+       "__typename": "ProductAssets"
+      },
+      "source": null,
+      "tag": null,
+      "weight": {
+       "text": "1 KG - 1.1 KG Approx",
+       "value": null,
+       "unit": null,
+       "__typename": "ProductWeight"
+      },
+      "price": {
+       "currency": "₹",
+       "perUnit": null,
+       "discount": {
+        "amount": "49.00",
+        "value": 49,
+        "percent": 98,
+        "perUnit": 0,
+        "text": "",
+        "displayValue": "98%",
+        "__typename": "ProductDiscount"
+       },
+       "dealDiscount": {
+        "amount": "49.00",
+        "value": 49,
+        "percent": 98,
+        "perUnit": null,
+        "text": "*98% discount on this product",
+        "displayValue": null,
+        "__typename": "ProductDiscount"
+       },
+       "mbeyond": {
+        "amount": "1",
+        "value": 1,
+        "__typename": "ProductPricing"
+       },
+       "mrp": {
+        "amount": "50",
+        "value": 50,
+        "__typename": "ProductPricing"
+       },
+       "price": {
+        "amount": "1",
+        "value": 1,
+        "__typename": "ProductPricing"
+       },
+       "__typename": "ProductPrice"
+      },
+      "bundle": null,
+      "trends": null,
+      "token": null,
+      "offers": {
+       "count": 0,
+       "label": "",
+       "__typename": "ProductPromotionalOffers"
+      },
+      "__typename": "Product"
+     },
+     "variant": null,
+     "__typename": "ProductDossier"
+    },
+    {
+     "product": {
+      "id": 121767,
+      "name": "Brown Coconut Small",
+      "type": 1,
+      "badge": 0,
+      "kind": 1,
+      "recurrence": {
+       "type": "0",
+       "text": null,
+       "__typename": "ProductRecurrence"
+      },
+      "stickerType": null,
+      "category": {
+       "id": 48,
+       "name": null,
+       "subCategory": {
+        "id": 192,
+        "name": "",
+        "type": "",
+        "typeId": "",
+        "pTypeId": "",
+        "__typename": "ProductSubCategoryInfo"
+       },
+       "__typename": "ProductCategoryInfo"
+      },
+      "delivery": {
+       "type": 1,
+       "slot": [
+        "5:00-7:00"
+       ],
+       "plusOne": false,
+       "__typename": "ProductDelivery"
+      },
+      "availability": {
+       "isOos": false,
+       "oos": false,
+       "forcedOos": false,
+       "schedule": false,
+       "maxQuantity": 1,
+       "cutOff": {
+        "time": "",
+        "text": "",
+        "__typename": "ProductCutOff"
+       },
+       "refill": {
+        "text": null,
+        "type": null,
+        "date": null,
+        "__typename": "ProductRefill"
+       },
+       "__typename": "ProductAvailability"
+      },
+      "assets": {
+       "image": {
+        "url": "https://file.milkbasket.com/x.png",
+        "type": 1,
+        "__typename": "ProductImageAssets"
+       },
+       "video": null,
+       "lottie": null,
+       "__typename": "ProductAssets"
+      },
+      "source": null,
+      "tag": null,
+      "weight": {
+       "text": "1 PC ( 300 - 400 GM Approx)",
+       "value": null,
+       "unit": null,
+       "__typename": "ProductWeight"
+      },
+      "price": {
+       "currency": "₹",
+       "perUnit": null,
+       "discount": {
+        "amount": "49.00",
+        "value": 49,
+        "percent": 98,
+        "perUnit": 0,
+        "text": "",
+        "displayValue": "98%",
+        "__typename": "ProductDiscount"
+       },
+       "dealDiscount": {
+        "amount": "49.00",
+        "value": 49,
+        "percent": 98,
+        "perUnit": null,
+        "text": "*98% discount on this product",
+        "displayValue": null,
+        "__typename": "ProductDiscount"
+       },
+       "mbeyond": {
+        "amount": "1",
+        "value": 1,
+        "__typename": "ProductPricing"
+       },
+       "mrp": {
+        "amount": "50",
+        "value": 50,
+        "__typename": "ProductPricing"
+       },
+       "price": {
+        "amount": "1",
+        "value": 1,
+        "__typename": "ProductPricing"
+       },
+       "__typename": "ProductPrice"
+      },
+      "bundle": null,
+      "trends": null,
+      "token": null,
+      "offers": {
+       "count": 0,
+       "label": "",
+       "__typename": "ProductPromotionalOffers"
+      },
+      "__typename": "Product"
+     },
+     "variant": null,
+     "__typename": "ProductDossier"
+    },
+    {
+     "product": {
+      "id": 121769,
+      "name": "Carrot Local",
+      "type": 1,
+      "badge": 0,
+      "kind": 1,
+      "recurrence": {
+       "type": "0",
+       "text": null,
+       "__typename": "ProductRecurrence"
+      },
+      "stickerType": null,
+      "category": {
+       "id": 48,
+       "name": null,
+       "subCategory": {
+        "id": 192,
+        "name": "",
+        "type": "",
+        "typeId": "",
+        "pTypeId": "",
+        "__typename": "ProductSubCategoryInfo"
+       },
+       "__typename": "ProductCategoryInfo"
+      },
+      "delivery": {
+       "type": 1,
+       "slot": [
+        "5:00-7:00"
+       ],
+       "plusOne": false,
+       "__typename": "ProductDelivery"
+      },
+      "availability": {
+       "isOos": false,
+       "oos": false,
+       "forcedOos": false,
+       "schedule": false,
+       "maxQuantity": 1,
+       "cutOff": {
+        "time": "",
+        "text": "",
+        "__typename": "ProductCutOff"
+       },
+       "refill": {
+        "text": null,
+        "type": null,
+        "date": null,
+        "__typename": "ProductRefill"
+       },
+       "__typename": "ProductAvailability"
+      },
+      "assets": {
+       "image": {
+        "url": "https://file.milkbasket.com/x.png",
+        "type": 1,
+        "__typename": "ProductImageAssets"
+       },
+       "video": null,
+       "lottie": null,
+       "__typename": "ProductAssets"
+      },
+      "source": null,
+      "tag": null,
+      "weight": {
+       "text": "500 GM - 600 GM Approx",
+       "value": null,
+       "unit": null,
+       "__typename": "ProductWeight"
+      },
+      "price": {
+       "currency": "₹",
+       "perUnit": null,
+       "discount": {
+        "amount": "64.00",
+        "value": 64,
+        "percent": 98,
+        "perUnit": 0,
+        "text": "",
+        "displayValue": "98.46%",
+        "__typename": "ProductDiscount"
+       },
+       "dealDiscount": {
+        "amount": "64.00",
+        "value": 64,
+        "percent": 98.46,
+        "perUnit": null,
+        "text": "*98.46% discount on this product",
+        "displayValue": null,
+        "__typename": "ProductDiscount"
+       },
+       "mbeyond": {
+        "amount": "1",
+        "value": 1,
+        "__typename": "ProductPricing"
+       },
+       "mrp": {
+        "amount": "65",
+        "value": 65,
+        "__typename": "ProductPricing"
+       },
+       "price": {
+        "amount": "1",
+        "value": 1,
+        "__typename": "ProductPricing"
+       },
+       "__typename": "ProductPrice"
+      },
+      "bundle": null,
+      "trends": null,
+      "token": null,
+      "offers": {
+       "count": 0,
+       "label": "",
+       "__typename": "ProductPromotionalOffers"
+      },
+      "__typename": "Product"
+     },
+     "variant": null,
+     "__typename": "ProductDossier"
+    },
+    {
+     "product": {
+      "id": 123830,
+      "name": "Banana-Robusta",
+      "type": 1,
+      "badge": 0,
+      "kind": 1,
+      "recurrence": {
+       "type": "0",
+       "text": null,
+       "__typename": "ProductRecurrence"
+      },
+      "stickerType": null,
+      "category": {
+       "id": 48,
+       "name": null,
+       "subCategory": {
+        "id": 192,
+        "name": "",
+        "type": "",
+        "typeId": "",
+        "pTypeId": "",
+        "__typename": "ProductSubCategoryInfo"
+       },
+       "__typename": "ProductCategoryInfo"
+      },
+      "delivery": {
+       "type": 1,
+       "slot": [
+        "5:00-7:00"
+       ],
+       "plusOne": false,
+       "__typename": "ProductDelivery"
+      },
+      "availability": {
+       "isOos": false,
+       "oos": false,
+       "forcedOos": false,
+       "schedule": false,
+       "maxQuantity": 1,
+       "cutOff": {
+        "time": "",
+        "text": "",
+        "__typename": "ProductCutOff"
+       },
+       "refill": {
+        "text": null,
+        "type": null,
+        "date": null,
+        "__typename": "ProductRefill"
+       },
+       "__typename": "ProductAvailability"
+      },
+      "assets": {
+       "image": {
+        "url": "https://file.milkbasket.com/x.png",
+        "type": 1,
+        "__typename": "ProductImageAssets"
+       },
+       "video": null,
+       "lottie": null,
+       "__typename": "ProductAssets"
+      },
+      "source": null,
+      "tag": null,
+      "weight": {
+       "text": "550 GM - 800 GM approx.",
+       "value": null,
+       "unit": null,
+       "__typename": "ProductWeight"
+      },
+      "price": {
+       "currency": "₹",
+       "perUnit": null,
+       "discount": {
+        "amount": "49.00",
+        "value": 49,
+        "percent": 98,
+        "perUnit": 0,
+        "text": "",
+        "displayValue": "98%",
+        "__typename": "ProductDiscount"
+       },
+       "dealDiscount": {
+        "amount": "49.00",
+        "value": 49,
+        "percent": 98,
+        "perUnit": null,
+        "text": "*98% discount on this product",
+        "displayValue": null,
+        "__typename": "ProductDiscount"
+       },
+       "mbeyond": {
+        "amount": "1",
+        "value": 1,
+        "__typename": "ProductPricing"
+       },
+       "mrp": {
+        "amount": "50",
+        "value": 50,
+        "__typename": "ProductPricing"
+       },
+       "price": {
+        "amount": "1",
+        "value": 1,
+        "__typename": "ProductPricing"
+       },
+       "__typename": "ProductPrice"
+      },
+      "bundle": null,
+      "trends": null,
+      "token": null,
+      "offers": {
+       "count": 0,
+       "label": "",
+       "__typename": "ProductPromotionalOffers"
+      },
+      "__typename": "Product"
+     },
+     "variant": null,
+     "__typename": "ProductDossier"
+    },
+    {
+     "product": {
+      "id": 121768,
+      "name": "Coriander Leaves Without Root",
+      "type": 1,
+      "badge": 0,
+      "kind": 1,
+      "recurrence": {
+       "type": "0",
+       "text": null,
+       "__typename": "ProductRecurrence"
+      },
+      "stickerType": null,
+      "category": {
+       "id": 48,
+       "name": null,
+       "subCategory": {
+        "id": 192,
+        "name": "",
+        "type": "",
+        "typeId": "",
+        "pTypeId": "",
+        "__typename": "ProductSubCategoryInfo"
+       },
+       "__typename": "ProductCategoryInfo"
+      },
+      "delivery": {
+       "type": 1,
+       "slot": [
+        "5:00-7:00"
+       ],
+       "plusOne": false,
+       "__typename": "ProductDelivery"
+      },
+      "availability": {
+       "isOos": false,
+       "oos": false,
+       "forcedOos": false,
+       "schedule": false,
+       "maxQuantity": 1,
+       "cutOff": {
+        "time": "",
+        "text": "",
+        "__typename": "ProductCutOff"
+       },
+       "refill": {
+        "text": null,
+        "type": null,
+        "date": null,
+        "__typename": "ProductRefill"
+       },
+       "__typename": "ProductAvailability"
+      },
+      "assets": {
+       "image": {
+        "url": "https://file.milkbasket.com/x.png",
+        "type": 1,
+        "__typename": "ProductImageAssets"
+       },
+       "video": null,
+       "lottie": null,
+       "__typename": "ProductAssets"
+      },
+      "source": null,
+      "tag": null,
+      "weight": {
+       "text": "100 GM - 150 GM Approx",
+       "value": null,
+       "unit": null,
+       "__typename": "ProductWeight"
+      },
+      "price": {
+       "currency": "₹",
+       "perUnit": null,
+       "discount": {
+        "amount": "44.00",
+        "value": 44,
+        "percent": 97,
+        "perUnit": 0,
+        "text": "",
+        "displayValue": "97.78%",
+        "__typename": "ProductDiscount"
+       },
+       "dealDiscount": {
+        "amount": "44.00",
+        "value": 44,
+        "percent": 97.78,
+        "perUnit": null,
+        "text": "*97.78% discount on this product",
+        "displayValue": null,
+        "__typename": "ProductDiscount"
+       },
+       "mbeyond": {
+        "amount": "1",
+        "value": 1,
+        "__typename": "ProductPricing"
+       },
+       "mrp": {
+        "amount": "45",
+        "value": 45,
+        "__typename": "ProductPricing"
+       },
+       "price": {
+        "amount": "1",
+        "value": 1,
+        "__typename": "ProductPricing"
+       },
+       "__typename": "ProductPrice"
+      },
+      "bundle": null,
+      "trends": null,
+      "token": null,
+      "offers": {
+       "count": 0,
+       "label": "",
+       "__typename": "ProductPromotionalOffers"
+      },
+      "__typename": "Product"
+     },
+     "variant": null,
+     "__typename": "ProductDossier"
+    }
+   ],
+   "config": {
+    "layout": 5,
+    "design": {
+     "rows": 1,
+     "showAvailability": false,
+     "showDiscount": true,
+     "showDealDiscount": false,
+     "showSubscribe": false,
+     "showSubscribeCoachmark": false,
+     "showCounter": true,
+     "showRecurrence": false,
+     "__typename": "ProductListDesignConfig"
+    },
+    "__typename": "ProductListConfig"
+   },
+   "pages": {
+    "limit": 15,
+    "page": 1,
+    "hasNextPage": true,
+    "records": 36,
+    "pages": 2,
+    "__typename": "PaginationOutput"
+   },
+   "__typename": "Products"
+  }
+ }
+}

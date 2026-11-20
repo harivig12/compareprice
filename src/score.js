@@ -143,6 +143,8 @@ export function scorePlatform(platform, items, resultsByQuery, feeConfig) {
       pricePerUnitLabel: chosen.pricePerUnitLabel,
       confidence: chosen.confidence,
       confidenceReason: chosen.confidenceReason,
+      // Which account showed this price (sites searched per account, e.g. Instamart).
+      ...(chosen.account ? { account: chosen.account } : {}),
       url: chosen.url,
     };
     if (status === 'bigger-pack') {

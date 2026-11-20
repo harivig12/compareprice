@@ -4,8 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Basket — settings &amp; schedule</title>
+<link rel="stylesheet" href="/ui/theme.css">
+<script src="/ui/theme.js"></script>
 <style>
-  :root { --bg:#0d1117; --panel:#161b22; --panel2:#1c2230; --line:#30363d; --text:#e6edf3; --dim:#8b949e; --bad:#f85149; --ok:#3fb950; --accent:#58a6ff; }
   * { box-sizing: border-box; }
   body { margin:0; background:var(--bg); color:var(--text); font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
   a { color:var(--accent); }
@@ -28,9 +29,9 @@
   .sched { background: var(--panel2); border:1px solid var(--line); border-radius: 10px; padding: 10px; margin-bottom: 10px; }
   .row { display:flex; gap: 10px; align-items:end; flex-wrap: wrap; }
   .row > div { flex: 1 1 180px; }
-  button { background:#238636; color:#fff; border:1px solid #2ea043; border-radius:8px; padding:8px 14px; font-weight:600; cursor:pointer; font-size: 14px; }
+  button { background:var(--btn); color:var(--btn-ink); border:1px solid var(--btn-border); border-radius:8px; padding:8px 14px; font-weight:600; cursor:pointer; font-size: 14px; }
   button.secondary { background:var(--panel2); border-color:var(--line); color:var(--text); }
-  button.danger { background: transparent; border-color: var(--bad); color: #ffb4ad; }
+  button.danger { background: transparent; border-color: var(--bad); color: var(--bad-ink); }
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .bar { display:flex; gap: 10px; align-items:center; flex-wrap: wrap; position: sticky; bottom: 0; background: var(--bg); padding: 10px 0; }
   #status { color: var(--dim); }
@@ -41,7 +42,7 @@
 </head>
 <body>
 <div class="wrap">
-  <header><h1>Settings &amp; schedule</h1><nav><a href="/">← Compare</a></nav></header>
+  <header><h1>Settings &amp; schedule</h1><nav style="display:flex;gap:12px;align-items:center"><span id="themetoggle"></span><a href="/">← Compare</a></nav></header>
 
   <form id="f" novalidate>
     <section class="panel">
