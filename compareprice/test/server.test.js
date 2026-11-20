@@ -357,8 +357,10 @@ test('login routes: start, verify and status go through the manager; bad input i
   const server = await startServer({ port: 0, compare: async () => FAKE_RESULT, login });
   try {
     assert.equal((await (await fetch(`${server.url}/api/login`)).json())[0].id, 'milkbasket');
-    assert.deepEqual(await (await post(server, '/api/login/start', { site: 'milkbasket', phone: '9711020494' })).json(), { step: 'otp', message: 'OTP sent' });
-    assert.equal((await post(server, '/api/login/start', { site: 'kpn', phone: '9711020494' })).status, 400);
+    const started = await post(server, '/api/login/start', { site: 'milkbasket', phone: '9800000000' });
+    assert.equal(started.status, 202, 'answers at once; the OTP step runs in the background');
+    assert.deepEqual(await started.json(), { step: 'otp', message: 'OTP sent' });
+    assert.equal((await post(server, '/api/login/start', { site: 'kpn', phone: '9800000000' })).status, 400);
     const bad = await post(server, '/api/login/verify', { site: 'milkbasket', otp: '000000' });
     assert.equal(bad.status, 400);
     assert.deepEqual(await bad.json(), { error: 'milkbasket: the site rejected that OTP', kind: 'session' });
@@ -367,6 +369,89 @@ test('login routes: start, verify and status go through the manager; bad input i
   } finally {
     await server.close();
   }
+});
+
+test('accounts: start with a name adds an account; signout of a busy account is 409; deals and offers routes', async () => {
+  const calls = [];
+  const login = {
+    status: () => [],
+    start: (site, id, opts) => { calls.push(['start', site, opts]); return { state: 'sending', message: 'm', account: opts.name ? 'a2' : opts.account }; },
+    verify: async (site, secret, opts) => { calls.push(['verify', site, opts]); return { loggedIn: true }; },
+    signOut: async (site, account) => {
+      if (account === 'a2') { const e = new Error('instamart: busy, try again after the current run'); e.code = 'busy'; e.kind = 'session'; throw e; }
+      return { signedOut: true, removed: false, account };
+    },
+  };
+  const store = {
+    currentDeals: () => ({ checkedAt: { milkbasket: '2026-11-19T10:00:00.000Z' }, groups: [{ site: 'milkbasket', conditions: { maxQty: 1 }, deals: [{ site: 'milkbasket', product: 'Tomato Desi', price: 1, mrp: 78, pct: 98.7, seenBy: [{ account: 'a2', seenAt: 't' }] }] }], fromSearches: [], errors: [] }),
+    listJobs: () => [],
+    createJob: () => 41,
+    updateJob: () => {},
+    getJob: () => null,
+  };
+  const accounts = { labels: () => ({ names: { main: 'Main', a2: 'Amma' }, hints: { a2: '••••••1234' } }) };
+  const queue = { enqueue: () => 42, current: () => null, pending: () => [], on: () => {}, off: () => {} };
+  const server = await startServer({ port: 0, compare: async () => FAKE_RESULT, login, store, accounts, queue });
+  try {
+    const r = await post(server, '/api/login/start', { site: 'instamart', id: '9800001234', name: 'Amma' });
+    assert.equal(r.status, 202);
+    assert.equal((await r.json()).account, 'a2');
+    await post(server, '/api/login/verify', { site: 'instamart', otp: '123456', account: 'a2' });
+    assert.deepEqual(calls.map((c) => [c[0], c[2]]), [['start', { account: 'main', name: 'Amma' }], ['verify', { account: 'a2' }]]);
+
+    const busy = await post(server, '/api/login/signout', { site: 'instamart', account: 'a2' });
+    assert.equal(busy.status, 409);
+    assert.match((await busy.json()).error, /busy, try again after the current run/);
+    assert.equal((await post(server, '/api/login/signout', { site: 'instamart' })).status, 200);
+
+    const deals = await (await fetch(`${server.url}/api/deals`)).json();
+    assert.equal(deals.minDiscountPct, 80);
+    assert.deepEqual(deals.groups[0].deals[0].seenBy, [{ account: 'a2', seenAt: 't', name: 'Amma', hint: '••••••1234' }]);
+
+    const run = await post(server, '/api/offers/run', {});
+    assert.equal(run.status, 202);
+    assert.equal((await run.json()).jobId, 42);
+  } finally {
+    await server.close();
+  }
+});
+
+test('"Get for missing only": only the listed pairs are queued; unknown or nothing-missing is refused; ✕ reject route', async () => {
+  const queued = [];
+  const queue = { enqueue: (j) => { queued.push(j); return 7; }, current: () => null, pending: () => [], on: () => {}, off: () => {} };
+  const rejected = [];
+  const store = { rejectMatch: (x) => { rejected.push(x); return { deleted: 2 }; }, listJobs: () => [], createJob: () => 7, updateJob: () => {}, getJob: () => null };
+  const server = await startServer({ port: 0, compare: async () => FAKE_RESULT, queue, store, limiter: { check: () => ({ ok: true }), status: () => ({}) } });
+  try {
+    const items = 'toor dal 1kg\nsugar 1kg';
+    const ok = await post(server, '/api/compare', { items, mode: 'missing', only: { zepto: ['sugar 1kg', 'not in list'], nosuch: ['sugar 1kg'] } });
+    assert.equal(ok.status, 202);
+    assert.equal((await ok.json()).pairs, 1);
+    assert.deepEqual(queued[0].only, { zepto: ['sugar 1kg'] });
+    assert.deepEqual(queued[0].sites, ['zepto']);
+    assert.equal((await post(server, '/api/compare', { items, mode: 'missing', only: {} })).status, 400);
+
+    const r = await post(server, '/api/prices/reject', { site: 'milkbasket', query: 'sugar 1kg', product: 'Low Sugar Potato 1 kg' });
+    assert.deepEqual(await r.json(), { ok: true, deleted: 2 });
+    assert.equal((await post(server, '/api/prices/reject', { site: 'nosuch', query: 'x', product: 'y' })).status, 400);
+  } finally {
+    await server.close();
+  }
+});
+
+test('theme assets are served, and nothing else under src/ui', async () => {
+  await withServer(async (s) => {
+    const css = await fetch(`${s.url}/ui/theme.css`);
+    assert.equal(css.status, 200);
+    assert.match(css.headers.get('content-type'), /text\/css/);
+    assert.match(await css.text(), /data-theme="light"/);
+    const js = await fetch(`${s.url}/ui/theme.js`);
+    assert.match(js.headers.get('content-type'), /javascript/);
+    assert.equal((await fetch(`${s.url}/ui/basket.html`)).status, 404);
+    assert.equal((await fetch(`${s.url}/ui/../server.js`)).status, 404);
+    const page = await (await fetch(`${s.url}/`)).text();
+    assert.match(page, /\/ui\/theme\.js/);
+  });
 });
 
 test('unknown routes 404 as JSON', async () => {

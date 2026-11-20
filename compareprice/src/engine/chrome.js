@@ -6,9 +6,9 @@
  * docs/diagnosis/2026-11-16-api-platforms-failing.md).
  */
 import { spawn } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, readlinkSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readlinkSync, rmSync, writeFileSync } from 'node:fs';
 import { hostname as osHostname } from 'node:os';
-import { delimiter, isAbsolute, join } from 'node:path';
+import { delimiter, dirname, isAbsolute, join } from 'node:path';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -87,6 +87,8 @@ export function chromeArgs({ port, profileDir, headless = true, userAgent } = {}
     '--disable-renderer-backgrounding',
     '--disable-backgrounding-occluded-windows',
     '--window-size=1366,900',
+    // The profile cache grew to ~300 MB; API calls don't need a big cache.
+    '--disk-cache-size=52428800',
     '--lang=en-IN',
   ];
   if (headless) args.unshift('--headless=new');
@@ -140,6 +142,27 @@ async function readVersion(endpoint, timeoutMs, proc) {
 }
 
 /**
+ * Turn off Chrome's password manager in the profile, so a password typed into
+ * a site's sign-in page (Amazon) is never kept in `Login Data`. Written to the
+ * profile's Preferences before launch (Chrome reads it at start; it isn't
+ * running yet, so there's no race). Other preferences are kept.
+ */
+export function disablePasswordSaving(profileDir) {
+  const file = join(profileDir, 'Default', 'Preferences');
+  let prefs = {};
+  try {
+    prefs = JSON.parse(readFileSync(file, 'utf8'));
+  } catch {
+    /* first launch, or unreadable: start from empty */
+  }
+  if (prefs.credentials_enable_service === false && prefs.profile?.password_manager_enabled === false) return;
+  prefs.credentials_enable_service = false;
+  prefs.profile = { ...(prefs.profile ?? {}), password_manager_enabled: false };
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, JSON.stringify(prefs));
+}
+
+/**
  * @param {{ port?: number, profileDir: string, headless?: boolean, chromePath?: string }} opts
  * @returns {Promise<{ endpoint: string, userAgent: string, close(): Promise<void>, process: import('node:child_process').ChildProcess | null }>}
  */
@@ -152,6 +175,7 @@ export async function launchChrome({ port = 9333, profileDir, headless = true, c
   if (!profileDir) throw new Error('launchChrome: profileDir is required');
   mkdirSync(profileDir, { recursive: true });
   const lock = clearStaleProfileLock(profileDir);
+  disablePasswordSaving(profileDir);
   const bin = resolveChromePath(chromePath);
   const proc = spawn(bin, [...chromeArgs({ port, profileDir, headless }), 'about:blank'], {
     stdio: 'ignore',

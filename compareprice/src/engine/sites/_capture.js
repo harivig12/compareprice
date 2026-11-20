@@ -52,3 +52,51 @@ export async function ensureCaptured(tab, key, urlRe, triggerUrl, { timeoutMs = 
   await seen;
   return state;
 }
+
+/**
+ * Collect the bodies of the page's own responses matching `urlRe` while it
+ * loads (e.g. a fee strip the site shows anyway). Call before navigating;
+ * `done()` stops listening and returns [{ url, op, text }].
+ */
+export function collectResponses(tab, urlRe) {
+  const ids = new Map(); // requestId -> { url, op }
+  const finished = new Set();
+  const offs = [
+    tab.on('Network.requestWillBeSent', (p) => {
+      if (!urlRe.test(p.request?.url || '') || p.request.method === 'OPTIONS') return;
+      let op = '';
+      try { op = JSON.parse(p.request.postData || '{}').operationName || ''; } catch { /* not JSON */ }
+      ids.set(p.requestId, { url: p.request.url, op });
+    }),
+    tab.on('Network.loadingFinished', (p) => finished.add(p.requestId)),
+  ];
+  const read = async () => {
+    const out = [];
+    for (const [id, meta] of ids) {
+      if (!finished.has(id)) continue;
+      const r = await tab.send('Network.getResponseBody', { requestId: id }).catch(() => null);
+      if (r?.body) out.push({ ...meta, text: r.base64Encoded ? Buffer.from(r.body, 'base64').toString() : r.body });
+    }
+    return out;
+  };
+  return {
+    /** What has arrived so far, still listening. */
+    peek: read,
+    async done() {
+      offs.forEach((off) => off?.());
+      const out = [];
+      for (const [id, meta] of ids) {
+        if (!finished.has(id)) continue;
+        const r = await tab.send('Network.getResponseBody', { requestId: id }).catch(() => null);
+        if (r?.body) out.push({ ...meta, text: r.base64Encoded ? Buffer.from(r.body, 'base64').toString() : r.body });
+      }
+      return out;
+    },
+  };
+}
+
+/** "FREE DELIVERY on orders above ₹99" -> 99 (first such amount in the text). */
+export function freeDeliveryFrom(text) {
+  const m = /free\s*delivery[^₹]{0,40}?(?:above|over|on orders of)\s*₹\s?(\d{2,4})/i.exec(String(text ?? '').replace(/<[^>]+>/g, ''));
+  return m ? Number(m[1]) : null;
+}

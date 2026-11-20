@@ -4,21 +4,45 @@
  * Location: localStorage['user-position'] (zustand store) holds
  *           {latitude, longitude, ...}; the page derives store ids from it.
  *           We write it once and reload. The UI picker writes the same thing.
- * Search:   GET bff-gateway.zepto.com/search-federator-service/api/v1/search
- *           ?query=<q>&mode=SHOW_ALL_RESULTS&pageNumber=0, with the page's own
- *           headers (store_ids, session/device ids, csrf secret, app version).
+ * Search:   guest: GET bff-gateway.zepto.com/search-federator-service/api/v1/search
+ *           ?query=<q>&mode=SHOW_ALL_RESULTS&pageNumber=0. Signed in: POST
+ *           user-search-service/api/v3/search with a JSON body. Either way with
+ *           the page's own headers (store_ids, session/device ids, csrf secret,
+ *           request-signature, app version), replayed from its own request.
  */
 import { pageFetch, expectJson } from '../page-fetch.js';
 import { SiteError } from '../errors.js';
-import { ensureCaptured } from './_capture.js';
+import { ensureCaptured, collectResponses } from './_capture.js';
 import { bestPack, cdpClick, typeText, addressSearchText } from './_util.js';
 
 const ID = 'zepto';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const ORIGIN = 'https://www.zepto.com/';
-const SEARCH_RE = /search-federator-service\/api\/v1\/search\?/;
+// Guests: GET search-federator-service/api/v1/search?query=…
+// Signed in (seen 2026-11-19): POST user-search-service/api/v3/search with a JSON
+// body {query, pageNumber, mode, userSessionId}. Same product shape in both.
+const SEARCH_RE = /search-federator-service\/api\/v1\/search\?|user-search-service\/api\/v\d+\/search(\?|$)/;
 const SEARCH_URL = (q) =>
   `https://bff-gateway.zepto.com/search-federator-service/api/v1/search?query=${encodeURIComponent(q).replace(/%20/g, '+')}&mode=SHOW_ALL_RESULTS&pageNumber=0`;
+
+/**
+ * The request to replay for `query`, built from the page's own captured search:
+ * the v3 POST keeps the page's body (its session id) with our query, the v1 GET
+ * gets the query in the URL.
+ * @param {{ url: string|null, body: string|null, headers: object }} cap
+ */
+export function searchRequest(cap, query) {
+  if (/user-search-service/.test(cap.url || '') && cap.body) {
+    let body;
+    try {
+      body = JSON.parse(cap.body);
+    } catch {
+      throw new SiteError('parse', `${ID}: the page's search request body is not JSON`, { site: ID });
+    }
+    return { url: cap.url, init: { method: 'POST', headers: cap.headers, body: JSON.stringify({ ...body, query, pageNumber: 0, mode: 'SHOW_ALL_RESULTS' }) } };
+  }
+  return { url: SEARCH_URL(query), init: { headers: cap.headers } };
+}
 
 const rupees = (v) => {
   const n = Number(v);
@@ -116,10 +140,33 @@ export default {
 
   parse,
 
+  /**
+   * No deal feed: only the free-delivery minimum its home page states
+   * (`etaInfo.deliveryFeeMov`, ₹99 on 2026-11-19), for the row under Total.
+   */
+  async offers(tab) {
+    const page = collectResponses(tab, /\/lms\/api\/v\d+\/get_page/);
+    // Re-opening the address the tab is already on loaded nothing new (live,
+    // 2026-11-19): go via a blank page so the home page asks for its layout.
+    await tab.goto('about:blank', { waitMs: 2000 }).catch(() => {});
+    await tab.goto(ORIGIN, { waitMs: 15000 });
+    let mov = null;
+    for (let i = 0; i < 20 && mov == null; i++) {
+      for (const r of await page.peek()) {
+        const m = /"deliveryFeeMov"\s*:\s*(\d{2,4})/.exec(r.text);
+        if (m) { mov = Number(m[1]); break; }
+      }
+      if (mov == null) await sleep(500);
+    }
+    await page.done();
+    return { rows: [], conditions: null, info: mov ? { freeDeliveryAbove: mov } : null };
+  },
+
   async search(tab, query) {
     const cap = await ensureCaptured(tab, ID, SEARCH_RE, `${ORIGIN}search?query=dal`);
     if (!cap.headers) throw new SiteError('session', `${ID}: page never issued a search request to copy headers from`, { site: ID });
-    const res = await pageFetch(tab, SEARCH_URL(query), { headers: cap.headers });
+    const req = searchRequest(cap, query);
+    const res = await pageFetch(tab, req.url, req.init);
     if (res.error) {
       // Since 2026-11-19 Zepto can require sign-in to search at a located store;
       // the API then answers without CORS headers ("Failed to fetch"). Say so.

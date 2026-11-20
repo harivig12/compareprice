@@ -4,11 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Basket — cheapest groceries near you</title>
+<link rel="stylesheet" href="/ui/theme.css">
+<script src="/ui/theme.js"></script>
 <style>
-  :root {
-    --bg:#0d1117; --panel:#161b22; --panel2:#1c2230; --line:#30363d; --text:#e6edf3; --dim:#8b949e;
-    --best:#0f5323; --second:#1f3d27; --warn:#d29922; --bad:#f85149; --accent:#58a6ff; --ok:#3fb950;
-  }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
   body { margin:0; background:var(--bg); color:var(--text); font:14px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
@@ -20,11 +18,11 @@
   header nav { margin-left:auto; }
   .bar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:10px; }
   .bar .grow { flex:1 1 260px; min-width:200px; position:relative; }
-  button { background:#238636; color:#fff; border:1px solid #2ea043; border-radius:8px; padding:7px 14px; font-weight:600; cursor:pointer; font-size:14px; }
+  button { background:var(--btn); color:var(--btn-ink); border:1px solid var(--btn-border); border-radius:8px; padding:7px 14px; font-weight:600; cursor:pointer; font-size:14px; }
   button.secondary { background:var(--panel2); border-color:var(--line); color:var(--text); }
   button:disabled { opacity:.55; cursor:not-allowed; }
   :focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
-  input[type=text], input[type=tel], input[type=search] { width:100%; background:var(--bg); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:7px 10px; font:inherit; }
+  input[type=text], input[type=tel], input[type=search], input[type=password] { width:100%; background:var(--bg); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:7px 10px; font:inherit; }
   details.panel, .panel { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:10px; }
   details.panel > summary { cursor:pointer; font-weight:600; }
   textarea { width:100%; min-height:130px; background:var(--bg); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:8px; font:13px/1.5 ui-monospace,Menlo,monospace; resize:vertical; margin-top:8px; }
@@ -35,9 +33,9 @@
   .progress { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; font-size:12px; }
   .chip { padding:4px 9px; border-radius:12px; background:var(--panel); border:1px solid var(--line); }
   .chip.ok { border-color:var(--ok); color:var(--ok); } .chip.run { border-color:var(--warn); color:var(--warn); }
-  .chip.err { border-color:var(--bad); color:#ffb4ad; white-space:normal; }
-  .banner { display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; background:#2a2412; border:1px solid var(--warn); border-radius:10px; padding:8px 12px; margin-bottom:10px; }
-  .banner.live { background:#12261a; border-color:var(--ok); } .banner.wait { background:#1b2230; border-color:var(--accent); }
+  .chip.err { border-color:var(--bad); color:var(--bad-ink); white-space:normal; }
+  .banner { display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; background:var(--banner-warn); border:1px solid var(--warn); border-radius:10px; padding:8px 12px; margin-bottom:10px; }
+  .banner.live { background:var(--banner-ok); border-color:var(--ok); } .banner.wait { background:var(--banner-info); border-color:var(--accent); }
   .banner p { margin:0; flex:1 1 300px; }
   .verdicts { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-bottom:10px; }
   .verdict { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:9px 12px; }
@@ -47,19 +45,19 @@
   table.cmp { width:100%; table-layout:fixed; border-collapse:collapse; font-size:12px; }
   table.cmp th, table.cmp td { border:1px solid var(--line); padding:6px; vertical-align:top; overflow-wrap:anywhere; }
   table.cmp thead th { background:var(--panel); text-align:left; position:sticky; top:0; z-index:1; }
-  table.cmp th.item { width:15%; } table.cmp th.down { width:9%; color:#ffb4ad; }
+  table.cmp th.item { width:15%; } table.cmp th.down { width:9%; color:var(--bad-ink); }
   td.item { font-weight:600; } td.item .qty { color:var(--dim); font-weight:400; }
   .p { font-size:15px; font-weight:700; }
-  .n { color:#c9d1d9; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-  .u { color:var(--dim); } .asof { color:#e3b341; font-size:11px; }
-  td.best { background:var(--best); } td.best .p { color:#fff; } td.best .n { color:#e3f6e8; } td.best .u { color:#b8dfc2; }
-  td.second { background:var(--second); } td.second .u { color:#a4c9af; }
-  td.miss { color:#6e7681; } td.dimmed { color:#8b949e; background:#14181f; }
-  td.dimmed .p { color:#8b949e; font-size:13px; }
+  .n { color:var(--n-ink); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .u { color:var(--dim); } .asof { color:var(--asof); font-size:11px; }
+  td.best { background:var(--best); color:var(--best-ink); } td.best .p { color:var(--best-ink); } td.best .n { color:var(--best-sub); } td.best .u, td.best .asof { color:var(--best-dim); }
+  td.second { background:var(--second); color:var(--second-ink); } td.second .p, td.second .n { color:var(--second-ink); } td.second .u { color:var(--second-dim); }
+  td.miss { color:var(--faint); } td.dimmed { color:var(--dim); background:var(--dimmed); }
+  td.dimmed .p { color:var(--dim); font-size:13px; }
   .badge { display:inline-block; font-size:10px; padding:1px 5px; border-radius:8px; margin-left:4px; font-weight:600; vertical-align:2px; }
-  .low { background:#3fb950; color:#04260f; } .above { background:#30363d; color:#c9d1d9; } .atlow { background:#1f6feb; color:#fff; }
+  .low { background:var(--badge-low); color:var(--badge-low-ink); } .above { background:var(--badge-above); color:var(--badge-above-ink); } .atlow { background:var(--accent-strong); color:#ffffff; }
   .flag { color:var(--warn); font-size:11px; }
-  tfoot td { font-weight:700; background:var(--panel); } tfoot td.win { color:#7ee787; }
+  tfoot td { font-weight:700; background:var(--panel); } tfoot td.win { color:var(--ok-ink); }
   .legend { font-size:11px; color:var(--dim); margin-top:8px; }
   .sw { display:inline-block; width:10px; height:10px; vertical-align:middle; margin:0 3px 0 10px; }
   .strip { font-size:12px; color:var(--dim); background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:6px 10px; margin-top:8px; }
@@ -69,17 +67,64 @@
   .card h3 { margin:0 0 6px; font-size:15px; }
   .card .row { display:grid; grid-template-columns:90px 1fr auto; gap:6px; padding:6px; border-radius:6px; align-items:start; }
   .card .row.best { background:var(--best); } .card .row.second { background:var(--second); }
-  .look { border-color:#1f6feb; }
+  .look { border-color:var(--accent-strong); }
   .look h3 { margin:0 0 6px; font-size:15px; }
+  .legend .chg { margin:0 2px; }
   .look table { width:100%; border-collapse:collapse; font-size:13px; table-layout:fixed; }
   .look td, .look th { overflow-wrap:anywhere; }
-  @media (max-width:700px) { .look .opt-col { display:none; } .bar .grow { flex-basis:100%; } .card .row { grid-template-columns:76px minmax(0,1fr) auto; } }
+  @media (max-width:700px) { .look .opt-col, .look .pk-col { display:none; } .bar .grow { flex-basis:100%; } .card .row { grid-template-columns:76px minmax(0,1fr) auto; } }
   .look th, .look td { text-align:left; padding:4px 6px; border-bottom:1px solid var(--line); }
-  .look tr.cheap td { background:var(--best); }
+  .look tr.cheap td { background:var(--best); color:var(--best-ink); }
+  .look tr.cheap td .muted, .look tr.cheap td .tr { color:var(--best-dim); }
+  .look .tr { color:var(--dim); font-size:12px; white-space:normal; }
+  .spark { display:inline-flex; gap:3px; align-items:flex-end; height:18px; vertical-align:middle; margin-right:6px; }
+  .spark i { display:block; width:7px; background:var(--bar); border-radius:2px; }
+  .spark i.none { background:var(--bar-empty); height:2px !important; }
+  .chg { font-size:11px; font-weight:700; margin-left:4px; white-space:nowrap; }
+  .chg.down { color:var(--dn); } .chg.up { color:var(--up); }
+  td.best .chg.down, tr.cheap .chg.down { color:var(--dn-on-best); } td.best .chg.up, tr.cheap .chg.up { color:var(--up-on-best); }
+  .otpfor { display:flex; justify-content:space-between; gap:8px; align-items:center; font-size:13px; }
+  .linkbtn { background:none; border:0; color:var(--accent); padding:0; font-weight:600; font-size:13px; cursor:pointer; }
+  .linkbtn:disabled { color:var(--dim); cursor:not-allowed; }
+  #lotp { font-size:20px; letter-spacing:6px; text-align:center; }
+  .acct .st { white-space:nowrap; }
+  /* Deals (80%+ off): compact table grouped by site (option 1, 2026-11-19). */
+  .deals { margin-top:12px; }
+  .dealhead { display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; }
+  .dealhead h3 { margin:0; font-size:15px; }
+  .dealsite { display:flex; gap:10px; align-items:baseline; flex-wrap:wrap; margin:10px 0 2px; font-weight:700; font-size:13px; border-bottom:1px solid var(--line); padding-bottom:4px; }
+  .dealsite .cond { color:var(--warn); font-weight:600; font-size:12px; }
+  .dealrow { display:grid; grid-template-columns:minmax(0,1fr) auto auto auto; gap:4px 10px; align-items:center; font-size:13px; padding:4px 0; border-bottom:1px solid var(--line); }
+  .dealrow .dn { overflow-wrap:anywhere; }
+  .dealrow .dp { font-weight:700; color:var(--dn); }
+  .dealrow .dm { color:var(--dim); text-decoration:line-through; font-size:12px; }
+  .pill { background:var(--best); color:var(--best-ink); border-radius:999px; padding:1px 8px; font-size:11px; font-weight:700; white-space:nowrap; }
+  .dealrow:focus { outline:2px solid var(--accent); outline-offset:1px; }
+  .dealmore { background:none; border:0; color:var(--accent); padding:4px 0; font-size:12px; cursor:pointer; font-weight:600; }
+  .dealnote { font-size:12px; color:var(--dim); padding:4px 0; }
+  .dealerr { font-size:12px; color:var(--bad-ink); padding:2px 0; }
+  .aprow { display:grid; grid-template-columns:1fr 1fr 1.3fr; gap:8px; }
+  .aprow input { width:100%; }
+  #apdlg input[type=date] { background:var(--bg); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:6px 8px; font:inherit; }
+  .entry { display:flex; justify-content:space-between; gap:8px; font-size:12px; padding:4px 0; border-bottom:1px solid var(--line); }
+  @media (max-width:520px) { .aprow { grid-template-columns:1fr 1fr; } }
+  .alt { margin-top:4px; padding:2px 6px; border:1px solid var(--warn); border-radius:5px; color:var(--warn); background:var(--bg); font-size:11px; line-height:1.3; overflow-wrap:anywhere; }
+  .rej { float:right; background:none; border:0; color:inherit; opacity:.55; padding:0 0 0 6px; margin:-2px -2px 0 0; font-size:13px; font-weight:700; cursor:pointer; line-height:1.2; }
+  .rej:hover, .rej:focus-visible { opacity:1; }
+  tfoot tr.free td { font-size:12px; font-weight:400; color:var(--dim); }
+  tfoot tr.free td .ok { color:var(--ok-ink); font-weight:600; }
+  .acctag { font-size:10px; font-weight:600; border:1px solid currentColor; border-radius:6px; padding:0 4px; margin-left:4px; opacity:.85; }
+  @media (max-width:700px) { .dealrow { grid-template-columns:minmax(0,1fr) auto auto; } .dealrow .dn { grid-column:1 / -1; } }
+  /* Sign-in popup: accounts listed under each site (layout A, 2026-11-19). */
+  .site { padding:8px 0; border-bottom:1px solid var(--line); }
+  .site .sh { font-size:13px; }
+  .arow { display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; font-size:13px; margin-top:6px; padding:5px 8px; border:1px solid var(--line); border-radius:6px; background:var(--bg); }
+  .arow .acts { display:flex; gap:10px; }
+  .addacct { margin-top:6px; }
   .opts button { margin:2px 4px 0 0; padding:2px 8px; font-size:12px; }
   .sug { position:absolute; left:0; right:0; top:100%; z-index:5; background:var(--panel2); border:1px solid var(--line); border-radius:8px; margin-top:2px; max-height:260px; overflow:auto; }
   .sug div { padding:6px 10px; cursor:pointer; display:flex; justify-content:space-between; gap:8px; }
-  .sug div:hover, .sug div[aria-selected=true] { background:#243049; } .sug small { color:var(--dim); }
+  .sug div:hover, .sug div[aria-selected=true] { background:var(--hover); } .sug small { color:var(--dim); }
   .errors li { margin:4px 0; } .errors .kind { font-family:ui-monospace,monospace; color:var(--bad); }
   .jobs { width:100%; border-collapse:collapse; font-size:13px; } .jobs td, .jobs th { text-align:left; padding:4px 6px; border-bottom:1px solid var(--line); }
   .muted { color:var(--dim); } .sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
@@ -87,7 +132,7 @@
   dialog::backdrop { background:rgba(0,0,0,.6); }
   dialog h2 { margin:0 0 4px; font-size:17px; } dialog label { display:block; font-weight:600; margin:10px 0 4px; }
   dialog .row2 { display:flex; gap:8px; margin-top:12px; justify-content:flex-end; }
-  .msg { min-height:1.4em; margin-top:8px; font-size:13px; } .msg.err { color:#ffb4ad; } .msg.ok { color:#7ee787; }
+  .msg { min-height:1.4em; margin-top:8px; font-size:13px; } .msg.err { color:var(--bad-ink); } .msg.ok { color:var(--ok-ink); }
   .acct { font-size:13px; padding:6px 0; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; gap:8px; }
 </style>
 </head>
@@ -96,14 +141,16 @@
   <header>
     <h1 id="title">Basket</h1>
     <span class="sub" id="sub">…</span>
-    <nav><a href="/settings">Settings &amp; schedule</a></nav>
+    <nav style="display:flex;gap:12px;align-items:center"><span id="themetoggle"></span><a href="/settings">Settings &amp; schedule</a></nav>
   </header>
 
   <div class="bar">
     <button type="button" id="go">Find the cheapest</button>
     <button type="button" id="fresh" class="secondary">Get fresh prices</button>
+    <button type="button" id="missing" class="secondary" hidden title="Search only the items and sites that have no saved price">Get for missing only</button>
     <button type="button" id="stop" class="secondary" disabled>Stop</button>
     <button type="button" id="signin" class="secondary">Sign in…</button>
+    <button type="button" id="addprice" class="secondary" title="A price you paid or saw elsewhere (a shop, a bill); shown as “Others”">Add a price</button>
     <div class="grow">
       <label for="q" class="sr">Check a saved price</label>
       <input id="q" type="search" placeholder="Check a saved price: type an item, e.g. onion" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="sug">
@@ -129,13 +176,21 @@
       <table class="cmp" id="table"></table>
       <div class="cards" id="cards"></div>
       <div class="legend">
-        <span class="sw" style="background:var(--best)"></span>cheapest for the item <span class="sw" style="background:var(--second)"></span>second cheapest
-        · badge = vs the lowest price seen so far · names wrap to 2 lines (full name on hover) · greyed = shown but not counted
+        <span class="sw" style="background:var(--best)"></span>cheapest per 100 g / 100 ml / piece <span class="sw" style="background:var(--second)"></span>second cheapest · ✕ = wrong product, never use it for this item again
+        · <span class="chg down">▼</span>/<span class="chg up">▲</span> = cheaper/dearer than the last saved price (hover for when) · badge = vs the lowest price seen so far · names wrap to 2 lines (full name on hover) · greyed = shown but not counted
       </div>
     </div>
     <details class="panel" id="leftout" hidden><summary id="leftsum"></summary><ul class="errors" id="leftlist"></ul></details>
     <div class="strip" id="problems" hidden></div>
     <p class="muted" id="footnote" style="margin:8px 0 0"></p>
+  </section>
+
+  <section class="panel deals" id="deals" aria-labelledby="dealsh" hidden>
+    <div class="dealhead">
+      <h3 id="dealsh">Deals · 80%+ off <span class="muted" id="dealsub"></span></h3>
+      <button type="button" class="secondary" id="checkoffers">Check offers</button>
+    </div>
+    <div id="dealbody"></div>
   </section>
 
   <details class="panel" style="margin-top:12px">
@@ -144,24 +199,61 @@
   </details>
 </div>
 
+<dialog id="apdlg" aria-labelledby="apt">
+  <h2 id="apt">Add a price</h2>
+  <p class="muted" style="margin:0 0 8px">A price from somewhere else (a local shop, a bill). It shows as <b>Others</b> in the table and in saved-price lookups, and counts in "Best per item". It is never searched and has no basket total.</p>
+  <form id="apform" novalidate>
+    <label for="apitem">Item (as in your list)</label>
+    <input id="apitem" type="text" maxlength="80" placeholder="e.g. tata salt 1kg" autocomplete="off">
+    <label for="approd">Product (optional)</label>
+    <input id="approd" type="text" maxlength="160" placeholder="e.g. Tata Salt 1 kg" autocomplete="off">
+    <div class="aprow">
+      <div><label for="apprice">Price ₹</label><input id="apprice" type="text" inputmode="decimal" maxlength="9" placeholder="18"></div>
+      <div><label for="appack">Pack</label><input id="appack" type="text" maxlength="20" placeholder="1 kg"></div>
+      <div><label for="apdate">Date</label><input id="apdate" type="date"></div>
+    </div>
+    <label for="apsrc">Bought from</label>
+    <input id="apsrc" type="text" maxlength="120" placeholder="e.g. Murugan Stores, Krishna Nagar" autocomplete="off">
+    <div class="msg" id="apmsg" role="status" aria-live="polite"></div>
+    <div class="row2">
+      <button type="button" class="secondary" id="apclose">Close</button>
+      <button type="submit" id="apsave">Save</button>
+    </div>
+  </form>
+  <div id="aplist" style="margin-top:10px"></div>
+</dialog>
+
 <dialog id="dlg" aria-labelledby="dlgt">
   <h2 id="dlgt">Sign in to a site</h2>
-  <p class="muted" style="margin:0 0 8px">Enter your mobile number, then the OTP the site sends. The session is kept in this service's browser (like a phone app), so you won't need the OTP again until the site signs you out.</p>
+  <p class="muted" style="margin:0 0 8px">Enter your mobile number (Amazon also takes the account email), then the OTP or password the site asks for. The session is kept in this service's browser (like a phone app), so you won't need to sign in again until the site signs you out.</p>
   <div id="accts"></div>
   <form id="loginform" novalidate>
     <div id="step1">
+      <div id="lnamebox" hidden>
+        <label for="lname">Account name (shown on hover)</label>
+        <input id="lname" type="text" maxlength="24" autocomplete="off" placeholder="e.g. Amma">
+      </div>
       <label for="lsite">Site</label>
       <select id="lsite" style="width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:7px 10px"></select>
-      <label for="lphone">Mobile number</label>
-      <input id="lphone" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="10-digit number">
+      <label for="lphone" id="lphonelbl">Mobile number</label>
+      <input id="lphone" type="tel" inputmode="numeric" autocomplete="tel-national" maxlength="14" placeholder="10-digit number">
     </div>
     <div id="step2" hidden>
-      <label for="lotp">OTP</label>
-      <input id="lotp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="Enter the OTP">
+      <div class="otpfor"><span id="otpfor"></span><button type="button" class="linkbtn" id="lchange">Change number</button></div>
+      <div id="otpbox">
+        <label for="lotp">OTP</label>
+        <input id="lotp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="• • • •">
+      </div>
+      <div id="passbox" hidden>
+        <label for="lpass">Password</label>
+        <input id="lpass" type="password" autocomplete="current-password" maxlength="128">
+        <p class="muted" style="margin:4px 0 0;font-size:12px">Typed into the site's own sign-in page. It isn't saved or logged here.</p>
+      </div>
     </div>
     <div class="msg" id="lmsg" role="status" aria-live="polite"></div>
     <div class="row2">
       <button type="button" class="secondary" id="lclose">Close</button>
+      <button type="button" class="secondary" id="lresend" hidden>Resend OTP</button>
       <button type="submit" id="lgo">Send OTP</button>
     </div>
   </form>
@@ -175,8 +267,12 @@ const when = (iso) => iso ? new Date(iso).toLocaleString('en-IN', { day: 'numeri
 const ddmmyy = (iso) => iso ? new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'Asia/Kolkata' }) : '';
 const day = (iso) => iso ? new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '';
 let META = { labels: {} }, currentJob = null, countdown = null;
+// Free-delivery facts per site (GET /api/siteinfo), the missing pairs of the
+// view, sites never searched, and the job id of a "missing only" run.
+let SITE_INFO = {}, MISSING = {}, missingJob = null;
+const SKIPPED = new Set();
 const chipState = new Map();
-const label = (p) => META.labels?.[p] ?? p;
+const label = (p) => META.labels?.[p] ?? (p === 'others' ? 'Others' : p);
 
 /** 1000g -> "1 kg", 500ml -> "500 ml", 6piece -> "6 pcs". */
 function fmtPack(size, unit) {
@@ -224,9 +320,19 @@ function formInput() {
 const lineFor = (p, q) => (p.lines || []).find((l) => l.query === q);
 const counted = (l) => l && l.lineTotal != null && l.status === 'ok';
 
+/**
+ * Dark / light green: ranked by rate (₹ per g, ml or piece) when every priced
+ * cell of the item has one in the same unit, so a bigger, cheaper-per-100 g
+ * pack wins; otherwise by what you pay (decision 2026-11-19).
+ */
+const rateOf = (l) => (Number.isFinite(l?.product?.pricePerUnit) && l.product.pricePerUnit > 0 ? l.product.pricePerUnit : null);
 function rankFor(r, q) {
-  const prices = [...new Set(r.platforms.filter((p) => !p.failed).map((p) => lineFor(p, q)).filter(counted).map((l) => l.lineTotal))].sort((a, b) => a - b);
-  return (v) => (v === prices[0] ? 'best' : v === prices[1] ? 'second' : '');
+  const lines = r.platforms.filter((p) => !p.failed).map((p) => lineFor(p, q)).filter(counted);
+  const units = new Set(lines.map((l) => l.product?.packUnit));
+  const byRate = lines.length > 0 && lines.every((l) => rateOf(l) != null) && units.size === 1;
+  const key = (l) => (byRate ? Math.round(rateOf(l) * 1e6) / 1e6 : l.lineTotal);
+  const vals = [...new Set(lines.map(key))].sort((a, b) => a - b);
+  return (l) => (!counted(l) ? '' : key(l) === vals[0] ? 'best' : key(l) === vals[1] ? 'second' : '');
 }
 
 function badge(h) {
@@ -234,6 +340,16 @@ function badge(h) {
   if (h.tag === 'new-low') return `<span class="badge low" title="was ${esc(fmtRate(h.low, h.unit))} on ${esc(day(h.lowSeenAt))}">new low</span>`;
   if (h.tag === 'at-low') return `<span class="badge atlow">at lowest · ${esc(day(h.lowSeenAt))}</span>`;
   return `<span class="badge above" title="lowest seen ${esc(day(h.lowSeenAt))}">low ${esc(fmtRate(h.low, h.unit))} · ${esc(day(h.lowSeenAt))}</span>`;
+}
+
+/** ▼/▲ against the latest earlier saved price (any run). Nothing when unchanged or new. */
+function arrow(h) {
+  if (!h || !h.change || h.change === 'same' || !h.prev) return '';
+  const pct = Math.abs(h.changePct);
+  const was = `was ${rs(h.prev.price)}${h.prev.pack ? ' for ' + h.prev.pack : ''} (${fmtRate(h.prev.unitPrice, h.unit)}) · ${when(h.prev.seenAt)}`;
+  return h.change === 'down'
+    ? `<span class="chg down" title="${esc(was)}" aria-label="cheaper by ${pct}% than last time">▼${pct}%</span>`
+    : `<span class="chg up" title="${esc(was)}" aria-label="dearer by ${pct}% than last time">▲${pct}%</span>`;
 }
 
 function unitLine(l) {
@@ -260,11 +376,32 @@ function cellHtml(p, l, cls) {
     return `<td class="miss">${why}</td>`;
   }
   const weak = l.status !== 'ok';
+  // Sites searched per account (Instamart): which account showed this price, and the others'.
+  const acctTip = l.accountPrices?.length > 1 || pr.account
+    ? ` title="${esc(['Cheapest from account: ' + ((l.accountPrices || []).find((a) => a.account === pr.account)?.name || pr.account || 'Main'), ...(l.accountPrices || []).filter((a) => a.account !== pr.account).map((a) => `${a.name}: ${rs(a.price)}`)].join('\n'))}"`
+    : '';
+  const acctTag = l.accountPrices?.length > 1 ? ` <span class="acctag">${esc((l.accountPrices.find((a) => a.account === pr.account) || {}).name || '')}</span>` : '';
   const skipped = l.dropped?.length ? `<div class="flag" title="${esc(l.dropped.map((d) => `${d.name} ${rs(d.price)}: ${d.reason}`).join('\n'))}">⚠ skipped ${l.dropped.length} odd price${l.dropped.length > 1 ? 's' : ''}</div>` : '';
-  return `<td class="${weak ? 'dimmed' : cls(l.lineTotal)}"><div class="p">${rs(l.lineTotal)}${weak ? ' <span class="flag" title="weak name match: check it">?</span>' : ''} ${badge(l.history)}</div>
+  // ✕ sits on the price line, floated to the cell's top-right corner, so a long
+  // (2-line clamped) product name can never hide it.
+  // Option A (2026-11-20): a cheaper same-kind other brand on this site. A hint; the total is unchanged.
+  const alt = l.alternative;
+  const altBox = alt ? `<div class="alt" title="${esc(`${alt.product}${alt.pack ? ' · ' + fmtPack(...packParts(alt.pack)) : ''}\n${rs(alt.price)} = ${perLabel(alt.pricePerUnit, alt.unit)} · ${alt.savingPct}% less per unit than ${pr.name}`)}">cheaper: ${esc(shortName(alt.product))} ${rs(alt.price)} · ${esc(perLabel(alt.pricePerUnit, alt.unit))}</div>` : '';
+  // "Others": the user's own entry: where it was bought, on hover; no ✕ (edit it in "Add a price").
+  if (p.others) {
+    return `<td class="${cls(l)}" title="${esc(`${pr.name}\nBought from ${l.source || '(not given)'} · ${day(l.cachedAt)}`)}"><div class="p">${rs(l.lineTotal)} <span class="acctag">entered</span></div>
+      <div class="n">${esc(pr.name)}</div><div class="u">${esc(unitLine(l))}</div>
+      <div class="asof">${esc(l.source ? l.source + ' · ' : '')}${esc(ddmmyy(l.cachedAt))}</div></td>`;
+  }
+  const rej = `<button type="button" class="rej" data-rej-site="${esc(p.platform)}" data-rej-q="${esc(l.query)}" data-rej-p="${esc(pr.name)}" title="Wrong product for “${esc(l.query)}”? Remove it and never use it for this item on ${esc(label(p.platform))} again" aria-label="Remove wrong match ${esc(pr.name)}">✕</button>`;
+  return `<td class="${weak ? 'dimmed' : cls(l)}"${acctTip}><div class="p">${rej}${rs(l.lineTotal)}${weak ? ' <span class="flag" title="weak name match: check it">?</span>' : ''}${arrow(l.history)} ${badge(l.history)}${acctTag}</div>
     <div class="n" title="${esc(pr.name)}">${esc(pr.name)}</div><div class="u">${esc(unitLine(l))}</div>
-    ${l.cachedAt ? `<div class="asof" title="saved ${esc(when(l.cachedAt))}">as of ${esc(ddmmyy(l.cachedAt))}</div>` : ''}${skipped}</td>`;
+    ${l.cachedAt ? `<div class="asof" title="saved ${esc(when(l.cachedAt))}">as of ${esc(ddmmyy(l.cachedAt))}</div>` : ''}${skipped}${altBox}</td>`;
 }
+/** ₹ per 100 g / 100 ml / pc from a per-unit price (per g, ml or piece). */
+const perLabel = (ppu, unit) => (unit === 'piece' ? `₹${(+ppu).toFixed(2)}/pc` : `₹${(+ppu * 100).toFixed(2)}/100${unit === 'ml' ? 'ml' : 'g'}`);
+/** "Aashirvaad Iodised Salt 1 kg" -> "Aashirvaad Iodised Salt" (pack is shown separately). */
+const shortName = (n) => String(n || '').replace(/\s*[\d.]+\s*(kg|g|gm|l|ml|ltr|pcs?|pack)\b.*$/i, '').slice(0, 40);
 
 function renderBanner(r) {
   const b = $('banner');
@@ -313,7 +450,29 @@ function render(r) {
     return `<tr><td class="item">${item.qty > 1 ? `<span class="qty">${item.qty}× </span>` : ''}${esc(item.query)}</td>${cells}${downCell}</tr>`;
   }).join('');
   const foot = up.map((p) => `<td class="${w && w.platform === p.platform ? 'win' : ''}">${rs(p.total)}</td>`).join('') + (down.length ? '<td>—</td>' : '');
-  $('table').innerHTML = `<thead><tr><th class="item" scope="col">Item</th>${head}</tr></thead><tbody>${rows}</tbody><tfoot><tr><td>Total</td>${foot}</tr></tfoot>`;
+  // Free delivery from (what the site itself states; from the offer check), vs this column's total.
+  const freeCell = (p) => {
+    const f = SITE_INFO[p.platform];
+    if (!f?.freeDeliveryAbove) return '<td>—</td>';
+    const gap = Math.round((f.freeDeliveryAbove - (p.total || 0)) * 100) / 100;
+    const fee = f.feeBelow ? ` (else ₹${f.feeBelow} ${esc(f.feeName || 'fee').toLowerCase()})` : '';
+    return `<td title="${esc(`${label(p.platform)} says: free delivery on orders of ₹${f.freeDeliveryAbove}+${f.feeBelow ? `; below that a ₹${f.feeBelow} ${f.feeName || 'fee'}` : ''} · read ${when(f.seenAt)}`)}">₹${f.freeDeliveryAbove}+${fee} · ${gap <= 0 ? '<span class="ok">✓ free</span>' : `${rs(gap)} more`}</td>`;
+  };
+  const anyFree = up.some((p) => SITE_INFO[p.platform]?.freeDeliveryAbove);
+  const freeRow = anyFree ? `<tr class="free"><td>Free delivery</td>${up.map(freeCell).join('')}${down.length ? '<td></td>' : ''}</tr>` : '';
+  $('table').innerHTML = `<thead><tr><th class="item" scope="col">Item</th>${head}</tr></thead><tbody>${rows}</tbody><tfoot><tr><td>Total</td>${foot}</tr>${freeRow}</tfoot>`;
+  // "Get for missing only": item/site pairs with no counted price in this view.
+  MISSING = {};
+  for (const p of r.platforms) {
+    if (SKIPPED.has(p.platform) || p.others) continue;
+    for (const item of r.basket) {
+      const l = lineFor(p, item.query);
+      if (!counted(l) && l?.status !== 'bigger-pack') (MISSING[p.platform] ??= []).push(item.raw || item.query);
+    }
+  }
+  const nMissing = Object.values(MISSING).flat().length;
+  $('missing').hidden = nMissing === 0;
+  $('missing').textContent = `Get for missing only (${nMissing})`;
 
   // Phones: one card per item, sites sorted by what you'd pay.
   $('cards').innerHTML = r.basket.map((item) => {
@@ -324,7 +483,7 @@ function render(r) {
         const why = !l ? '—' : l.status === 'not-cached' ? 'no saved price' : l.status === 'bigger-pack' ? `bigger pack (${fmtPack(l.product.packSize, l.product.packUnit)}, ${rs(l.product.price)})` : l.status === 'suspect' ? 'price looked wrong, left out' : l.status === 'no-match' ? 'no matching product' : l.status === 'out-of-stock' ? 'out of stock' : l.lineTotal != null ? `${rs(l.lineTotal)} ? (weak match)` : 'not found';
         return `<div class="row"><b>${esc(label(p.platform))}</b><span class="muted">${esc(why)}</span><span></span></div>`;
       }
-      return `<div class="row ${cls(l.lineTotal)}"><b>${esc(label(p.platform))}</b><span>${esc(l.product.name)}<div class="u">${esc(unitLine(l))} ${l.cachedAt ? '· as of ' + esc(ddmmyy(l.cachedAt)) : ''} ${badge(l.history)}</div></span><b>${rs(l.lineTotal)}</b></div>`;
+      return `<div class="row ${cls(l)}"><b>${esc(label(p.platform))}</b><span>${esc(l.product.name)}<div class="u">${esc(unitLine(l))} ${l.cachedAt ? '· as of ' + esc(ddmmyy(l.cachedAt)) : ''} ${badge(l.history)}</div></span><b>${rs(l.lineTotal)}${arrow(l.history)}</b></div>`;
     }).join('')}</div>`;
   }).join('');
 
@@ -388,6 +547,40 @@ async function fetchFresh() {
   } catch (e) { alert('Could not start: ' + e.message); } finally { $('fresh').disabled = false; }
 }
 $('fresh').addEventListener('click', fetchFresh);
+
+// "Get for missing only": search just the item/site pairs with no price in
+// this view; when it finishes, the view is rebuilt from saved prices.
+async function fetchMissing() {
+  const input = formInput(); if (!input) return;
+  const only = Object.fromEntries(Object.entries(MISSING).filter(([site, list]) => input.platforms.includes(site) && list.length));
+  if (!Object.keys(only).length) return;
+  $('missing').disabled = true;
+  try {
+    const res = await fetch('/api/compare', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...input, mode: 'missing', only }) });
+    const body = await res.json();
+    if (res.status === 429) { startWait(body.waitMs, body.error, fetchMissing); return; }
+    if (res.status !== 202) throw new Error(body.error || res.status);
+    $('waitbar').hidden = true;
+    currentJob = body.jobId; missingJob = body.jobId; chipState.clear();
+    Object.keys(only).forEach((p) => chipState.set(p, { text: `${only[p].length} missing · ${body.queued ? 'waiting in queue' : 'starting'}` }));
+    renderChips(); loadJobs();
+  } catch (e) { alert('Could not start: ' + e.message); } finally { $('missing').disabled = false; }
+}
+$('missing').addEventListener('click', fetchMissing);
+
+// ✕ on a cell: wrong product for that item on that site. Remove and remember.
+$('table').addEventListener('click', async (ev) => {
+  const b = ev.target.closest('.rej');
+  if (!b) return;
+  const { rejSite: site, rejQ: query, rejP: product } = b.dataset;
+  if (!confirm(`Remove “${product}” as ${label(site)}'s match for “${query}”?\nIts saved prices for this item are deleted and it is never picked for this item on ${label(site)} again.`)) return;
+  const res = await fetch('/api/prices/reject', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ site, query, product }) });
+  const out = await res.json();
+  if (!res.ok) { alert(out.error || 'Could not remove it'); return; }
+  // Show the view again from saved prices (the next older match, or "no saved price").
+  $('go').click();
+});
+
 $('stop').addEventListener('click', async () => {
   clearInterval(countdown); $('waitbar').hidden = true;
   await fetch('/api/stop', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(currentJob != null ? { jobId: currentJob } : {}) });
@@ -412,7 +605,7 @@ function onProgress({ jobId, event: e }) {
 async function loadJobs() {
   const j = await (await fetch('/api/jobs?limit=10')).json();
   $('stop').disabled = !j.current;
-  $('jobs').innerHTML = (j.jobs || []).map((x) => `<tr><td>${x.id}</td><td>${when(x.createdAt)}</td><td>${esc(x.trigger)}</td><td>${esc((x.sites || []).map(label).join(', ') || 'default')}</td><td>${esc(x.status)}${x.error ? ' — ' + esc(x.error) : ''}</td></tr>`).join('') || '<tr><td colspan="5" class="muted">No runs yet</td></tr>';
+  $('jobs').innerHTML = (j.jobs || []).map((x) => `<tr><td>${esc(x.id)}</td><td>${esc(when(x.createdAt))}</td><td>${esc(x.trigger)}</td><td>${esc((x.sites || []).map(label).join(', ') || 'default')}</td><td>${esc(x.status)}${x.error ? ' — ' + esc(x.error) : ''}</td></tr>`).join('') || '<tr><td colspan="5" class="muted">No runs yet</td></tr>';
 }
 
 function connect() {
@@ -420,6 +613,11 @@ function connect() {
   es.addEventListener('progress', (m) => onProgress(JSON.parse(m.data)));
   es.addEventListener('done', (m) => {
     const d = JSON.parse(m.data); loadJobs();
+    // Any finished job may have found deals (offer checks and searches alike).
+    loadDeals();
+    if (d.kind === 'offers') { loadSiteInfo(); return; }
+    // A "missing only" run fills gaps: show the whole list again from saved prices.
+    if (d.ok && missingJob != null && d.jobId === missingJob) { missingJob = null; currentJob = null; $('go').click(); return; }
     if (currentJob == null || d.jobId === currentJob) {
       if (d.ok) loadResult(d.jobId); else { chipState.set('run', { text: `✖ ${d.error}`, cls: 'err' }); renderChips(); }
     }
@@ -435,7 +633,8 @@ async function fetchSug() {
   const q = $('q').value.trim();
   if (!q) { hideSug(); return; }
   sugItems = await (await fetch('/api/suggest?q=' + encodeURIComponent(q))).json();
-  $('sug').innerHTML = sugItems.map((s, i) => `<div role="option" data-i="${i}">${esc(s.query)} <small>${s.sites} site${s.sites === 1 ? '' : 's'} · ${esc(ddmmyy(s.seenAt))}</small></div>`).join('') || '<div class="muted">No saved item matches</div>';
+  const dmy = (d) => (d ? d.split('-').reverse().map((x, i) => (i === 2 ? x.slice(2) : x)).join('/') : '');
+  $('sug').innerHTML = sugItems.map((s, i) => `<div role="option" data-i="${i}"><span><b>${esc(s.query)}</b> · ${s.sites} site${s.sites === 1 ? '' : 's'}</span><small>${s.best ? `best ${rs(s.best.rate)}/${esc(s.best.per.replace(/^100 /, '100'))} ${esc(label(s.best.site))} · ${esc(dmy(s.best.date))}` : esc(ddmmyy(s.seenAt))}</small></div>`).join('') || '<div class="muted">No saved item matches</div>';
   $('sug').hidden = false; $('q').setAttribute('aria-expanded', 'true');
 }
 $('q').addEventListener('input', () => { clearTimeout(sugTimer); sugTimer = setTimeout(fetchSug, 150); });
@@ -457,51 +656,359 @@ async function doLookup(q) {
   const res = await fetch('/api/lookup?q=' + encodeURIComponent(q));
   const b = await res.json();
   if (res.status !== 200) { box.innerHTML = `<p style="margin:0">${esc(b.error)}</p>`; return; }
-  const unit = b.per;
-  box.innerHTML = `<h3>${esc(b.query)} — saved prices <span class="muted" style="font-weight:400">(rate per ${esc(unit)})</span></h3>
-    <table><thead><tr><th>Site</th><th>Rate</th><th>Last price</th><th class="opt-col">Pack</th><th>As of</th><th class="opt-col">Lowest rate seen</th></tr></thead><tbody>
-    ${b.sites.map((s, i) => `<tr class="${i === 0 ? 'cheap' : ''}"><td>${esc(label(s.site))}</td><td><b>${rs(s.rate)}</b></td><td>${rs(s.lastPrice)} <span class="muted" title="${esc(s.product)}">${esc((s.product || '').slice(0, 28))}</span></td><td class="opt-col">${esc(s.pack || '')}</td><td>${esc(ddmmyy(s.seenAt))}</td><td class="opt-col">${rs(s.lowRate)} · ${esc(day(s.lowSeenAt))}</td></tr>`).join('')}
+  // Option B (approved 2026-11-19): one line per vendor, a 3-date trend, now, lowest ever.
+  const dm = (d) => (d ? d.split('-').reverse().slice(0, 2).join('/') : '');
+  const per = b.per.replace(/^100 /, '100');
+  const base = b.per === 'piece' ? 'pc' : b.per === '100 ml' ? 'L' : 'kg';
+  const all = b.sites.flatMap((x) => (x.trend || []).filter(Boolean).map((c) => c.rate));
+  const lo = Math.min(...all), hi = Math.max(...all);
+  const bar = (c) => (c ? `<i style="height:${Math.round(6 + (hi > lo ? (c.rate - lo) / (hi - lo) : 0.5) * 12)}px"></i>` : '<i class="none"></i>');
+  const val = (c, i) => (c ? `<span title="${esc(`${c.product || ''}\n${rs(c.price)}${c.pack ? ' for ' + fmtPack(...packParts(c.pack)) : ''} · ${when(c.seenAt)}`)}">${(+c.rate).toFixed(2)}</span>` : `<span title="no price on ${esc(dm(b.dates[i]))}">—</span>`);
+  const nowArrow = (x) => arrow({ change: x.change, changePct: x.changePct, prev: x.prev, unit: base });
+  // Pack price behind each rate (what was paid, for which pack), product on hover.
+  const how = (c) => `${c.product || ''}\n${rs(c.price)}${c.pack ? ` for ${fmtPack(...packParts(c.pack))}` : ''} = ${rs(c.rate)} per ${b.per} · ${when(c.seenAt)}`;
+  const pk = (c, i) => (c ? `<span title="${esc(how(c))}">${rs(c.price)}</span>` : `<span title="no price on ${esc(dm(b.dates[i]))}">—</span>`);
+  const lastPack = (cells) => { const c = [...cells].reverse().find(Boolean); return c?.pack ? ` · ${esc(fmtPack(...packParts(c.pack)))}` : ''; };
+  const siteName = (x) => (x.site === 'others' ? `Others${x.source ? `<div class="muted" style="font-size:11px">${esc(x.source)}</div>` : ''}` : esc(label(x.site)));
+  box.innerHTML = `<h3>${esc(b.query)} <span class="muted" style="font-weight:400">· rate per ${esc(b.per)} · ${esc(b.dates.map(dm).join(' → '))}</span></h3>
+    <table><colgroup><col style="width:15%"><col><col class="pk-col" style="width:21%"><col style="width:16%"><col class="opt-col" style="width:16%"></colgroup>
+    <thead><tr><th>Site</th><th>Trend (${b.dates.length} date${b.dates.length === 1 ? '' : 's'})</th><th class="pk-col">Pack price</th><th>Now</th><th class="opt-col">Lowest ever</th></tr></thead><tbody>
+    ${b.sites.map((x, i) => {
+      const cells = b.dates.map((_, k) => (x.trend || [])[k] ?? null);
+      return `<tr class="${i === 0 ? 'cheap' : ''}"><td${x.source ? ` title="${esc(`Bought from ${x.source}`)}"` : ''}>${siteName(x)}</td>
+        <td><span class="spark" aria-hidden="true">${cells.map(bar).join('')}</span><span class="tr">${cells.map(val).join(' → ')}</span></td>
+        <td class="pk-col"><span class="tr">${cells.map(pk).join(' → ')}${lastPack(cells)}</span></td>
+        <td><b title="${esc(`${rs(x.lastPrice)} · ${x.product || ''} · ${when(x.seenAt)}`)}">${rs(x.rate)}</b>${nowArrow(x)}<div class="muted" style="font-size:11px">${esc(per.replace('piece', 'pc'))} · ${esc(ddmmyy(x.seenAt))}</div></td>
+        <td class="opt-col">${rs(x.lowRate)} · ${esc(day(x.lowSeenAt))}</td></tr>`;
+    }).join('')}
     </tbody></table>
     ${b.options?.length ? `<div class="opts muted" style="margin-top:6px">Also saved: ${b.options.map((o) => `<button type="button" class="secondary" data-q="${esc(o.query)}">${esc(o.query)}</button>`).join('')}</div>` : ''}`;
   box.querySelectorAll('[data-q]').forEach((btn) => btn.addEventListener('click', () => { $('q').value = btn.dataset.q; doLookup(btn.dataset.q); }));
 }
 
-// ───────────────────────── sign-in popup ─────────────────────────
-let loginSite = null, loginStep = 1;
-async function refreshAccounts() {
-  const list = await (await fetch('/api/login')).json();
-  $('accts').innerHTML = list.map((a) => `<div class="acct"><span><b>${esc(a.label)}</b> <span class="muted">— ${esc(a.why)}</span></span><span>${a.loggedIn ? `<span style="color:#7ee787">signed in ${esc(day(a.since))} ${esc(a.phoneHint || '')}</span>` : '<span class="muted">not signed in</span>'}</span></div>`).join('');
-  $('lsite').innerHTML = list.map((a) => `<option value="${esc(a.id)}">${esc(a.label)}</option>`).join('');
+// ───────────────────────── deals (80%+ off) ─────────────────────────
+// Option 1 (approved 2026-11-19): compact table grouped by site, first rows then
+// "+ N more"; hover/focus a row for the accounts that saw it. Never in totals.
+const DEAL_ROWS = 5;
+const dealOpen = new Set();
+const hhmm = (iso) => (iso ? new Date(iso).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Kolkata' }) : '—');
+const condText = (c) => [c?.maxQty ? `max ${c.maxQty} item${c.maxQty > 1 ? 's' : ''}` : '', c?.minBasket ? `basket ₹${c.minBasket}+` : ''].filter(Boolean).join(' · ');
+function dealRow(d, showSite) {
+  const who = d.seenBy.map((s) => `${s.name}${s.hint ? ` (${s.hint})` : ''} · ${hhmm(s.seenAt)}`).join('\n');
+  const own = condText(d.conditions);
+  return `<div class="dealrow" tabindex="0" title="${esc(`Seen by:\n${who}${d.source === 'feed' ? '\nfrom the site\'s deal list' : '\nfound while searching'}`)}">
+    <span class="dn">${showSite ? `<b>${esc(label(d.site))}</b> · ` : ''}${esc(d.product)}${d.pack ? ` · ${esc(fmtPack(...packParts(d.pack)))}` : ''}${own && showSite ? ` <span class="muted">· ${esc(own)}</span>` : ''}</span>
+    <span class="dp">${rs(d.price)}</span><span class="dm">${rs(d.mrp)}</span><span class="pill">${Math.round(d.pct)}% off</span></div>`;
 }
-function setStep(n) { loginStep = n; $('step1').hidden = n !== 1; $('step2').hidden = n !== 2; $('lgo').textContent = n === 1 ? 'Send OTP' : 'Verify'; }
-function lmsg(text, kind) { $('lmsg').textContent = text; $('lmsg').className = 'msg ' + (kind || ''); }
-$('signin').addEventListener('click', async () => {
-  setStep(1); lmsg(''); $('lotp').value = '';
-  $('lphone').value ||= (await (await fetch('/api/config')).json()).phone || '';
-  await refreshAccounts(); $('dlg').showModal(); $('lphone').focus();
-});
-$('lclose').addEventListener('click', () => $('dlg').close());
-$('loginform').addEventListener('submit', async (ev) => {
-  ev.preventDefault();
-  const go = $('lgo'); go.disabled = true;
+const packParts = (p) => { const m = /^([\d.]+)\s*([a-z]+)$/i.exec(String(p || '')); return m ? [Number(m[1]), m[2]] : [null, null]; };
+function dealGroup(key, title, cond, deals, empty, showSite) {
+  const open = dealOpen.has(key);
+  const shown = open ? deals : deals.slice(0, DEAL_ROWS);
+  const more = deals.length - shown.length;
+  return `<div class="dealsite"><span>${title}</span>${cond ? `<span class="cond">${esc(cond)}</span>` : ''}</div>
+    ${deals.length ? shown.map((d) => dealRow(d, showSite)).join('') : `<div class="dealnote">${esc(empty)}</div>`}
+    ${more > 0 ? `<button type="button" class="dealmore" data-more="${esc(key)}">+ ${more} more</button>` : open && deals.length > DEAL_ROWS ? `<button type="button" class="dealmore" data-more="${esc(key)}">show fewer</button>` : ''}`;
+}
+async function loadDeals() {
+  let d;
+  try { d = await (await fetch('/api/deals')).json(); } catch { return; }
+  const pct = d.minDiscountPct ?? 80;
+  const any = d.groups.length || d.fromSearches.length || d.errors.length;
+  $('deals').hidden = false;
+  $('dealsh').firstChild.textContent = `Deals · ${pct}%+ off `;
+  const last = Object.values(d.checkedAt || {}).sort().at(-1);
+  $('dealsub').textContent = `· not in totals${last ? ` · checked ${hhmm(last)}` : ''}`;
+  const html = d.groups.map((g) => dealGroup(g.site, esc(label(g.site)), condText(g.conditions), g.deals, `No ${pct}%+ deals in the last check (${hhmm(g.checkedAt)}).`, false)).join('')
+    + (d.fromSearches.length ? dealGroup('search', 'From searches', '', d.fromSearches, '', true) : '')
+    + d.errors.map((e) => `<div class="dealerr">${esc(label(e.site))} · ${esc(e.name)}: ${esc(e.error)}</div>`).join('');
+  $('dealbody').innerHTML = any ? html : `<div class="dealnote">No offer check yet. It runs after each scheduled run, or press Check offers.</div>`;
+  $('dealbody').querySelectorAll('[data-more]').forEach((b) => b.addEventListener('click', () => {
+    const k = b.dataset.more; if (dealOpen.has(k)) dealOpen.delete(k); else dealOpen.add(k); loadDeals();
+  }));
+}
+$('checkoffers').addEventListener('click', async () => {
+  $('checkoffers').disabled = true;
   try {
-    if (loginStep === 1) {
-      loginSite = $('lsite').value; lmsg('Asking the site to send an OTP… (about 15 s)');
-      const res = await fetch('/api/login/start', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ site: loginSite, phone: $('lphone').value }) });
-      const b = await res.json();
-      if (!res.ok) throw new Error(b.error);
-      setStep(2); lmsg(b.message, 'ok'); $('lotp').focus();
-    } else {
-      lmsg('Checking the OTP…');
-      const res = await fetch('/api/login/verify', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ site: loginSite, otp: $('lotp').value }) });
-      const b = await res.json();
-      if (!res.ok) throw new Error(b.error);
-      lmsg('Signed in. The session is saved for future searches.', 'ok'); setStep(1); await refreshAccounts();
-    }
-  } catch (e) { lmsg(e.message, 'err'); } finally { go.disabled = false; }
+    const res = await fetch('/api/offers/run', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
+    const b = await res.json();
+    $('dealsub').textContent = res.ok ? `· checking offers (job ${b.jobId})…` : `· ${b.error || 'could not start'}`;
+  } finally {
+    setTimeout(() => { $('checkoffers').disabled = false; }, 5000);
+  }
 });
 
-loadMeta().then(() => { loadResult(); loadJobs(); connect(); });
+// ───────────────────────── sign-in popup ─────────────────────────
+// Step 1: site + number -> "Send OTP". The popup moves to step 2 at once (OTP
+// box + "Verify"); the server drives the site's page in the background and we
+// poll its state: sending -> otp_sent (Verify enabled) | error (Resend).
+let loginSite = null, loginStep = 1, pollTimer = null, accounts = [];
+// What step 2 asks for: 'otp' (code box), 'password', 'approve' (no box,
+// "Check" after approving on the phone), or 'wait' while the page loads.
+let loginKind = 'wait';
+const STATE_TEXT = {
+  sending: 'Opening the site and asking for the next step… (about 15 s)',
+  otp_sent: '✓ Code sent. Enter it above and press Verify.',
+  password_needed: 'Enter the account password above and press Sign in.',
+  approve_needed: 'Approve the sign-in on your phone, then press Check.',
+  verifying: 'Checking…',
+  signed_in: '✓ Signed in. The session is saved for future searches.',
+};
+const KIND_OF = { otp_sent: 'otp', password_needed: 'password', approve_needed: 'approve' };
+const READY = ['otp_sent', 'password_needed', 'approve_needed'];
+
+// Layout A (approved 2026-11-19): each site lists its accounts; multi-account
+// sites (Instamart, Milkbasket) have "+ Add account". `loginAccount` is the
+// account being signed in, or null while adding a new one (its name is typed).
+let loginAccount = 'main';
+const siteOf = (id) => accounts.find((x) => x.id === id);
+const acctOf = (site, id) => siteOf(site)?.accounts?.find((a) => a.id === id) ?? null;
+function acctStatus(a) {
+  return a.loggedIn ? `<span style="color:var(--ok-ink)">signed in ${esc(day(a.since))}</span>`
+    : a.state === 'error' ? '<span style="color:var(--bad-ink)">last try failed</span>'
+    : a.pending ? '<span style="color:var(--warn)">in progress</span>' : '<span class="muted">not signed in</span>';
+}
+async function refreshAccounts() {
+  accounts = await (await fetch('/api/login')).json();
+  $('accts').innerHTML = accounts.map((s) => {
+    const rows = (s.accounts || []).map((a) => `<div class="arow"><span><b>${esc(a.name)}</b>${a.hint ? ` · ${esc(a.hint)}` : ''}</span>
+      <span class="st">${acctStatus(a)}</span>
+      <span class="acts">${a.loggedIn ? '' : `<button type="button" class="linkbtn" data-act="signin" data-site="${esc(s.id)}" data-acc="${esc(a.id)}">Sign in</button>`}
+      ${a.loggedIn || a.id !== 'main' ? `<button type="button" class="linkbtn" data-act="signout" data-site="${esc(s.id)}" data-acc="${esc(a.id)}">${a.id === 'main' ? 'Sign out' : 'Remove'}</button>` : ''}</span></div>`).join('');
+    const add = s.canAdd ? `<button type="button" class="linkbtn addacct" data-act="add" data-site="${esc(s.id)}">+ Add account</button> <span class="muted" style="font-size:12px">${s.id === 'instamart' ? 'prices are searched for each account' : 'extra accounts: deals only, no product search'}</span>` : '';
+    return `<div class="site"><div class="sh"><b>${esc(s.label)}</b> <span class="muted">— ${esc(s.why)}</span></div>${rows}${add ? `<div>${add}</div>` : ''}</div>`;
+  }).join('');
+  const keep = $('lsite').value;
+  $('lsite').innerHTML = accounts.map((a) => `<option value="${esc(a.id)}">${esc(a.label)}</option>`).join('');
+  if (keep) $('lsite').value = keep;
+  siteChanged();
+  return accounts;
+}
+/** Pick a site + account (or a new account) for step 1. */
+function chooseAccount(site, account) {
+  $('lsite').value = site;
+  loginAccount = account;
+  $('lnamebox').hidden = account !== null;
+  if (account === null) $('lname').value = '';
+  setStep(1); lmsg('');
+  siteChanged();
+  (account === null ? $('lname') : $('lphone')).focus();
+}
+$('accts').addEventListener('click', async (ev) => {
+  const b = ev.target.closest('[data-act]');
+  if (!b) return;
+  const site = b.dataset.site, acc = b.dataset.acc;
+  if (b.dataset.act === 'signin') return chooseAccount(site, acc);
+  if (b.dataset.act === 'add') return chooseAccount(site, null);
+  if (b.dataset.act === 'signout') {
+    const a = acctOf(site, acc);
+    const what = acc === 'main' ? `Sign out of ${label(site)}? Other sites stay signed in.` : `Remove the ${label(site)} account "${a?.name}"? Its browser profile is deleted.`;
+    if (!confirm(what)) return;
+    const res = await fetch('/api/login/signout', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ site, account: acc }) });
+    const out = await res.json();
+    lmsg(res.ok ? (out.removed ? `Removed "${a?.name}".` : `Signed out of ${label(site)}.`) : out.error, res.ok ? 'ok' : 'err');
+    await refreshAccounts();
+  }
+});
+/** Amazon takes a number or an email; the others a mobile number only. */
+function siteChanged() {
+  const a = accounts.find((x) => x.id === $('lsite').value);
+  const email = Boolean(a?.acceptsEmail);
+  $('lphonelbl').textContent = email ? 'Mobile number or email' : 'Mobile number';
+  $('lphone').type = email ? 'text' : 'tel';
+  $('lphone').inputMode = email ? 'email' : 'numeric';
+  $('lphone').maxLength = email ? 254 : 14;
+  $('lphone').placeholder = email ? '10-digit number or email' : '10-digit number';
+  $('lphone').autocomplete = email ? 'username' : 'tel-national';
+  if (loginStep === 1) $('lgo').textContent = a?.method === 'password' ? 'Continue' : 'Send OTP';
+}
+function lmsg(text, kind) { $('lmsg').textContent = text || ''; $('lmsg').className = 'msg ' + (kind || ''); }
+function setKind(kind) {
+  loginKind = kind;
+  $('otpbox').hidden = kind !== 'otp';
+  $('passbox').hidden = kind !== 'password';
+  $('lgo').textContent = kind === 'password' ? 'Sign in' : kind === 'approve' ? 'Check' : 'Verify';
+  // Resend asks the site for a new OTP; it makes no sense for a password.
+  const site = siteOf(loginSite);
+  $('lresend').hidden = loginStep !== 2 || site?.method === 'password';
+}
+function setStep(n) {
+  loginStep = n;
+  $('step1').hidden = n !== 1;
+  $('step2').hidden = n !== 2;
+  $('lpass').value = '';
+  if (n === 1) { stopPoll(); $('lgo').disabled = false; $('lresend').hidden = true; siteChanged(); }
+  else setKind('wait');
+}
+function stopPoll() { clearInterval(pollTimer); pollTimer = null; }
+
+/** Reflect the server's state for the current site in step 2. */
+function showState(a) {
+  if (!a) return;
+  if (KIND_OF[a.state] && KIND_OF[a.state] !== loginKind) {
+    setKind(KIND_OF[a.state]);
+    (loginKind === 'password' ? $('lpass') : loginKind === 'otp' ? $('lotp') : $('lgo')).focus();
+  }
+  const wait = Math.ceil((a.resendInMs || 0) / 1000);
+  $('lresend').disabled = wait > 0 || a.state === 'sending' || a.state === 'verifying';
+  $('lresend').textContent = wait > 0 ? `Resend in ${wait}s` : 'Resend OTP';
+  $('lgo').disabled = !READY.includes(a.state);
+  if (a.message && READY.includes(a.state) && !a.error) $('otpfor').textContent = a.message;
+  if (a.state === 'error' || (READY.includes(a.state) && a.error)) lmsg(a.error, 'err');
+  else lmsg(STATE_TEXT[a.state] || '', READY.includes(a.state) || a.state === 'signed_in' ? 'ok' : '');
+}
+function startPoll() {
+  stopPoll();
+  pollTimer = setInterval(async () => {
+    const list = await refreshAccounts().catch(() => null);
+    const a = list ? acctOf(loginSite, loginAccount) : null;
+    showState(a);
+    // Keep ticking while there is a countdown or work in flight.
+    if (a && !['sending', 'verifying'].includes(a.state) && !(a.resendInMs > 0)) stopPoll();
+  }, 1000);
+}
+
+async function startSignIn() {
+  loginSite = $('lsite').value;
+  const site = siteOf(loginSite);
+  const adding = loginAccount === null;
+  const name = $('lname').value.trim();
+  if (adding && !name) { lmsg('Give the account a name, e.g. "Amma".', 'err'); $('lname').focus(); return; }
+  const raw = $('lphone').value.trim();
+  const isEmail = site?.acceptsEmail && raw.includes('@');
+  const id = isEmail ? raw : raw.replace(/\D/g, '').slice(-10);
+  if (isEmail ? !/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(id) : id.length !== 10) {
+    lmsg(site?.acceptsEmail ? 'Enter a 10-digit mobile number or the account email.' : 'Enter a 10-digit mobile number.', 'err');
+    $('lphone').focus();
+    return;
+  }
+  const res = await fetch('/api/login/start', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ site: loginSite, id, ...(adding ? { name } : { account: loginAccount }) }) });
+  const b = await res.json();
+  if (!res.ok) { lmsg(b.error, 'err'); return; }
+  loginAccount = b.account || loginAccount || 'main';
+  $('lnamebox').hidden = true;
+  // Move on now; the state poll shows the code box, the password box, or the exact error.
+  const hint = isEmail ? `${id.slice(0, 1)}•••@${id.split('@')[1]}` : `••••••${id.slice(-4)}`;
+  const who = loginAccount === 'main' ? '' : ` · ${adding ? name : acctOf(loginSite, loginAccount)?.name || ''}`;
+  $('otpfor').textContent = `${label(loginSite)}${who} · ${hint}`;
+  $('lotp').value = '';
+  setStep(2);
+  $('lgo').disabled = true;
+  lmsg(STATE_TEXT.sending);
+  startPoll();
+}
+
+async function verifyStep() {
+  let body;
+  if (loginKind === 'password') {
+    const password = $('lpass').value;
+    if (!password) { lmsg('Enter the password.', 'err'); $('lpass').focus(); return; }
+    body = { site: loginSite, account: loginAccount, password };
+    // Not kept in the page any longer than the request.
+    $('lpass').value = '';
+  } else if (loginKind === 'approve') {
+    body = { site: loginSite, account: loginAccount };
+  } else {
+    const otp = $('lotp').value.replace(/\s+/g, '');
+    if (!/^\d{4,8}$/.test(otp)) { lmsg('The code is 4 to 8 digits.', 'err'); $('lotp').focus(); return; }
+    body = { site: loginSite, account: loginAccount, otp };
+  }
+  $('lgo').disabled = true;
+  lmsg(STATE_TEXT.verifying);
+  const res = await fetch('/api/login/verify', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  const b = await res.json();
+  await refreshAccounts();
+  const a = acctOf(loginSite, loginAccount);
+  if (!res.ok) {
+    $('lotp').value = '';
+    showState(a);
+    lmsg(b.error, 'err');
+    if (loginKind === 'password') $('lpass').focus(); else if (loginKind === 'otp') $('lotp').focus();
+    startPoll();
+    return;
+  }
+  if (!b.loggedIn) { showState(a); return; } // a second step: code or approval
+  lmsg(STATE_TEXT.signed_in, 'ok');
+  setTimeout(() => { setStep(1); lmsg(''); }, 1800);
+}
+
+$('signin').addEventListener('click', async () => {
+  setStep(1); lmsg(''); $('lotp').value = '';
+  loginAccount = 'main'; $('lnamebox').hidden = true;
+  $('lphone').value ||= (await (await fetch('/api/config')).json()).phone || '';
+  await refreshAccounts();
+  // Re-open mid-flow: if any account is waiting for its next step, go straight to step 2.
+  let mid = null;
+  for (const s of accounts) for (const a of s.accounts || []) if (!mid && (READY.includes(a.state) || a.state === 'sending')) mid = { site: s, acc: a };
+  if (mid) {
+    loginSite = mid.site.id; loginAccount = mid.acc.id; $('lsite').value = mid.site.id;
+    $('otpfor').textContent = `${mid.site.label}${mid.acc.id === 'main' ? '' : ' · ' + mid.acc.name}${mid.acc.hint ? ' · ' + mid.acc.hint : ''}`;
+    setStep(2); showState(mid.acc); startPoll();
+  }
+  $('dlg').showModal();
+  (mid ? (loginKind === 'password' ? $('lpass') : $('lotp')) : $('lphone')).focus();
+});
+$('lsite').addEventListener('change', () => { loginAccount = 'main'; $('lnamebox').hidden = true; siteChanged(); });
+$('lclose').addEventListener('click', () => { stopPoll(); $('lpass').value = ''; $('dlg').close(); });
+$('lchange').addEventListener('click', () => { setStep(1); lmsg(''); $('lphone').focus(); });
+$('lresend').addEventListener('click', async () => { $('lresend').disabled = true; await startSignIn(); });
+$('lotp').addEventListener('input', () => { if (/^\d{4,8}$/.test($('lotp').value) && loginStep === 2) lmsg(''); });
+$('loginform').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  try { if (loginStep === 1) await startSignIn(); else await verifyStep(); }
+  catch (e) { lmsg(e.message, 'err'); $('lgo').disabled = false; }
+});
+
+// ───────────────────────── add a price ("Others") ─────────────────────────
+const todayIso = () => new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10); // IST date
+function apmsg(text, kind) { $('apmsg').textContent = text || ''; $('apmsg').className = 'msg ' + (kind || ''); }
+async function loadEntries() {
+  const list = await (await fetch('/api/entries?limit=10')).json().catch(() => []);
+  $('aplist').innerHTML = list.length
+    ? `<div class="muted" style="font-size:12px;margin-bottom:2px">Your recent entries</div>${list.map((e) => `<div class="entry"><span><b>${esc(e.query)}</b> · ${esc(e.product)} · ${rs(e.price)}${e.pack ? ' · ' + esc(fmtPack(...packParts(e.pack))) : ''} · ${esc(ddmmyy(e.seenAt))}${e.source ? ' · ' + esc(e.source) : ''}</span><button type="button" class="linkbtn" data-entry="${esc(e.id)}">Remove</button></div>`).join('')}`
+    : '';
+}
+$('addprice').addEventListener('click', async () => {
+  apmsg('');
+  $('apitem').value ||= $('q').value.trim();
+  $('apdate').value = todayIso();
+  $('apdate').max = todayIso();
+  await loadEntries();
+  $('apdlg').showModal();
+  ($('apitem').value ? $('apprice') : $('apitem')).focus();
+});
+$('apclose').addEventListener('click', () => $('apdlg').close());
+$('aplist').addEventListener('click', async (ev) => {
+  const b = ev.target.closest('[data-entry]');
+  if (!b || !confirm('Remove this entered price? (It is kept in the data, but no longer shown.)')) return;
+  await fetch('/api/entries?id=' + encodeURIComponent(b.dataset.entry), { method: 'DELETE' });
+  await loadEntries();
+  if (!$('result').hidden) $('go').click();
+});
+$('apform').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const body = { item: $('apitem').value.trim(), product: $('approd').value.trim(), price: $('apprice').value.replace(/[₹,\s]/g, ''), pack: $('appack').value.trim(), date: $('apdate').value || todayIso(), source: $('apsrc').value.trim() };
+  if (!body.item) { apmsg('Give the item, as in your list.', 'err'); $('apitem').focus(); return; }
+  if (!(Number(body.price) > 0)) { apmsg('Give the price paid.', 'err'); $('apprice').focus(); return; }
+  $('apsave').disabled = true;
+  try {
+    const res = await fetch('/api/entries', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    const out = await res.json();
+    if (!res.ok) { apmsg(out.error, 'err'); return; }
+    apmsg(`✓ Saved for “${body.item}”.`, 'ok');
+    $('approd').value = ''; $('apprice').value = ''; $('appack').value = '';
+    await loadEntries();
+    if (!$('result').hidden) $('go').click();
+  } finally { $('apsave').disabled = false; }
+});
+
+async function loadSiteInfo() {
+  try { SITE_INFO = await (await fetch('/api/siteinfo')).json(); } catch { SITE_INFO = {}; }
+}
+loadMeta().then(async () => {
+  for (const [p] of Object.entries(META.skipped || {})) SKIPPED.add(p);
+  await loadSiteInfo();
+  loadResult(); loadJobs(); loadDeals(); connect();
+});
 </script>
 </body>
 </html>

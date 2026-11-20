@@ -189,18 +189,16 @@ Only one comparison runs at a time; a second gets `409`. Prefer the CLI over
 
 ### Via MCP
 
-The `basket` MCP server exposes four tools:
-
-- `compare_basket(items, pincode?, platforms?)` — whole basket; markdown table
-  plus a JSON summary carrying `totalsInclude`, `feesKnown` and `feesMissing`
-- `search_product(query, platforms?)` — one product priced everywhere, fast
-- `open_basket_view()` — opens the interactive browser page for the last result
-- `open_platform(platform?)` — opens the buy link, defaults to the winner
+The `basket` MCP server is a thin client of the running service (`BASKET_URL`,
+default `http://127.0.0.1:7777`). It answers from saved prices unless asked
+for `fresh`. Tools: `lookup_price`, `suggest_items`,
+`compare_basket(items, sites?, fresh?)`, `run_saved_basket`, `job_result`,
+`site_status`, `open_basket_view`. See README › MCP.
 
 Register with:
 
 ```bash
-claude mcp add basket -- node <abs-path>/src/mcp-server.js
+claude mcp add basket --env BASKET_URL=http://127.0.0.1:7777 -- node <abs-path>/src/mcp-server.js
 ```
 
 ## Platforms

@@ -8,12 +8,15 @@
  *           request (seen on warm-up) instead of being hardcoded.
  * Recon: docs/diagnosis/2026-11-16-api-platforms-failing.md
  */
-import { pageFetch, expectJson } from '../page-fetch.js';
+import { expectJson } from '../page-fetch.js';
+import { apiFetch } from '../direct.js';
 import { SiteError } from '../errors.js';
 import { bestPack } from './_util.js';
-import { watchRequest, ensureCaptured } from './_capture.js';
+import { watchRequest, ensureCaptured, collectResponses, freeDeliveryFrom } from './_capture.js';
 
 const ID = 'instamart';
+const ORIGIN = 'https://www.swiggy.com/';
+const HOME_RE = /\/api\/instamart\/home\/v2/;
 const SEARCH_PATH = '/api/instamart/search/v2?offset=0&ageConsent=false&voiceSearchTrackingId=&storeId=&primaryStoreId=&secondaryStoreId=';
 const MIN_GAP_MS = 2500;
 const SEARCH_RE = /\/api\/instamart\/search\/v2/;
@@ -42,7 +45,8 @@ export function parse(json) {
   // Swiggy reports throttling as HTTP 200 with {"statusCode":429} and no data.
   if (json && !json.data && Number(json.statusCode) >= 400) {
     const code = Number(json.statusCode);
-    throw new SiteError(code === 429 ? 'blocked' : 'session', `${ID}: ${code === 429 ? 'rate limited (statusCode 429 in body)' : `statusCode ${code} in body`}`, { site: ID, status: code, retryAfterMs: code === 429 ? 15000 : 0 });
+    // 15 s was too short: the retry hit the same limit (2026-11-19). 30 s cleared it.
+    throw new SiteError(code === 429 ? 'blocked' : 'session', `${ID}: ${code === 429 ? 'rate limited (statusCode 429 in body)' : `statusCode ${code} in body`}`, { site: ID, status: code, retryAfterMs: code === 429 ? 30000 : 0 });
   }
   const items = collectItems(json?.data?.cards ?? json);
   const rows = [];
@@ -88,6 +92,10 @@ export default {
   label: 'Instamart',
   origin: 'https://www.swiggy.com/instamart/search?custom_back=true&query=dal',
   domFallback: 'instamart',
+  // API first (Node with the session), page fetch on refusal.
+  direct: true,
+  // Prices can differ per account: every signed-in account is searched.
+  perAccountSearch: true,
 
   locationCookies(loc) {
     const value = encodeURIComponent(JSON.stringify({
@@ -96,6 +104,8 @@ export default {
     return [{ name: 'userLocation', value, domain: '.swiggy.com', path: '/' }];
   },
 
+  // Only watches the page's own search request; never moves the address.
+  locationPassive: true,
   async setLocation(tab) {
     watchRequest(tab, ID, SEARCH_RE);
   },
@@ -111,14 +121,51 @@ export default {
     const wait = tab._instamartNext - Date.now();
     if (wait > 0) await new Promise((r) => setTimeout(r, wait));
     tab._instamartNext = Date.now() + MIN_GAP_MS;
-    const res = await pageFetch(tab, SEARCH_PATH, {
+    // API first: answered from Node with the session (recon 2026-11-19); a
+    // refusal falls back to fetch inside the tab for the rest of the session.
+    const res = await apiFetch(tab, `${ORIGIN}${SEARCH_PATH.replace(/^\//, '')}`, {
       method: 'POST',
       headers: { ...cap.headers, 'content-type': 'application/json' },
       body: JSON.stringify({
         facets: [], sortAttribute: '', query, search_results_offset: '0',
         page_type: 'INSTAMART_SEARCH_PAGE', is_pre_search_tag: false,
       }),
-    });
+    }, { siteId: ID });
     return parse(expectJson(res, ID));
+  },
+
+  /**
+   * Offer check without a product search: the home feed's product widgets
+   * (same item shape as search). Recon 2026-11-19 found no separate deal feed;
+   * deals at 80%+ show up here or in searches.
+   */
+  async offers(tab) {
+    // Read the page's own responses (no replay): the home feed comes twice, a
+    // small shell first and the product widgets after, and the cart says
+    // "FREE DELIVERY on orders above ₹99". On a slow machine the second feed
+    // and the cart land seconds after the load (live, 2026-11-19), so wait for them.
+    const watch = collectResponses(tab, /\/api\/instamart\/(home\/v2|checkout\/v2\/cart)/);
+    await tab.goto('about:blank', { waitMs: 2000 }).catch(() => {});
+    await tab.goto(`${ORIGIN}instamart`, { waitMs: 15000 });
+    let got = [];
+    for (let i = 0; i < 20; i++) {
+      got = await watch.peek();
+      const feed = got.some((r) => HOME_RE.test(r.url) && r.text.includes('"variations"'));
+      const cart = got.some((r) => /checkout\/v2\/cart/.test(r.url));
+      if (feed && cart) break;
+      await new Promise((r) => setTimeout(r, 500));
+    }
+    got = await watch.done();
+    const freeAbove = got.filter((r) => /checkout\/v2\/cart/.test(r.url)).map((r) => freeDeliveryFrom(r.text)).find((n) => n != null) ?? null;
+    const info = freeAbove != null ? { freeDeliveryAbove: freeAbove } : null;
+    const rows = [];
+    const seen = new Set();
+    for (const r of got.filter((x) => HOME_RE.test(x.url))) {
+      let j;
+      try { j = JSON.parse(r.text); } catch { continue; }
+      // The home feed keeps its product widgets outside `data.cards`: walk all of it.
+      for (const row of parse({ data: { cards: j } })) if (!seen.has(row.url + row.name)) { seen.add(row.url + row.name); rows.push(row); }
+    }
+    return { rows, conditions: null, info, ...(rows.length ? {} : { note: 'the home feed had no products' }) };
   },
 };

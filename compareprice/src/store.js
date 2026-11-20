@@ -20,6 +20,9 @@ const BASE_UNITS = {
 const FAMILY_UNIT = { mass: 'kg', volume: 'L', count: 'pc' };
 
 const round2 = (n) => Math.round(n * 100) / 100;
+
+/** Bump when matching/pack/price-check rules change, so saved rows are re-checked once. */
+export const CLEANUP_VERSION = 3;
 const EPSILON = 0.005; // half a paisa: equal after rounding to 2 dp
 
 // Pack spellings folded into one form so "1 kg", "1kg" and "1 KG" share a history.
@@ -60,7 +63,7 @@ const JOB_FIELDS = {
   summary: 'summary',
 };
 
-export function openStore(file = join(DATA_DIR, 'basket.db')) {
+export function openStore(file = join(DATA_DIR, 'basket.db'), { timeZone = 'Asia/Kolkata' } = {}) {
   if (file !== ':memory:') mkdirSync(dirname(file), { recursive: true });
   const db = new DatabaseSync(file);
   db.exec(`
@@ -96,62 +99,131 @@ export function openStore(file = join(DATA_DIR, 'basket.db')) {
       key TEXT PRIMARY KEY,
       fired_at TEXT NOT NULL
     );
+    -- Deals (80%+ off MRP): from offer feeds per site+account, and from searches.
+    -- Shown on their own; never part of a basket total.
+    CREATE TABLE IF NOT EXISTS deals (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      site TEXT NOT NULL,
+      account TEXT NOT NULL,
+      source TEXT NOT NULL,
+      product TEXT NOT NULL,
+      pack TEXT,
+      price REAL NOT NULL,
+      mrp REAL NOT NULL,
+      pct REAL NOT NULL,
+      conditions TEXT,
+      url TEXT,
+      seen_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS deals_key ON deals (site, account, source, seen_at);
+    -- Products the user marked as a wrong match for an item on a site (✕ on a cell):
+    -- their saved prices are deleted and they're never picked for that item again.
+    CREATE TABLE IF NOT EXISTS rejects (
+      query TEXT NOT NULL,
+      site TEXT NOT NULL,
+      product TEXT NOT NULL,
+      rejected_at TEXT NOT NULL,
+      PRIMARY KEY (query, site, product)
+    );
+    -- Latest cheaper other-brand product per item+site (the "cheaper: …" hint). Not history.
+    CREATE TABLE IF NOT EXISTS alternatives (
+      query TEXT NOT NULL,
+      site TEXT NOT NULL,
+      product TEXT NOT NULL,
+      price REAL NOT NULL,
+      pack TEXT,
+      unit_price REAL NOT NULL,
+      unit TEXT,
+      seen_at TEXT NOT NULL,
+      PRIMARY KEY (query, site)
+    );
+    -- What a site says about its own fees (e.g. free delivery above ₹99), read from its pages.
+    CREATE TABLE IF NOT EXISTS site_info (
+      site TEXT PRIMARY KEY,
+      info TEXT NOT NULL,
+      seen_at TEXT NOT NULL
+    );
+    -- Last offer check per site+account (also when it found nothing).
+    CREATE TABLE IF NOT EXISTS deal_checks (
+      site TEXT NOT NULL,
+      account TEXT NOT NULL,
+      checked_at TEXT NOT NULL,
+      error TEXT,
+      PRIMARY KEY (site, account)
+    );
   `);
 
   // v2 columns: enough to rebuild a product row for history-first search.
   const cols = new Set(db.prepare('PRAGMA table_info(prices)').all().map((c) => c.name));
-  for (const [name, type] of [['pack_size', 'REAL'], ['pack_unit', 'TEXT'], ['mrp', 'REAL'], ['url', 'TEXT']]) {
+  // `hidden`: null = in use; otherwise why it is set aside ('rejected' by ✕,
+  // 'no-match' / 'outlier' by a clean-up). Rows are never deleted (2026-11-20).
+  // `source`: where an "Others" price was bought (entered by the user).
+  for (const [name, type] of [['pack_size', 'REAL'], ['pack_unit', 'TEXT'], ['mrp', 'REAL'], ['url', 'TEXT'], ['hidden', 'TEXT'], ['source', 'TEXT']]) {
     if (!cols.has(name)) db.exec(`ALTER TABLE prices ADD COLUMN ${name} ${type}`);
   }
-  // Re-key rows written with an older normalizeQuery.
-  for (const { query } of db.prepare('SELECT DISTINCT query FROM prices').all()) {
-    const key = normalizeQuery(query);
-    if (key !== query) db.prepare('UPDATE prices SET query = ? WHERE query = ?').run(key, query);
-  }
-  // Drop rows an older, looser matcher accepted but the current one refuses
-  // (e.g. "toor dal" saved as Moong Dal): they would show as false lows and
-  // as the "previous record" in history-first search.
-  const del = db.prepare('DELETE FROM prices WHERE query = ? AND product = ?');
-  let pruned = 0;
-  for (const { query, product } of db.prepare('SELECT DISTINCT query, product FROM prices WHERE product IS NOT NULL').all()) {
-    const m = matchConfidence(query, { name: product });
-    if (m.refused || m.score < CONFIDENCE_THRESHOLD) pruned += Number(del.run(query, product).changes);
-  }
-  if (pruned) console.warn(`store: removed ${pruned} saved price(s) that no longer match their item`);
-  // Rows saved before the price check existed can carry wrong packs (₹79 for a
-  // "500 g" butter that was 100 g). Compare each site's latest unit price with
-  // the median across sites for the same item and drop what is far off, so a
-  // bad row never shows as a "new low" or as a lookup rate.
-  let outliers = 0;
-  const bounds = { low: 0.4, high: 2.5 };
-  for (const { query, family } of db.prepare('SELECT DISTINCT query, family FROM prices').all()) {
-    const bySite = db.prepare('SELECT site, id, unit_price FROM prices WHERE query = ? AND family = ?').all(query, family);
-    const sites = [...new Set(bySite.map((r) => r.site))];
-    if (sites.length < 3) continue;
-    const mids = sites.map((site) => {
-      const v = bySite.filter((r) => r.site === site).map((r) => r.unit_price).sort((a, b) => a - b);
-      return v[v.length >> 1];
-    }).sort((a, b) => a - b);
-    const mid = mids[mids.length >> 1];
-    for (const r of bySite) {
-      if (r.unit_price < mid * bounds.low || r.unit_price > mid * bounds.high) {
-        outliers += Number(db.prepare('DELETE FROM prices WHERE id = ?').run(r.id).changes);
+  // The clean-ups below scan every row. They only need to run when the
+  // matching or pack rules change, so they run once per CLEANUP_VERSION
+  // (bump it when normalize.js / pricecheck.js rules change) instead of on
+  // every start.
+  db.exec('CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)');
+  const cleanupDone = db.prepare("SELECT value FROM meta WHERE key = 'cleanup_version'").get()?.value;
+  if (cleanupDone !== String(CLEANUP_VERSION)) {
+    // Re-key rows written with an older normalizeQuery.
+    for (const { query } of db.prepare('SELECT DISTINCT query FROM prices').all()) {
+      const key = normalizeQuery(query);
+      if (key !== query) db.prepare('UPDATE prices SET query = ? WHERE query = ?').run(key, query);
+    }
+    // Drop rows an older, looser matcher accepted but the current one refuses
+    // (e.g. "toor dal" saved as Moong Dal): they would show as false lows and
+    // as the "previous record" in history-first search.
+    // Never deleted: marked hidden with the reason, kept for reference and recovery.
+    const del = db.prepare("UPDATE prices SET hidden = 'no-match' WHERE hidden IS NULL AND query = ? AND product = ?");
+    let pruned = 0;
+    for (const { query, product } of db.prepare('SELECT DISTINCT query, product FROM prices WHERE hidden IS NULL AND product IS NOT NULL').all()) {
+      const m = matchConfidence(query, { name: product });
+      if (m.refused || m.score < CONFIDENCE_THRESHOLD) pruned += Number(del.run(query, product).changes);
+    }
+    if (pruned) console.warn(`store: removed ${pruned} saved price(s) that no longer match their item`);
+    // Rows saved before the price check existed can carry wrong packs (₹79 for a
+    // "500 g" butter that was 100 g). Compare each site's latest unit price with
+    // the median across sites for the same item and drop what is far off, so a
+    // bad row never shows as a "new low" or as a lookup rate.
+    let outliers = 0;
+    const bounds = { low: 0.4, high: 2.5 };
+    for (const { query, family } of db.prepare('SELECT DISTINCT query, family FROM prices WHERE hidden IS NULL').all()) {
+      const bySite = db.prepare('SELECT site, id, unit_price FROM prices WHERE hidden IS NULL AND query = ? AND family = ?').all(query, family);
+      const sites = [...new Set(bySite.map((r) => r.site))];
+      if (sites.length < 3) continue;
+      const mids = sites.map((site) => {
+        const v = bySite.filter((r) => r.site === site).map((r) => r.unit_price).sort((a, b) => a - b);
+        return v[v.length >> 1];
+      }).sort((a, b) => a - b);
+      const mid = mids[mids.length >> 1];
+      for (const r of bySite) {
+        if (r.unit_price < mid * bounds.low || r.unit_price > mid * bounds.high) {
+          outliers += Number(db.prepare("UPDATE prices SET hidden = 'outlier' WHERE id = ?").run(r.id).changes);
+        }
       }
     }
+    if (outliers) console.warn(`store: removed ${outliers} saved price(s) far from what other sites charge`);
+    db.prepare("INSERT INTO meta (key, value) VALUES ('cleanup_version', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(String(CLEANUP_VERSION));
   }
-  if (outliers) console.warn(`store: removed ${outliers} saved price(s) far from what other sites charge`);
 
   const q = {
     insertPrice: db.prepare(`INSERT INTO prices
       (query, site, family, unit, unit_price, price, product, pack, seen_at, job_id, trigger, pack_size, pack_unit, mrp, url)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`),
-    sites: db.prepare('SELECT DISTINCT site FROM prices WHERE query = ?'),
-    firstFamily: db.prepare('SELECT family FROM prices WHERE query = ? AND site = ? ORDER BY id LIMIT 1'),
-    low: db.prepare(`SELECT * FROM prices WHERE query = ? AND site = ? AND family = ?
+    sites: db.prepare('SELECT DISTINCT site FROM prices WHERE hidden IS NULL AND query = ?'),
+    firstFamily: db.prepare('SELECT family FROM prices WHERE hidden IS NULL AND query = ? AND site = ? ORDER BY id LIMIT 1'),
+    low: db.prepare(`SELECT * FROM prices WHERE hidden IS NULL AND query = ? AND site = ? AND family = ?
       ORDER BY unit_price ASC, id ASC LIMIT 1`),
-    last: db.prepare(`SELECT * FROM prices WHERE query = ? AND site = ? AND family = ?
+    last: db.prepare(`SELECT * FROM prices WHERE hidden IS NULL AND query = ? AND site = ? AND family = ?
       ORDER BY id DESC LIMIT 1`),
-    lastAny: db.prepare('SELECT * FROM prices WHERE query = ? AND site = ? ORDER BY id DESC LIMIT 1'),
+    lastAny: db.prepare('SELECT * FROM prices WHERE hidden IS NULL AND query = ? AND site = ? ORDER BY id DESC LIMIT 1'),
+    lastTwo: db.prepare(`SELECT * FROM prices WHERE hidden IS NULL AND query = ? AND site = ? AND family = ?
+      ORDER BY id DESC LIMIT 2`),
+    inFamily: db.prepare(`SELECT site, unit_price, price, product, pack, seen_at FROM prices
+      WHERE hidden IS NULL AND query = ? AND family = ? ORDER BY id`),
     createJob: db.prepare(`INSERT INTO jobs (status, trigger, sites, items, created_at)
       VALUES ('queued', ?, ?, ?, ?)`),
     getJob: db.prepare('SELECT * FROM jobs WHERE id = ?'),
@@ -171,6 +243,26 @@ export function openStore(file = join(DATA_DIR, 'basket.db')) {
     if (pack) return pack.family;
     return q.firstFamily.get(query, site)?.family ?? null;
   }
+
+  /** Below this relative change a price counts as unchanged ("="). */
+  const SAME_PCT = 1;
+
+  /** ▲/▼ of `nowUnitPrice` against an earlier saved row (any day). */
+  function changeAgainst(nowUnitPrice, prev) {
+    if (!prev) return { prev: null, change: null, changePct: null };
+    const pct = ((nowUnitPrice - prev.unit_price) / prev.unit_price) * 100;
+    return {
+      prev: { unitPrice: round2(prev.unit_price), price: prev.price, seenAt: prev.seen_at, product: prev.product, pack: prev.pack },
+      change: Math.abs(pct) < SAME_PCT ? 'same' : pct < 0 ? 'down' : 'up',
+      changePct: Math.round(pct * 10) / 10,
+    };
+  }
+
+  /** Calendar date of an ISO time in the service's time zone (dates are local, not UTC). */
+  // One formatter for the store's life: building one per row made suggest()
+  // (a trend lookup per suggestion, per keystroke) needlessly slow.
+  const dateFmt = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' });
+  const localDate = (iso) => dateFmt.format(new Date(iso));
 
   function siteHistory(query, site) {
     const family = familyFor(query, site);
@@ -215,6 +307,8 @@ export function openStore(file = join(DATA_DIR, 'basket.db')) {
       db.exec('BEGIN');
       try {
         for (const platform of result?.platforms ?? []) {
+          // "Others" lines are the user's own entries, already stored.
+          if (platform.others) continue;
           for (const line of platform.lines ?? []) {
             // Low-confidence picks are shown to the user but never become a low.
             if (line.status !== 'ok') continue;
@@ -237,6 +331,181 @@ export function openStore(file = join(DATA_DIR, 'basket.db')) {
         db.exec('ROLLBACK');
         throw err;
       }
+      if (result?.alternatives?.length) this.recordAlternatives(result.alternatives, seenAt);
+      // Deals seen while searching (computed by compareBasket); never in totals.
+      if (result?.deals?.length) {
+        const bySite = new Map();
+        for (const d of result.deals) bySite.set(`${d.site}|${d.account}`, [...(bySite.get(`${d.site}|${d.account}`) ?? []), d]);
+        for (const [key, list] of bySite) {
+          const [site, account] = key.split('|');
+          this.recordDeals(list, { site, account, source: 'search', checkedAt: seenAt });
+        }
+      }
+    },
+
+    /**
+     * Store deals for one site+account. A `feed` check replaces that pair's
+     * feed deals (what the feed no longer lists has ended); `search` deals add up.
+     */
+    recordDeals(deals, { site, account = 'main', source, checkedAt = new Date().toISOString(), error = null }) {
+      db.exec('BEGIN');
+      try {
+        // Search deals are shown for 24 h; older ones aren't needed.
+        db.prepare("DELETE FROM deals WHERE source = 'search' AND seen_at < ?").run(new Date(Date.parse(checkedAt) - 24 * 3_600_000).toISOString());
+        if (source === 'feed') {
+          // A failed check keeps the last good deals (one network blip mustn't empty the section).
+          if (!error) db.prepare("DELETE FROM deals WHERE site = ? AND account = ? AND source = 'feed'").run(site, account);
+          db.prepare('INSERT INTO deal_checks (site, account, checked_at, error) VALUES (?, ?, ?, ?) ON CONFLICT(site, account) DO UPDATE SET checked_at = excluded.checked_at, error = excluded.error')
+            .run(site, account, checkedAt, error);
+        }
+        const ins = db.prepare('INSERT INTO deals (site, account, source, product, pack, price, mrp, pct, conditions, url, seen_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        for (const d of deals) {
+          if (!(d.pct > 0) || !d.product) continue;
+          ins.run(site, account, source, d.product, d.pack ?? null, d.price, d.mrp, d.pct, d.conditions ? JSON.stringify(d.conditions) : null, d.url ?? null, d.seenAt ?? checkedAt);
+        }
+        db.exec('COMMIT');
+      } catch (err) {
+        db.exec('ROLLBACK');
+        throw err;
+      }
+    },
+
+    /**
+     * The user says `product` is the wrong match for `query` on `site`: delete
+     * its saved prices for that item and never pick it for that item again.
+     * @returns {{ deleted: number }}
+     */
+    rejectMatch({ query, site, product }) {
+      const key = normalizeQuery(query);
+      const name = String(product ?? '').trim();
+      if (!key || !site || !name) throw new Error('query, site and product are required');
+      db.prepare('INSERT INTO rejects (query, site, product, rejected_at) VALUES (?, ?, ?, ?) ON CONFLICT DO NOTHING').run(key, site, name, new Date().toISOString());
+      // Kept, marked hidden: it stops counting for this item but stays in the data.
+      return { hidden: Number(db.prepare("UPDATE prices SET hidden = 'rejected' WHERE hidden IS NULL AND query = ? AND site = ? AND product = ?").run(key, site, name).changes) };
+    },
+
+    /**
+     * A price the user bought or saw elsewhere (a local shop, a bill). Stored
+     * as site 'others' so the table, colours, lookup trend and history treat
+     * it like any saved price; `source` says where. Never searched, never a deal.
+     * @returns {{ id: number }}
+     */
+    addManualPrice({ query, product, price, packSize, packUnit, pack, seenAt, source }) {
+      const key = normalizeQuery(query);
+      const p = Number(price);
+      if (!key) throw new Error('Give the item, e.g. "tata salt 1kg"');
+      if (!(p > 0 && p < 1e6)) throw new Error('Give the price paid in ₹');
+      const when = seenAt ? new Date(seenAt) : new Date();
+      if (Number.isNaN(when.getTime()) || when.getTime() > Date.now() + 86_400_000) throw new Error('The date is not valid');
+      // The pack: given, or read from the product name, or from the item ("… 1kg").
+      const fromText = (pack && parsePack(String(pack))) || parsePack(`${product ?? ''}`) || parsePack(key);
+      const size = Number(packSize) > 0 ? Number(packSize) : fromText?.size ?? null;
+      const unit = packUnit || fromText?.unit || null;
+      const row = { name: String(product || key).trim().slice(0, 160), price: p, packSize: size, packUnit: unit };
+      const up = unitPriceOf(row);
+      if (!up) throw new Error('Give the pack size (e.g. 1 kg, 500 g, 6 pcs), so a rate per 100 g can be worked out');
+      const r = q.insertPrice.run(
+        key, 'others', up.family, up.unit, up.unitPrice, p, row.name, `${size}${unit}`, when.toISOString(),
+        null, 'entry', size, unit, null, null,
+      );
+      const id = Number(r.lastInsertRowid);
+      db.prepare('UPDATE prices SET source = ? WHERE id = ?').run(String(source ?? '').trim().slice(0, 120) || null, id);
+      return { id };
+    },
+
+    /** Entered prices, newest first (for the dialog's list). */
+    listManualPrices(limit = 50) {
+      return db.prepare("SELECT id, query, product, price, pack, seen_at AS seenAt, source FROM prices WHERE site = 'others' AND hidden IS NULL ORDER BY seen_at DESC, id DESC LIMIT ?").all(Math.min(Number(limit) || 50, 200));
+    },
+
+    /** Take an entered price out (kept, marked hidden). */
+    removeManualPrice(id) {
+      return { removed: Number(db.prepare("UPDATE prices SET hidden = 'removed' WHERE id = ? AND site = 'others' AND hidden IS NULL").run(Number(id)).changes) };
+    },
+
+    /** Latest entered price per item (with where it was bought), for the Others column. */
+    manualFor(query) {
+      const key = normalizeQuery(query);
+      const r = db.prepare("SELECT * FROM prices WHERE site = 'others' AND hidden IS NULL AND query = ? ORDER BY seen_at DESC, id DESC LIMIT 1").get(key);
+      return r ? { row: { name: r.product, price: r.price, mrp: null, packSize: r.pack_size, packUnit: r.pack_unit, inStock: true, url: '' }, seenAt: r.seen_at, source: r.source ?? null, id: r.id } : null;
+    },
+
+    /**
+     * Cheaper products of another brand, seen by searches for this item on this
+     * site (option A, 2026-11-20): never part of the history, only for the hint.
+     */
+    recordAlternatives(list, seenAt) {
+      const ins = db.prepare(`INSERT INTO alternatives (query, site, product, price, pack, unit_price, unit, seen_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(query, site) DO UPDATE SET product = excluded.product, price = excluded.price, pack = excluded.pack, unit_price = excluded.unit_price, unit = excluded.unit, seen_at = excluded.seen_at`);
+      for (const a of list) ins.run(normalizeQuery(a.query), a.site, a.product, a.price, a.pack ?? null, a.unitPrice, a.unit ?? null, seenAt);
+    },
+    alternativeFor(query, site) {
+      const r = db.prepare('SELECT * FROM alternatives WHERE query = ? AND site = ?').get(normalizeQuery(query), site);
+      return r ? { product: r.product, price: r.price, pack: r.pack, pricePerUnit: r.unit_price, unit: r.unit, seenAt: r.seen_at } : null;
+    },
+
+    /** Product names rejected for this item on this site. */
+    rejectedFor(query, site) {
+      return new Set(db.prepare('SELECT product FROM rejects WHERE query = ? AND site = ?').all(normalizeQuery(query), site).map((r) => r.product));
+    },
+
+    /** Fee facts a site publishes (free-delivery minimum etc.), per site. */
+    setSiteInfo(site, info, seenAt = new Date().toISOString()) {
+      if (!info || !Object.keys(info).length) return;
+      db.prepare('INSERT INTO site_info (site, info, seen_at) VALUES (?, ?, ?) ON CONFLICT(site) DO UPDATE SET info = excluded.info, seen_at = excluded.seen_at').run(site, JSON.stringify(info), seenAt);
+    },
+    siteInfo() {
+      return Object.fromEntries(db.prepare('SELECT site, info, seen_at FROM site_info').all().map((r) => [r.site, { ...JSON.parse(r.info), seenAt: r.seen_at }]));
+    },
+
+    /** An account signed out or removed: its deals and check rows go too. */
+    forgetAccountDeals(site, account) {
+      db.prepare('DELETE FROM deals WHERE site = ? AND account = ?').run(site, account);
+      db.prepare('DELETE FROM deal_checks WHERE site = ? AND account = ?').run(site, account);
+    },
+
+    /**
+     * What the Deals section shows: feed deals from each site+account's latest
+     * check, grouped by site; search deals from the last 24 h. The same product
+     * seen by several accounts is one row with `seenBy` (for the hover).
+     * @param {{ now?: number, names?: Record<string,string>, hints?: Record<string,string> }} [opts]
+     *   names/hints: account id -> display name / masked hint (from accounts.json)
+     */
+    currentDeals({ now = Date.now(), names = {}, hints = {} } = {}) {
+      const merge = (rows) => {
+        const out = new Map();
+        for (const r of rows) {
+          const key = `${r.site}|${r.product}|${r.pack ?? ''}|${r.price}`;
+          const d = out.get(key) ?? {
+            site: r.site, product: r.product, pack: r.pack, price: r.price, mrp: r.mrp, pct: r.pct,
+            conditions: r.conditions ? JSON.parse(r.conditions) : null, url: r.url, source: r.source, seenAt: r.seen_at, seenBy: [],
+          };
+          if (!d.seenBy.some((x) => x.account === r.account)) {
+            d.seenBy.push({ account: r.account, name: names[r.account] ?? (r.account === 'main' ? 'Main' : r.account), hint: hints[r.account] ?? null, seenAt: r.seen_at });
+          }
+          if (r.seen_at > d.seenAt) d.seenAt = r.seen_at;
+          out.set(key, d);
+        }
+        return [...out.values()].sort((a, b) => b.pct - a.pct || a.price - b.price);
+      };
+      const feed = db.prepare("SELECT * FROM deals WHERE source = 'feed'").all();
+      const checks = db.prepare('SELECT site, account, checked_at, error FROM deal_checks').all();
+      const checkedAt = {};
+      const errors = [];
+      for (const c of checks) {
+        if (!checkedAt[c.site] || c.checked_at > checkedAt[c.site]) checkedAt[c.site] = c.checked_at;
+        if (c.error) errors.push({ site: c.site, account: c.account, name: names[c.account] ?? c.account, error: c.error, checkedAt: c.checked_at });
+      }
+      const sites = [...new Set([...feed.map((r) => r.site), ...Object.keys(checkedAt)])].sort();
+      const groups = sites.map((site) => {
+        const deals = merge(feed.filter((r) => r.site === site));
+        // Conditions shared by every deal of the site go on its heading line.
+        const shared = deals.length && deals.every((d) => JSON.stringify(d.conditions) === JSON.stringify(deals[0].conditions)) ? deals[0].conditions : null;
+        return { site, checkedAt: checkedAt[site] ?? null, conditions: shared, deals };
+      });
+      const since = new Date(now - 24 * 3_600_000).toISOString();
+      const fromSearches = merge(db.prepare("SELECT * FROM deals WHERE source = 'search' AND seen_at >= ?").all(since));
+      return { checkedAt, groups, fromSearches, errors };
     },
 
     /**
@@ -268,6 +537,7 @@ export function openStore(file = join(DATA_DIR, 'basket.db')) {
         inStock: true,
         url: row.url ?? '',
         seenAt: row.seen_at,
+        ...(row.source ? { source: row.source } : {}),
       };
     },
 
@@ -280,9 +550,18 @@ export function openStore(file = join(DATA_DIR, 'basket.db')) {
       const needle = normalizeQuery(q).replace(/[%_]/g, '');
       return db
         .prepare(`SELECT query, COUNT(DISTINCT site) AS sites, MAX(seen_at) AS seenAt FROM prices
-                  WHERE query LIKE ? GROUP BY query ORDER BY (query LIKE ?) DESC, MAX(seen_at) DESC, query LIMIT ?`)
+                  WHERE hidden IS NULL AND query LIKE ? GROUP BY query ORDER BY (query LIKE ?) DESC, MAX(seen_at) DESC, query LIMIT ?`)
         .all(`%${needle}%`, `${needle}%`, Math.min(Number(limit) || 8, 25))
-        .map((r) => ({ query: r.query, sites: Number(r.sites), seenAt: r.seenAt }));
+        .map((r) => {
+          // Best rate on the latest date with data, so the dropdown already answers "how much?".
+          const rr = this.recentRates(r.query, { days: 1 });
+          let best = null;
+          for (const [site, cells] of Object.entries(rr?.sites ?? {})) {
+            const c = cells.at(-1);
+            if (c && (!best || c.rate < best.rate)) best = { site, rate: c.rate, per: rr.per, date: rr.dates.at(-1) };
+          }
+          return { query: r.query, sites: Number(r.sites), seenAt: r.seenAt, best };
+        });
     },
 
     /**
@@ -312,11 +591,71 @@ export function openStore(file = join(DATA_DIR, 'basket.db')) {
           lowRate: round2(h.lowUnitPrice / div),
           lowSeenAt: h.seenAt,
           url: last.url || null,
+          // "Others" (entered by the user): where it was bought, for the hover.
+          ...(last.source ? { source: last.source } : {}),
         });
       }
       if (!rows.length) return null;
+      const recent = this.recentRates(key);
+      for (const r of rows) {
+        r.trend = recent?.sites[r.site] ?? null;
+        const h = this.cachedHistory(key, r.site);
+        r.change = h?.change ?? null;
+        r.changePct = h?.changePct ?? null;
+        r.prev = h?.prev ?? null;
+      }
       rows.sort((a, b) => a.rate - b.rate);
-      return { query: key, per, sites: rows };
+      return { query: key, per, dates: recent?.dates ?? [], sites: rows };
+    },
+
+    /**
+     * History for a line shown from saved prices (history-first view): the
+     * latest saved row against the one saved before it, plus the lowest ever.
+     * @returns {object|null} same shape as annotate()'s `line.history`
+     */
+    cachedHistory(query, site) {
+      const key = normalizeQuery(query);
+      const family = familyFor(key, site);
+      if (!family) return null;
+      const [last, prev] = q.lastTwo.all(key, site, family);
+      const h = siteHistory(key, site);
+      if (!last || !h) return null;
+      const delta = round2(last.unit_price - h.lowUnitPrice);
+      return {
+        low: h.lowUnitPrice,
+        lowSeenAt: h.seenAt,
+        unit: h.unit,
+        delta,
+        tag: Math.abs(delta) < EPSILON ? 'at-low' : delta < 0 ? 'new-low' : 'above-low',
+        ...changeAgainst(last.unit_price, prev),
+      };
+    },
+
+    /**
+     * Rates on the last `days` dates that have data for this item (any site),
+     * per site, oldest -> newest. Each value is the LOWEST rate that site had
+     * that date (the deal view), per 100 g / 100 ml / piece. `null` where a
+     * site had no price that date.
+     * @returns {{ dates: string[], per: string, sites: Record<string, Array<{ rate: number, price: number, product: string, pack: string, seenAt: string } | null>> } | null}
+     */
+    recentRates(query, { days = 3 } = {}) {
+      const key = normalizeQuery(query);
+      const fam = parsePack(key)?.family ?? q.firstFamily.get(key, q.sites.all(key)[0]?.site ?? '')?.family;
+      if (!fam) return null;
+      const rows = q.inFamily.all(key, fam);
+      if (!rows.length) return null;
+      const dates = [...new Set(rows.map((r) => localDate(r.seen_at)))].sort().slice(-days);
+      const div = fam === 'count' ? 1 : 10; // ₹/kg -> ₹/100 g, ₹/L -> ₹/100 ml
+      const sites = {};
+      for (const r of rows) {
+        const i = dates.indexOf(localDate(r.seen_at));
+        if (i < 0) continue;
+        const cell = (sites[r.site] ??= dates.map(() => null));
+        if (!cell[i] || r.unit_price / div < cell[i].rate) {
+          cell[i] = { rate: round2(r.unit_price / div), price: r.price, product: r.product, pack: r.pack, seenAt: r.seen_at };
+        }
+      }
+      return { dates, per: fam === 'count' ? 'piece' : fam === 'volume' ? '100 ml' : '100 g', sites };
     },
 
     /** @returns {Record<string, object>} site -> history summary */
@@ -348,7 +687,7 @@ export function openStore(file = join(DATA_DIR, 'basket.db')) {
           const prior = family ? siteHistory(query, platform.platform) : null;
           const now = round2(up.unitPrice);
           if (!prior) {
-            line.history = { low: null, lowSeenAt: null, delta: null, tag: 'new-low', unit: up.unit };
+            line.history = { low: null, lowSeenAt: null, delta: null, tag: 'new-low', unit: up.unit, prev: null, change: null, changePct: null };
             continue;
           }
           const delta = round2(now - prior.lowUnitPrice);
@@ -358,6 +697,8 @@ export function openStore(file = join(DATA_DIR, 'basket.db')) {
             unit: up.unit,
             delta,
             tag: Math.abs(delta) < EPSILON ? 'at-low' : delta < 0 ? 'new-low' : 'above-low',
+            // vs the latest earlier saved price (decision 2026-11-19: latest available data)
+            ...changeAgainst(up.unitPrice, q.last.get(query, platform.platform, family)),
           };
         }
       }

@@ -1,0 +1,43 @@
+/*
+ * Colour tokens for both pages (basket.html, settings.html).
+ * Dark is the original look; light is the palette approved on 2026-11-19.
+ * Meaning is the same in both: --best = cheapest (dark green, white text),
+ * --second = second cheapest (light green), --dn = cheaper, --up = dearer.
+ * theme.js sets <html data-theme="light|dark"> before first paint.
+ */
+:root, :root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0d1117; --panel: #161b22; --panel2: #1c2230; --line: #30363d;
+  --text: #e6edf3; --dim: #8b949e; --faint: #6e7681; --n-ink: #c9d1d9;
+  --best: #0f5323; --best-ink: #ffffff; --best-sub: #e3f6e8; --best-dim: #b8dfc2;
+  --second: #1f3d27; --second-ink: #e6edf3; --second-dim: #a4c9af;
+  --warn: #d29922; --bad: #f85149; --bad-ink: #ffb4ad; --ok: #3fb950; --ok-ink: #7ee787;
+  --accent: #58a6ff; --accent-strong: #1f6feb; --hover: #243049;
+  --btn: #238636; --btn-border: #2ea043; --btn-ink: #ffffff;
+  --banner-warn: #2a2412; --banner-ok: #12261a; --banner-info: #1b2230;
+  --asof: #e3b341; --dimmed: #14181f;
+  --badge-low: #3fb950; --badge-low-ink: #04260f; --badge-above: #30363d; --badge-above-ink: #c9d1d9;
+  --dn: #3fb950; --up: #f85149; --dn-on-best: #d1fadb; --up-on-best: #ffd8d3;
+  --bar: #58a6ff; --bar-empty: #30363d;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #ffffff; --panel: #f6f8fa; --panel2: #eef1f4; --line: #d0d7de;
+  --text: #1f2328; --dim: #57606a; --faint: #6e7781; --n-ink: #1f2328;
+  --best: #1a7f37; --best-ink: #ffffff; --best-sub: #f0fff4; --best-dim: #d1f7dc;
+  --second: #dafbe1; --second-ink: #0f5323; --second-dim: #2f6f3e;
+  --warn: #9a6700; --bad: #cf222e; --bad-ink: #a40e26; --ok: #1a7f37; --ok-ink: #1a7f37;
+  --accent: #0969da; --accent-strong: #0969da; --hover: #ddf4ff;
+  --btn: #1f883d; --btn-border: #1a7f37; --btn-ink: #ffffff;
+  --banner-warn: #fff8c5; --banner-ok: #dafbe1; --banner-info: #ddf4ff;
+  --asof: #9a6700; --dimmed: #f6f8fa;
+  --badge-low: #1a7f37; --badge-low-ink: #ffffff; --badge-above: #eaeef2; --badge-above-ink: #24292f;
+  --dn: #1a7f37; --up: #cf222e; --dn-on-best: #d1fadb; --up-on-best: #ffd8d3;
+  --bar: #0969da; --bar-empty: #d0d7de;
+}
+
+/* The ☀ / ☾ / Auto switch (rendered by theme.js into #themetoggle). */
+.themetoggle { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; font-size: 12px; vertical-align: middle; }
+.themetoggle button { background: transparent; border: 0; color: var(--dim); padding: 3px 10px; font-weight: 600; border-radius: 0; cursor: pointer; font-size: 12px; }
+.themetoggle button[aria-pressed="true"] { background: var(--accent-strong); color: #ffffff; }

@@ -19,7 +19,7 @@ import { PAGE_FILE, PKG_ROOT, DATA_DIR } from './paths.js';
 import { join as pjoin } from 'node:path';
 import { resolveBasket } from './resolver.js';
 import { getLimiter } from './limits.js';
-import { LoginManager, LOGIN_SITES, tabDriver } from './engine/login.js';
+import { defaultLoginManager, LOGIN_SITES } from './engine/login.js';
 import { saveResult, loadResult } from './ui-writer.js';
 import { compareBasket, DEFAULT_PINCODE } from './compare.js';
 import { PLATFORMS, ALL_PLATFORMS } from './platforms.js';
@@ -33,6 +33,7 @@ const PORT_ATTEMPTS = 10;
 const MAX_BODY = 256 * 1024;
 const KEEP_RESULTS = 20;
 const SETTINGS_FILE = join(PKG_ROOT, 'src', 'ui', 'settings.html');
+const UI_ASSETS = { '/ui/theme.css': ['theme.css', 'text/css'], '/ui/theme.js': ['theme.js', 'text/javascript'] };
 
 function json(res, status, payload) {
   const body = JSON.stringify(payload);
@@ -90,7 +91,7 @@ function html(res, file) {
  * @param {() => object|null} [opts.loadLatest]
  * @param {(opts: object) => Promise<object>} [opts.cachedCompare] history-first compare (tests)
  * @param {import('./limits.js').SiteLimiter} [opts.limiter]  request budget shared with the engine
- * @param {LoginManager} [opts.login]   mobile + OTP sign-ins (default: uses the engine's Chrome)
+ * @param {import('./engine/login.js').LoginManager} [opts.login]   mobile + OTP sign-ins (default: uses the engine's Chrome)
  * @param {string} [opts.dataDir]
  * @returns {Promise<{url: string, port: number, queue: JobQueue, close: () => Promise<void>}>}
  */
@@ -107,14 +108,19 @@ export function startServer({
   cachedCompare = (opts) => compareBasket({ ...opts, cached: true }),
   limiter = null,
   login = null,
+  accounts = null,
   dataDir = DATA_DIR,
 } = {}) {
   const budget = () => limiter ?? getLimiter(getConfig().limits);
   let loginManager = login;
   const logins = () =>
-    (loginManager ??= new LoginManager({
-      file: pjoin(dataDir, 'sessions.json'),
-      getDriver: async (siteId) => tabDriver(await (await import('./engine/pool.js')).getPool({ location: getConfig().location }).tab(siteId)),
+    (loginManager ??= defaultLoginManager({
+      file: pjoin(dataDir, 'accounts.json'),
+      legacyFile: pjoin(dataDir, 'sessions.json'),
+      accounts: accounts ?? undefined,
+      log: (m) => console.log(`[${new Date().toISOString()}] ${m}`),
+      getLocation: () => getConfig().location,
+      inUse: () => Boolean(q.current()),
     }));
   const q = queue ?? new JobQueue({ run: compare, store });
   const results = new Map(); // jobId -> result (most recent KEEP_RESULTS)
@@ -133,20 +139,22 @@ export function startServer({
     const ok = !(outcome instanceof Error);
     const j = jobs.get(jobId);
     if (j) Object.assign(j, { status: ok ? 'done' : outcome.message === 'cancelled' ? 'cancelled' : 'failed', finishedAt: new Date().toISOString(), error: ok ? null : outcome.message });
-    if (ok && outcome) {
-      results.set(jobId, outcome);
+    // An offer check is not a basket result: it must not replace the table.
+    const offers = ok && outcome?.kind === 'offers';
+    if (ok && outcome) results.set(jobId, outcome);
+    if (ok && outcome && !offers) {
       latestJobId = jobId;
-      while (results.size > KEEP_RESULTS) results.delete(results.keys().next().value);
       saveLatest(outcome);
     }
-    broadcast('done', { jobId, ok, error: ok ? undefined : outcome.message });
+    while (results.size > KEEP_RESULTS) results.delete(results.keys().next().value);
+    broadcast('done', { jobId, ok, error: ok ? undefined : outcome.message, ...(offers ? { kind: 'offers' } : {}) });
     broadcast('job', jobInfo(jobId));
   };
   q.on('progress', onProgress);
   q.on('done', onDone);
 
-  function enqueue({ items, sites, trigger = 'manual' }) {
-    const id = q.enqueue({ items, sites, trigger });
+  function enqueue({ items, sites, trigger = 'manual', only }) {
+    const id = q.enqueue({ items, sites, trigger, ...(only ? { only } : {}) });
     if (!store) jobs.set(id, { id, status: 'queued', trigger, sites: sites ?? [], createdAt: new Date().toISOString() });
     queueMicrotask(() => broadcast('job', jobInfo(id)));
     return id;
@@ -159,6 +167,13 @@ export function startServer({
     try {
       if (req.method === 'GET' && (path === '/' || path === '/index.html')) return html(res, PAGE_FILE);
       if (req.method === 'GET' && (path === '/settings' || path === '/settings.html')) return html(res, SETTINGS_FILE);
+      // Shared theme assets. A fixed whitelist: nothing else under src/ui is served.
+      if (req.method === 'GET' && UI_ASSETS[path]) {
+        const [file, type] = UI_ASSETS[path];
+        res.writeHead(200, { 'content-type': `${type}; charset=utf-8`, 'cache-control': 'no-cache' });
+        res.end(readFileSync(join(PKG_ROOT, 'src', 'ui', file), 'utf8'));
+        return;
+      }
 
       if (req.method === 'GET' && path === '/health') {
         return json(res, 200, { ok: true, service: 'basket', busy: q.current() !== null, queued: q.pending().length });
@@ -245,8 +260,11 @@ export function startServer({
       if (req.method === 'POST' && path === '/api/login/start') {
         const b = await readJson(req);
         if (!LOGIN_SITES[b.site]) return json(res, 400, { error: `Sign-in is available for: ${Object.keys(LOGIN_SITES).join(', ')}`, field: 'site' });
+        // Answers at once; the site's page is driven in the background and the
+        // popup polls GET /api/login for state (sending -> otp_sent | error).
         try {
-          return json(res, 200, await logins().start(b.site, b.phone));
+          // `account` signs in an existing account (default main); `name` adds a new one.
+          return json(res, 202, await logins().start(b.site, b.id ?? b.phone, { account: b.account ?? 'main', ...(b.name != null ? { name: b.name } : {}) }));
         } catch (e) {
           return json(res, e.kind === 'blocked' ? 429 : 400, { error: e.message, kind: e.kind ?? 'error' });
         }
@@ -256,10 +274,82 @@ export function startServer({
         const b = await readJson(req);
         if (!LOGIN_SITES[b.site]) return json(res, 400, { error: 'Unknown site', field: 'site' });
         try {
-          return json(res, 200, await logins().verify(b.site, b.otp));
+          // `password` for password sites (Amazon), `otp` otherwise; never logged or echoed.
+          return json(res, 200, await logins().verify(b.site, b.password ?? b.otp, { account: b.account ?? 'main' }));
         } catch (e) {
           return json(res, 400, { error: e.message, kind: e.kind ?? 'error' });
         }
+      }
+
+      if (req.method === 'POST' && path === '/api/login/signout') {
+        const b = await readJson(req);
+        if (!LOGIN_SITES[b.site]) return json(res, 400, { error: 'Unknown site', field: 'site' });
+        try {
+          return json(res, 200, await logins().signOut(b.site, b.account ?? 'main'));
+        } catch (e) {
+          return json(res, e.code === 'busy' ? 409 : 400, { error: e.message, kind: e.kind ?? 'error' });
+        }
+      }
+
+      // ✕ on a cell: this product is the wrong match for this item on this site.
+      if (req.method === 'POST' && path === '/api/prices/reject') {
+        const b = await readJson(req);
+        if (!ALL_PLATFORMS.includes(b.site)) return json(res, 400, { error: 'Unknown site', field: 'site' });
+        if (!String(b.query ?? '').trim() || !String(b.product ?? '').trim()) return json(res, 400, { error: 'Pass { site, query, product }' });
+        if (!store?.rejectMatch) return json(res, 400, { error: 'No history store' });
+        return json(res, 200, { ok: true, ...store.rejectMatch({ query: b.query, site: b.site, product: b.product }) });
+      }
+
+      // "Others": prices bought or seen elsewhere, entered by the user.
+      if (path === '/api/entries') {
+        if (!store?.addManualPrice) return json(res, 400, { error: 'No history store' });
+        if (req.method === 'GET') return json(res, 200, store.listManualPrices(Number(url.searchParams.get('limit')) || 50));
+        if (req.method === 'POST') {
+          const b = await readJson(req);
+          try {
+            return json(res, 201, store.addManualPrice({
+              query: b.item, product: b.product, price: b.price, packSize: b.packSize, packUnit: b.packUnit, pack: b.pack,
+              seenAt: b.date, source: b.source,
+            }));
+          } catch (e) {
+            return json(res, 400, { error: e.message });
+          }
+        }
+        if (req.method === 'DELETE') {
+          const id = Number(url.searchParams.get('id'));
+          if (!Number.isInteger(id)) return json(res, 400, { error: 'Pass ?id=' });
+          return json(res, 200, store.removeManualPrice(id));
+        }
+      }
+
+      // What sites publish about their fees (free-delivery minimum), from the offer check.
+      if (req.method === 'GET' && path === '/api/siteinfo') return json(res, 200, store?.siteInfo ? store.siteInfo() : {});
+
+      // Deals (80%+ off MRP), grouped by site; never part of a total.
+      if (req.method === 'GET' && path === '/api/deals') {
+        const minDiscountPct = getConfig().deals?.minDiscountPct ?? 80;
+        if (!store?.currentDeals) return json(res, 200, { minDiscountPct, checkedAt: {}, groups: [], fromSearches: [], errors: [] });
+        // Account ids repeat across sites ('main', 'a2'), so names are looked up per site.
+  // (A Milkbasket account whose offer check lost its session is marked signed out.)
+        const deals = store.currentDeals({});
+        const labelsOf = (site) => accounts?.labels(site) ?? { names: {}, hints: {} };
+        const name = (site, id) => labelsOf(site).names[id] ?? (id === 'main' ? 'Main' : id);
+        for (const d of [...deals.groups.flatMap((g) => g.deals), ...deals.fromSearches]) {
+          d.seenBy = d.seenBy.map((x) => ({ ...x, name: name(d.site, x.account), hint: labelsOf(d.site).hints[x.account] ?? null }));
+        }
+        for (const e of deals.errors) e.name = name(e.site, e.account);
+        return json(res, 200, { minDiscountPct, ...deals });
+      }
+
+      // "Check offers": a queued job (shares the queue, so no tab is shared with a search).
+      if (req.method === 'POST' && path === '/api/offers/run') {
+        const b = await readJson(req).catch(() => ({}));
+        const cur = q.current();
+        const queued = q.pending().find((j) => j.trigger === 'offers') ?? (cur?.trigger === 'offers' ? cur : null);
+        if (queued) return json(res, 202, { jobId: queued.id, queued: 0, already: true });
+        const ahead = (cur ? 1 : 0) + q.pending().length;
+        const jobId = enqueue({ items: '', sites: Array.isArray(b.sites) && b.sites.length ? b.sites : undefined, trigger: 'offers' });
+        return json(res, 202, { jobId, queued: ahead });
       }
 
       if (req.method === 'GET' && path === '/api/config') return json(res, 200, getConfig());
@@ -301,7 +391,19 @@ export function startServer({
         // page can count down instead of stalling. Scheduled runs never get here:
         // they queue directly and pace themselves inside the engine.
         const cfgNow = getConfig();
-        const chosen = platforms ?? (cfgNow.sites?.length ? cfgNow.sites : ALL_PLATFORMS);
+        // "Get for missing only": { only: { site: [item, …] } }, just the pairs without a saved price.
+        let only = null;
+        if (payload.mode === 'missing') {
+          const lines = new Set(items.split('\n').map((l) => l.trim()).filter(Boolean));
+          only = {};
+          for (const [site, list] of Object.entries(payload.only ?? {})) {
+            if (!ALL_PLATFORMS.includes(site) || SITES[site]?.skip || !Array.isArray(list)) continue;
+            const picked = list.map(String).filter((x) => lines.has(x.trim()));
+            if (picked.length) only[site] = picked;
+          }
+          if (!Object.keys(only).length) return json(res, 400, { error: 'Nothing is missing: every item has a saved price on the chosen sites.' });
+        }
+        const chosen = only ? Object.keys(only) : platforms ?? (cfgNow.sites?.length ? cfgNow.sites : ALL_PLATFORMS);
         const waits = chosen
           .filter((site) => !SITES[site]?.skip)
           .map((site) => ({ site, label: SITES[site]?.label ?? site, ...budget().check(site, 1) }))
@@ -320,8 +422,8 @@ export function startServer({
 
         // Jobs ahead of this one (0 = it starts right away).
         const ahead = (q.current() ? 1 : 0) + q.pending().length;
-        const jobId = enqueue({ items, sites: platforms, trigger: payload.trigger === 'schedule' ? 'schedule' : 'manual' });
-        return json(res, 202, { jobId, queued: ahead });
+        const jobId = enqueue({ items, sites: only ? Object.keys(only) : platforms, trigger: payload.trigger === 'schedule' ? 'schedule' : 'manual', ...(only ? { only } : {}) });
+        return json(res, 202, { jobId, queued: ahead, ...(only ? { pairs: Object.values(only).flat().length } : {}) });
       }
 
       json(res, 404, { error: `No route for ${req.method} ${path}` });
