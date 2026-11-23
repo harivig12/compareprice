@@ -20,6 +20,7 @@ import { openStore } from './store.js';
 import { JobQueue } from './jobs.js';
 import { startScheduler } from './scheduler.js';
 import { startServer } from './server.js';
+import { startSweep } from './sweep.js';
 
 /** One-line summary of a finished job, for runs.jsonl. */
 export function summarize(job, outcome) {
@@ -55,6 +56,7 @@ export function summarize(job, outcome) {
  * @param {Function} [opts.run]       compareBasket-compatible (tests)
  * @param {() => Date} [opts.now]     scheduler clock (tests)
  * @param {number} [opts.tickMs]
+ * @param {{ setTimer: Function, clearTimer: Function }} [opts.sweepTimers]  catalogue sweep timers (tests)
  * @param {(msg: string) => void} [opts.log]
  */
 export async function startService({
@@ -64,6 +66,7 @@ export async function startService({
   run,
   now,
   tickMs,
+  sweepTimers,
   log = (m) => console.log(`[${new Date().toISOString()}] ${m}`),
 } = {}) {
   const getConfig = () => loadConfig(dataDir);
@@ -113,7 +116,14 @@ export async function startService({
     );
   });
 
+  // The sweep starts after the server (it shares the queue), but the server's
+  // /api/sweep routes need it: hand over a holder filled in below.
+  const sweep = { ref: null };
   const server = await startServer({
+    sweep: {
+      status: () => sweep.ref?.status() ?? null,
+      runOnce: (opts) => sweep.ref?.runOnce(opts) ?? { jobId: null, items: [], reason: 'not started' },
+    },
     port: port ?? Number(process.env.BASKET_PORT || cfg.server?.port || 7777),
     host: host ?? process.env.BASKET_HOST ?? cfg.server?.host ?? '127.0.0.1',
     queue,
@@ -131,18 +141,27 @@ export async function startService({
   });
 
   const scheduler = startScheduler({ queue, getConfig, store, ...(now ? { now } : {}), ...(tickMs ? { tickMs } : {}) });
+  sweep.ref = startSweep({ queue, getConfig, store, log, ...(now ? { now } : {}), ...(sweepTimers ?? {}) });
+  const sw = getConfig().sweep ?? {};
   const sched = getConfig().schedules.filter((s) => s.enabled !== false).map((s) => `${s.name} ${s.times.join('/')} [${s.sites.join(',')}]`);
   log(`basket service on ${server.url} (bind ${server.host}); data ${dataDir}; tz ${cfg.timezone}`);
   log(`schedules: ${sched.join('; ') || 'none'}`);
+  log(
+    sw.enabled === false
+      ? 'catalogue sweep: off'
+      : `catalogue sweep: ${sw.minItems ?? 2}–${sw.maxItems ?? 4} products every ${sw.minGapMinutes ?? 5}–${sw.maxGapMinutes ?? 20} min; next ${sweep.ref.status().nextAt}`,
+  );
 
   return {
     server,
     queue,
     store,
     scheduler,
+    sweep: sweep.ref,
     resultsDir,
     async close() {
       scheduler.stop();
+      sweep.ref.stop();
       await server.close();
       const pool = await import('./engine/pool.js').then((m) => m.peekPool?.()).catch(() => null);
       await pool?.close().catch(() => {});

@@ -49,6 +49,7 @@
   table.cmp thead th { background:var(--panel); text-align:left; position:sticky; top:0; z-index:1; }
   table.cmp th.item { width:15%; } table.cmp th.down { width:9%; color:#ffb4ad; }
   td.item { font-weight:600; } td.item .qty { color:var(--dim); font-weight:400; }
+  .aka { color:var(--dim); font-weight:400; font-size:12px; display:block; }
   .p { font-size:15px; font-weight:700; }
   .n { color:#c9d1d9; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
   .u { color:var(--dim); } .asof { color:#e3b341; font-size:11px; }
@@ -221,6 +222,8 @@ function formInput() {
 }
 
 // ───────────────────────── rendering ─────────────────────────
+// "kismis" is shown as raisins, with what was typed underneath.
+const akaHtml = (item) => item.typed ? `<span class="aka" title="Searched and saved as ${esc(item.query)}">you typed: ${esc(item.typed)}</span>` : '';
 const lineFor = (p, q) => (p.lines || []).find((l) => l.query === q);
 const counted = (l) => l && l.lineTotal != null && l.status === 'ok';
 
@@ -310,7 +313,7 @@ function render(r) {
     const cls = rankFor(r, item.query);
     const cells = up.map((p) => cellHtml(p, lineFor(p, item.query), cls)).join('');
     const downCell = down.length ? `<td class="miss">${down.map((p) => esc(label(p.platform))).join(', ')}</td>` : '';
-    return `<tr><td class="item">${item.qty > 1 ? `<span class="qty">${item.qty}× </span>` : ''}${esc(item.query)}</td>${cells}${downCell}</tr>`;
+    return `<tr><td class="item">${item.qty > 1 ? `<span class="qty">${item.qty}× </span>` : ''}${esc(item.query)}${akaHtml(item)}</td>${cells}${downCell}</tr>`;
   }).join('');
   const foot = up.map((p) => `<td class="${w && w.platform === p.platform ? 'win' : ''}">${rs(p.total)}</td>`).join('') + (down.length ? '<td>—</td>' : '');
   $('table').innerHTML = `<thead><tr><th class="item" scope="col">Item</th>${head}</tr></thead><tbody>${rows}</tbody><tfoot><tr><td>Total</td>${foot}</tr></tfoot>`;
@@ -319,7 +322,7 @@ function render(r) {
   $('cards').innerHTML = r.basket.map((item) => {
     const cls = rankFor(r, item.query);
     const entries = up.map((p) => ({ p, l: lineFor(p, item.query) })).sort((a, b) => (counted(a.l) ? a.l.lineTotal : 1e12) - (counted(b.l) ? b.l.lineTotal : 1e12));
-    return `<div class="card"><h3>${item.qty > 1 ? item.qty + '× ' : ''}${esc(item.query)}</h3>${entries.map(({ p, l }) => {
+    return `<div class="card"><h3>${item.qty > 1 ? item.qty + '× ' : ''}${esc(item.query)}${akaHtml(item)}</h3>${entries.map(({ p, l }) => {
       if (!counted(l)) {
         const why = !l ? '—' : l.status === 'not-cached' ? 'no saved price' : l.status === 'bigger-pack' ? `bigger pack (${fmtPack(l.product.packSize, l.product.packUnit)}, ${rs(l.product.price)})` : l.status === 'suspect' ? 'price looked wrong, left out' : l.status === 'no-match' ? 'no matching product' : l.status === 'out-of-stock' ? 'out of stock' : l.lineTotal != null ? `${rs(l.lineTotal)} ? (weak match)` : 'not found';
         return `<div class="row"><b>${esc(label(p.platform))}</b><span class="muted">${esc(why)}</span><span></span></div>`;

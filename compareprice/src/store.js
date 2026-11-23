@@ -10,6 +10,7 @@ import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { DATA_DIR } from './paths.js';
 import { parsePack, matchConfidence, CONFIDENCE_THRESHOLD } from './normalize.js';
+import { canonicalQuery, productsMatching } from './catalog.js';
 
 // Canonical pack unit (normalize.js) -> [base unit, divisor, family].
 const BASE_UNITS = {
@@ -31,8 +32,13 @@ const UNIT_ALIASES = [
   [/^(pcs?|pieces?)$/, 'pc'],
 ];
 
+/**
+ * The history key of a basket line. Synonyms fold to the catalogue's
+ * canonical tag first (src/catalog.js), so "kismis", "kishmish" and
+ * "raisins" share one history instead of three.
+ */
 export function normalizeQuery(query) {
-  return String(query ?? '')
+  return canonicalQuery(String(query ?? '').toLowerCase().replace(/\s+/g, ' ').trim())
     .toLowerCase()
     .replace(/\s+/g, ' ')
     .trim()
@@ -103,11 +109,19 @@ export function openStore(file = join(DATA_DIR, 'basket.db')) {
   for (const [name, type] of [['pack_size', 'REAL'], ['pack_unit', 'TEXT'], ['mrp', 'REAL'], ['url', 'TEXT']]) {
     if (!cols.has(name)) db.exec(`ALTER TABLE prices ADD COLUMN ${name} ${type}`);
   }
-  // Re-key rows written with an older normalizeQuery.
-  for (const { query } of db.prepare('SELECT DISTINCT query FROM prices').all()) {
-    const key = normalizeQuery(query);
-    if (key !== query) db.prepare('UPDATE prices SET query = ? WHERE query = ?').run(key, query);
+  // Re-key rows written with an older normalizeQuery, and fold synonyms into
+  // one product ("kismis" rows join "raisins"). Runs on open, so a catalogue
+  // change takes effect on restart; new rows are written canonical already.
+  function regroup() {
+    let moved = 0;
+    for (const { query } of db.prepare('SELECT DISTINCT query FROM prices').all()) {
+      const key = normalizeQuery(query);
+      if (key !== query) moved += Number(db.prepare('UPDATE prices SET query = ? WHERE query = ?').run(key, query).changes);
+    }
+    return moved;
   }
+  const regrouped = regroup();
+  if (regrouped) console.warn(`store: regrouped ${regrouped} saved price(s) under their product's canonical name`);
   // Drop rows an older, looser matcher accepted but the current one refuses
   // (e.g. "toor dal" saved as Moong Dal): they would show as false lows and
   // as the "previous record" in history-first search.
@@ -278,11 +292,27 @@ export function openStore(file = join(DATA_DIR, 'basket.db')) {
      */
     suggest(q = '', limit = 8) {
       const needle = normalizeQuery(q).replace(/[%_]/g, '');
+      // "kis" also finds "raisins": any catalogue product with a name starting
+      // with the text contributes its canonical tag.
+      const alts = [...new Set(productsMatching(q, 5).map((p) => p.canonical))].filter((c) => !c.includes(needle));
+      const where = ['query LIKE ?', ...alts.map(() => 'query LIKE ?')].join(' OR ');
       return db
         .prepare(`SELECT query, COUNT(DISTINCT site) AS sites, MAX(seen_at) AS seenAt FROM prices
-                  WHERE query LIKE ? GROUP BY query ORDER BY (query LIKE ?) DESC, MAX(seen_at) DESC, query LIMIT ?`)
-        .all(`%${needle}%`, `${needle}%`, Math.min(Number(limit) || 8, 25))
+                  WHERE ${where} GROUP BY query ORDER BY (query LIKE ?) DESC, MAX(seen_at) DESC, query LIMIT ?`)
+        .all(`%${needle}%`, ...alts.map((a) => `%${a}%`), `${needle}%`, Math.min(Number(limit) || 8, 25))
         .map((r) => ({ query: r.query, sites: Number(r.sites), seenAt: r.seenAt }));
+    },
+
+    /** Fold rows saved under a synonym into the product's canonical name. @returns {number} rows moved */
+    regroup,
+
+    /**
+     * Where an item has saved prices: site -> newest seenAt. The catalogue
+     * sweep (src/sweep.js) uses it to find products still missing.
+     */
+    coverage(query) {
+      const rows = db.prepare('SELECT site, MAX(seen_at) AS seenAt FROM prices WHERE query = ? GROUP BY site').all(normalizeQuery(query));
+      return Object.fromEntries(rows.map((r) => [r.site, r.seenAt]));
     },
 
     /**

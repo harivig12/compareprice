@@ -27,6 +27,7 @@ import { CONFIDENCE_THRESHOLD } from './normalize.js';
 import { JobQueue } from './jobs.js';
 import { loadConfig, saveConfig, validateConfig, completeConfig } from './config.js';
 import { SITES } from './engine/sites/index.js';
+import { CATEGORIES, canonicalQuery, describeQuery, listProducts, productsMatching } from './catalog.js';
 
 const DEFAULT_PORT = 7777;
 const PORT_ATTEMPTS = 10;
@@ -92,6 +93,7 @@ function html(res, file) {
  * @param {import('./limits.js').SiteLimiter} [opts.limiter]  request budget shared with the engine
  * @param {LoginManager} [opts.login]   mobile + OTP sign-ins (default: uses the engine's Chrome)
  * @param {string} [opts.dataDir]
+ * @param {{ status(): object, runOnce(o?: object): object }} [opts.sweep]  catalogue sweep (src/sweep.js)
  * @returns {Promise<{url: string, port: number, queue: JobQueue, close: () => Promise<void>}>}
  */
 export function startServer({
@@ -108,6 +110,7 @@ export function startServer({
   limiter = null,
   login = null,
   dataDir = DATA_DIR,
+  sweep = null,
 } = {}) {
   const budget = () => limiter ?? getLimiter(getConfig().limits);
   let loginManager = login;
@@ -236,6 +239,36 @@ export function startServer({
         if (!found && options.length) found = store.lookup(options[0].query);
         if (!found) return json(res, 404, { error: `No saved price for "${q}" yet. Run it once with Get fresh prices.`, options: [] });
         return json(res, 200, { ...found, options: options.filter((o) => o.query !== found.query) });
+      }
+
+      // Product catalogue: ?q= resolves a line ("kismis 500g" -> raisins 500g),
+      // ?category= filters; with neither, the whole catalogue and its facets.
+      if (req.method === 'GET' && path === '/api/catalog') {
+        const term = String(url.searchParams.get('q') ?? '').trim();
+        const category = String(url.searchParams.get('category') ?? '').trim();
+        if (category && !CATEGORIES.includes(category)) return json(res, 400, { error: `Unknown category. Available: ${CATEGORIES.join(', ')}`, field: 'category' });
+        if (term) {
+          return json(res, 200, {
+            query: term,
+            canonical: canonicalQuery(term),
+            product: describeQuery(term),
+            suggestions: productsMatching(term, 10).filter((p) => !category || p.category === category).map(({ id, name, canonical, category: cat }) => ({ id, name, canonical, category: cat })),
+          });
+        }
+        const products = listProducts({ category: category || undefined });
+        return json(res, 200, { categories: CATEGORIES, count: products.length, products });
+      }
+
+      if (req.method === 'GET' && path === '/api/sweep') {
+        if (!sweep) return json(res, 404, { error: 'The catalogue sweep runs only in the service (basket serve).' });
+        return json(res, 200, sweep.status());
+      }
+
+      if (req.method === 'POST' && path === '/api/sweep/run') {
+        if (!sweep) return json(res, 404, { error: 'The catalogue sweep runs only in the service (basket serve).' });
+        const out = sweep.runOnce({ force: true });
+        if (out.jobId != null) queueMicrotask(() => broadcast('job', jobInfo(out.jobId)));
+        return json(res, out.jobId != null ? 202 : 200, out);
       }
 
       if (req.method === 'GET' && path === '/api/limits') return json(res, 200, budget().status(ALL_PLATFORMS));

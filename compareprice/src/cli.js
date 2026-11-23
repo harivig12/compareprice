@@ -26,6 +26,7 @@ import { SITES } from './engine/sites/index.js';
 import { join } from 'node:path';
 import { setup, doctor } from './setup.js';
 import { loadFees, saveFees, clearFees, FEES_FILE } from './fees.js';
+import { CATEGORIES, canonicalQuery, describeQuery, listProducts } from './catalog.js';
 
 const C = {
   reset: '\x1b[0m',
@@ -345,6 +346,9 @@ Commands
   run-now [--sites=a,b] Queue the configured basket on the running service
                         (runs locally if no service answers)
   history "<item>"      Lowest price seen per site, with the date
+  catalog ["<item>"]    Product catalogue: what a line resolves to
+                        ("kismis" -> raisins), or --category=spices
+  sweep-now             Queue one catalogue sweep batch on the running service
   fees                  Show / set delivery and handling charges
   setup, doctor         Legacy webcmd helpers (only for BASKET_BACKEND=webcmd)
 
@@ -796,6 +800,59 @@ function historyCommand(args) {
   }
 }
 
+/**
+ * basket catalog                   categories and product counts
+ * basket catalog "<item>"          what a line resolves to ("kismis" -> raisins)
+ * basket catalog --category=spices products in one category, with their tags
+ */
+function catalogCommand(args) {
+  const asJson = args.includes('--json');
+  const term = args.filter((a) => !a.startsWith('-')).slice(1).join(' ').trim();
+  const category = flagValue(args, 'category');
+  if (category && !CATEGORIES.includes(category)) {
+    console.error(c(C.red, `✖ Unknown category "${category}". Available: ${CATEGORIES.join(', ')}`));
+    process.exitCode = EXIT.USAGE;
+    return;
+  }
+  if (term) {
+    const out = { query: term, canonical: canonicalQuery(term), product: describeQuery(term) };
+    if (asJson) return emitJson({ ok: true, ...out });
+    console.log('');
+    if (!out.product) console.log(`  ${c(C.bold, term)}  ${c(C.dim, 'not a catalogue product; searched as typed')}`);
+    else {
+      const p = out.product;
+      console.log(`  ${c(C.bold, term)} → ${c(C.green, out.canonical)}`);
+      console.log(c(C.dim, `  product ${p.name} · category ${p.category} · matched by ${p.matchedBy} "${p.phrase}"${p.brand ? ` · brand ${p.brand}` : ''}`));
+    }
+    console.log('');
+    return;
+  }
+  const products = listProducts({ category: category || undefined });
+  if (asJson) return emitJson({ ok: true, categories: CATEGORIES, products });
+  console.log('');
+  for (const cat of category ? [category] : CATEGORIES) {
+    const inCat = products.filter((p) => p.category === cat);
+    console.log(`  ${c(C.bold, pad(cat, 14))} ${c(C.dim, `${inCat.length} products`)}`);
+    if (category) for (const p of inCat) console.log(`    ${pad(p.canonical, 22)} ${c(C.dim, p.tags.slice(1).join(', '))}`);
+  }
+  console.log('');
+}
+
+/** Ask the running service to queue one catalogue sweep batch now. */
+async function sweepNowCommand(args) {
+  const cfg = loadConfig();
+  const base = flagValue(args, 'url') || process.env.BASKET_URL || `http://127.0.0.1:${process.env.BASKET_PORT || cfg.server?.port || 7777}`;
+  try {
+    const res = await fetch(`${base}/api/sweep/run`, { method: 'POST', signal: AbortSignal.timeout(5000) });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+    console.log(body.jobId != null ? `  queued sweep job ${body.jobId}: ${body.items.join(', ')}` : `  nothing queued (${body.reason})`);
+  } catch (err) {
+    console.error(c(C.red, `✖ No service answered at ${base} (${err.message}). Start it with: basket serve`));
+    process.exitCode = EXIT.RUNTIME;
+  }
+}
+
 async function dispatch() {
   const args = process.argv.slice(2);
   const first = args.find((a) => !a.startsWith('-'));
@@ -831,6 +888,12 @@ async function dispatch() {
       return;
     case 'history':
       historyCommand(args);
+      return;
+    case 'catalog':
+      catalogCommand(args);
+      return;
+    case 'sweep-now':
+      await sweepNowCommand(args);
       return;
     default:
       await main();

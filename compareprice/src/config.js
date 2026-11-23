@@ -43,6 +43,18 @@ export const DEFAULT_CONFIG = Object.freeze({
   // Per-site overrides of the request budget (see src/limits.js), e.g.
   // { "instamart": { "minGapMs": 4000, "perMinute": 10 } }. Empty = defaults.
   limits: {},
+  // Catalogue sweep (src/sweep.js): every minGap–maxGap minutes, queue
+  // minItems–maxItems catalogue products that have no saved price yet.
+  // sites: [] means the sites above.
+  sweep: {
+    enabled: true,
+    sites: [],
+    minItems: 2,
+    maxItems: 4,
+    minGapMinutes: 5,
+    maxGapMinutes: 20,
+    staleHours: 24,
+  },
 });
 
 const isPlainObject = (v) => v != null && typeof v === 'object' && !Array.isArray(v);
@@ -115,6 +127,15 @@ export function validateConfig(cfg, knownSites) {
   }
   const names = cfg.schedules.map((s) => s.name.trim());
   if (new Set(names).size !== names.length) return bad('schedules', 'schedule names must be unique');
+  const sw = cfg.sweep ?? {};
+  if (sw.sites != null && !Array.isArray(sw.sites)) return bad('sweep.sites', 'sweep sites must be a list');
+  const swUnknown = (sw.sites ?? []).find((x) => !knownSites.includes(x));
+  if (swUnknown) return bad('sweep.sites', `unknown site "${swUnknown}"`);
+  for (const k of ['minItems', 'maxItems', 'minGapMinutes', 'maxGapMinutes', 'staleHours']) {
+    if (sw[k] != null && !(Number(sw[k]) > 0)) return bad(`sweep.${k}`, `${k} must be a positive number`);
+  }
+  if (Number(sw.minItems) > Number(sw.maxItems)) return bad('sweep.maxItems', 'maxItems must be at least minItems');
+  if (Number(sw.minGapMinutes) > Number(sw.maxGapMinutes)) return bad('sweep.maxGapMinutes', 'maxGapMinutes must be at least minGapMinutes');
   try {
     new Intl.DateTimeFormat('en', { timeZone: cfg.timezone });
   } catch {

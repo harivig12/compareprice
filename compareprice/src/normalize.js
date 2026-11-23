@@ -8,6 +8,8 @@
  *
  * Refusing is the point. A cheerful wrong comparison is worse than a gap.
  */
+import { BRANDS } from './brands.js';
+import { canonicalQuery, foldAliases } from './catalog.js';
 
 // unit token -> [canonical unit, multiplier, family]
 const UNITS = {
@@ -208,21 +210,10 @@ const VARIANT_TOKENS = [
 ];
 
 /**
- * Common Indian grocery brands. The brand is the single strongest identity
- * signal: asking for "amul butter" and being handed Mother Dairy is not a
- * near-miss, it's the wrong product. Multi-word brands are matched as phrases.
+ * Common Indian grocery brands (src/brands.js). The brand is the single
+ * strongest identity signal: asking for "amul butter" and being handed Mother
+ * Dairy is not a near-miss, it's the wrong product.
  */
-const BRANDS = [
-  'amul', 'mother dairy', 'nestle', 'britannia', 'parle', 'itc', 'aashirvaad',
-  'fortune', 'saffola', 'tata', 'dabur', 'patanjali', 'haldiram', 'haldirams',
-  'maggi', 'kelloggs', 'quaker', 'bingo', 'lays', 'kurkure', 'cadbury',
-  'tropicana', 'real', 'paperboat', 'bisleri', 'kinley', 'coca', 'pepsi',
-  'surf', 'ariel', 'vim', 'harpic', 'dettol', 'lifebuoy', 'colgate',
-  'nandini', 'heritage', 'gowardhan', 'govardhan', 'verka', 'nova',
-  'bonn', 'harvest', 'modern', 'english oven', 'wibs',
-  'catch', 'everest', 'mdh', 'daawat', 'india gate', 'kohinoor',
-  'epigamia', 'yakult', 'danone', 'milky mist', 'id', 'akshayakalpa',
-];
 
 /**
  * Food categories. These are what a thing *is*. If the product carries a
@@ -249,7 +240,7 @@ const CATEGORY_TOKENS = [
   'egg', 'eggs', 'chicken', 'mutton', 'fish',
   'soap', 'shampoo', 'detergent', 'toothpaste', 'sanitizer',
   'spread', 'jam', 'ketchup', 'sauce', 'pickle', 'honey',
-  'seeds', 'nuts', 'cashew', 'almond', 'raisin',
+  'seeds', 'nuts', 'cashew', 'almond', 'raisin', 'raisins',
   // Processed forms of produce and staples: "tomato 500g" must not buy
   // tomato powder, "onion" must not buy fried onions.
   'powder', 'paste', 'puree', 'chutney', 'soup', 'flakes', 'dried', 'dehydrated', 'granules',
@@ -341,8 +332,11 @@ function variantsIn(tokens) {
  *   score 0..1. `refused` means we will not compare these at any price.
  */
 export function matchConfidence(query, product) {
+  // One product, many names: "kismis" is asked as "raisins", and a listing
+  // called "Kishmish" or "Dry Grapes" is read as "raisins" too (src/catalog.js).
+  query = canonicalQuery(query);
   const qTokens = tokenize(query);
-  const pTokens = tokenize(product.name);
+  const pTokens = tokenize(foldAliases(query, product.name));
 
   if (qTokens.length === 0 || pTokens.length === 0) {
     return { score: 0, refused: true, reason: 'no comparable tokens' };

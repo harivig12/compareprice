@@ -41,6 +41,20 @@ On startup the store:
 - folds item spellings into one key (`toor dal 1 kg` = `toor dal 1kg`)
 - deletes saved rows the current matcher refuses (e.g. Moong Dal saved under "toor dal" by the older matcher), and logs `store: removed N saved price(s)…`
 
+## Product catalogue and synonyms
+
+`src/catalog-data.js` lists about 230 products as synonym sets: a canonical tag, regional and transliterated names, misspellings, narrower names, brand facets and a category (`staples`, `pulses`, `spices`, `masala`, `oil`, `dairy`, `sweetener`, `dry-fruits`, `snacks`, `beverages`, `household`, `personal-care`…). Any basket line that names one of them is searched, matched and saved under the canonical tag. For example, "kismis", "kishmish", "khismis" and "dry grapes" are all `raisins`, and "gud", "vellam" and "jagrey" are all `jaggery`. Two such lines in one basket merge into one row, and the page shows what was typed under it. A listing called "Kishmish" or "Dry Grapes" counts as a match for raisins.
+
+- A line is rewritten only when it is the product plus brands, pack sizes and plain modifiers. "britannia good day cashew" stays as typed. Brands are never rewritten ("harpic" stays brand-specific). The brand is reported as `product.brand`.
+- On start the store re-keys saved prices, so rows saved under a synonym join the canonical product's history (`store: regrouped N saved price(s)…`).
+- `basket catalog "<item>"` shows what a line resolves to. `basket catalog --category=spices` lists one category. `GET /api/catalog` returns the same information.
+
+## Catalogue sweep
+
+The service also fills in prices for catalogue products that no basket asked for. Each sweep picks a random 2–4 products, queues them as one job (trigger `sweep`), then waits a random 5–20 minutes before the next one (for example 3 products at 00:00, 2 at 00:09, 4 at 00:23). Products with no saved price on some site come first. When none are missing, prices older than `staleHours` are refreshed. A product is swept at most once a day. A sweep never starts while another job is running or queued. It looks again a minute or two later.
+
+Settings are in `config.json → sweep`: `{ enabled, sites: [] (= config sites), minItems, maxItems, minGapMinutes, maxGapMinutes, staleHours }`. Status is at `GET /api/sweep`, and `basket sweep-now` (or `POST /api/sweep/run`) queues a batch at once. Turn it off with `"sweep": { "enabled": false }`.
+
 ## Waiting, pacing and sign-ins
 
 - **"Wait 3s…" on the page:** a chosen site was searched moments ago, or is resting after the site blocked us. The page retries by itself. Budgets are in `src/limits.js` and can be overridden in `config.json → limits`. Current usage is at `/api/limits`.

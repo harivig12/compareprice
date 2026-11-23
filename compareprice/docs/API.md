@@ -18,6 +18,9 @@ Served by `src/server.js` (started by `basket serve` / the Docker image). The ba
 | GET | `/api/history` | `?q=<item>` | `{ query, sites: { [site]: { lowUnitPrice, unit, lowPrice, product, pack, seenAt, lastUnitPrice, lastSeenAt } } }` |
 | GET | `/api/suggest` | `?q=&limit=8` | Saved items whose text contains `q`, prefix matches first: `[{ query, sites, seenAt }]` |
 | GET | `/api/lookup` | `?q=<item>` | What each site last charged: `{ query, per: '100 g'\|'100 ml'\|'piece', sites: [{ site, rate, lastPrice, pack, product, seenAt, lowRate, lowSeenAt, url }], options }`, cheapest rate first. `q` may be partial ("onion"). 404 if nothing is saved. |
+| GET | `/api/catalog` | `?q=<item>` and/or `?category=` | With `q`: `{ query, canonical, product: { id, name, canonical, category, matchedBy, phrase, brand } \| null, suggestions }` ("kismis 500g" → `canonical: "raisins 500g"`). Without: `{ categories, count, products: [{ id, name, category, canonical, tags, sub, brands }] }`. |
+| GET | `/api/sweep` | | Catalogue sweep status: `{ enabled, settings, nextAt, runs, lastRun: { at, jobId, items, reasons } }`. 404 outside `basket serve`. |
+| POST | `/api/sweep/run` | | Queue one sweep batch now (even if disabled): `202 { jobId, items }`, or `200 { jobId: null, reason }` when nothing is missing. |
 | GET | `/api/limits` | | Per-site request budget: `{ [site]: { ok, waitMs, reason, lastMinute, lastHour, limits, cooldownMs, cooldownReason } }` |
 | GET | `/api/login` | | Sign-in status per site: `[{ id, label, why, loggedIn, since, phoneHint, pending }]` |
 | POST | `/api/login/start` | `{ site, phone }` | Opens the site's sign-in page, enters the number and asks for the OTP: `{ step: 'otp', message }`. Returns 429 after 3 OTP requests per site per hour. |

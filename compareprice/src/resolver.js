@@ -6,7 +6,12 @@
  *   2x amul taaza toned milk 500ml
  *   2 x amul taaza toned milk 500ml
  *   3 maggi noodles
+ *
+ * Each line's product is then named by its catalogue canonical tag
+ * (src/catalog.js): "kismis 500g" is searched, matched and saved as
+ * "raisins 500g", and two lines naming the same product are one line.
  */
+import { canonicalQuery, describeQuery } from './catalog.js';
 
 // Unit words that must NOT be mistaken for a leading quantity.
 // "500 ml milk" is a pack size, not "500 of milk".
@@ -48,12 +53,47 @@ export function parseLine(line) {
 }
 
 /**
+ * A parsed line with its product named canonically and its catalogue facets.
+ *   typed     what the user wrote, when it differs from `query`
+ *   product   { id, name, category, brand } when the line is a catalogue product
+ */
+export function canonicalLine(item) {
+  const query = canonicalQuery(item.query);
+  const facet = describeQuery(query);
+  const out = { ...item, query };
+  if (query !== item.query) out.typed = item.query;
+  if (facet) out.product = { id: facet.id, name: facet.name, category: facet.category, brand: facet.brand };
+  return out;
+}
+
+/**
  * @param {string} text
- * @returns {Array<{ raw: string, query: string, qty: number }>}
+ * @returns {Array<{ raw: string, query: string, qty: number, typed?: string, product?: object }>}
  */
 export function resolveBasket(text) {
-  return text
+  const lines = text
     .split(/\r?\n/)
     .map(parseLine)
-    .filter((item) => item !== null);
+    .filter((item) => item !== null)
+    .map(canonicalLine);
+
+  // One umbrella per product: "kismis" and "raisins" on two lines are one
+  // line with both quantities, not two rows that split the result.
+  const merged = [];
+  const byKey = new Map();
+  for (const line of lines) {
+    const key = line.query.toLowerCase().replace(/\s+/g, ' ').replace(/(\d)\s+([a-z])/g, '$1$2'); // "500 g" = "500g"
+    const prev = byKey.get(key);
+    if (!prev) {
+      byKey.set(key, line);
+      merged.push(line);
+      continue;
+    }
+    prev.qty += line.qty;
+    prev.raw = `${prev.raw} + ${line.raw}`;
+    const typed = [...(prev.typed ? prev.typed.split(', ') : []), line.typed ?? line.query];
+    const distinct = typed.filter((t, i) => typed.indexOf(t) === i && t !== prev.query);
+    if (distinct.length) prev.typed = distinct.join(', ');
+  }
+  return merged;
 }

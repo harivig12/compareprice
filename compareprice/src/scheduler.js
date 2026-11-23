@@ -8,7 +8,7 @@
  */
 
 /** Wall-clock parts of `date` in `timeZone`. */
-function wallClock(date, timeZone) {
+export function wallClock(date, timeZone) {
   const parts = Object.fromEntries(
     new Intl.DateTimeFormat('en-CA', {
       timeZone,
