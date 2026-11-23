@@ -2,163 +2,300 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Basket — cheapest groceries near you</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F4F7F2">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="compareprice">
+<title>Basket · compareprice — cheapest groceries near you</title>
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="stylesheet" href="/theme.css">
 <style>
-  :root {
-    --bg:#0d1117; --panel:#161b22; --panel2:#1c2230; --line:#30363d; --text:#e6edf3; --dim:#8b949e;
-    --best:#0f5323; --second:#1f3d27; --warn:#d29922; --bad:#f85149; --accent:#58a6ff; --ok:#3fb950;
+  .wrap { max-width: 1320px; margin: 0 auto; padding: 0 clamp(.75rem, 2.5vw, 1.5rem) 2.5rem; }
+
+  /* hero: title, location, saved-price search */
+  .hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 460px); gap: 1rem 1.5rem; align-items: end; margin: .5rem 0 1rem; }
+  .hero h1 { font-size: clamp(1.9rem, 4vw, 2.9rem); line-height: 1.02; letter-spacing: -.04em; margin: 0; font-weight: 800; }
+  .hero .sub { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .6rem; margin: .5rem 0 0; color: var(--muted); font-weight: 600; }
+  .hero .sub .ico { width: 16px; height: 16px; color: var(--g); }
+  .tools { display: flex; gap: .5rem; align-items: center; }
+  .grow { flex: 1 1 auto; position: relative; min-width: 0; }
+  .search { position: relative; }
+  .search .ico { position: absolute; left: .9rem; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+  .search input { padding-left: 2.6rem; border-radius: 999px; background: rgba(255, 255, 255, .9); min-height: 48px; }
+  .sug { position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 30; background: #fff; border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 18px 40px rgba(11, 27, 20, .14); max-height: 300px; overflow: auto; padding: 6px; }
+  .sug div { padding: .6rem .75rem; min-height: 44px; border-radius: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: .6rem; font-weight: 600; }
+  .sug div:hover, .sug div[aria-selected=true] { background: #EFFAF4; }
+  .sug small { color: var(--faint); font-weight: 500; }
+
+  /* the list */
+  .listbox { border-radius: var(--radius); padding: 0; margin-bottom: .9rem; }
+  .listbox > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: .6rem; min-height: 56px; padding: .5rem 1.1rem; font-weight: 800; }
+  .listbox > summary::-webkit-details-marker { display: none; }
+  .listbox > summary .ico.chev { margin-left: auto; transition: transform .2s var(--ease); color: var(--muted); }
+  .listbox[open] > summary .ico.chev { transform: rotate(180deg); }
+  .listbody { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 1rem 1.25rem; padding: 0 1.1rem 1.1rem; }
+  .listbody textarea { min-height: 190px; background: rgba(255, 255, 255, .95); }
+  .listbody h2 { font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: .2rem 0 .55rem; }
+  .listbody .tip { margin: .8rem 0 0; font-size: .88rem; color: var(--muted); }
+  #sites label.skipped { opacity: .65; }
+  .beta { font-size: .68rem; font-weight: 800; color: var(--amber); background: var(--amber-bg); border-radius: 999px; padding: .05rem .45rem; }
+
+  /* run actions */
+  .actions { display: flex; flex-wrap: wrap; align-items: center; gap: .55rem; border-radius: 999px; padding: .45rem; margin-bottom: 1rem; }
+  .actions .note { margin-left: auto; padding-right: .7rem; font-size: .85rem; color: var(--muted); }
+  #go { min-height: 48px; padding: 0 1.4rem; }
+  #fresh { min-height: 48px; }
+  .actions button, #signin { white-space: nowrap; }
+  .actions .short { display: none; }
+
+  /* banners, chips, toast */
+  .banner { display: flex; flex-wrap: wrap; gap: .6rem 1rem; align-items: center; border-radius: 18px; padding: .75rem 1rem; margin-bottom: .9rem; background: var(--amber-bg); border: 1px solid #F3D3A6; }
+  .banner p { margin: 0; flex: 1 1 300px; }
+  .banner.live { background: #EFFAF4; border-color: #A9DCC0; }
+  .banner.wait { background: #EEF3FF; border-color: #BFD0FA; }
+  .progress { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .9rem; }
+  .progress:empty { display: none; }
+  .toast { position: fixed; left: 50%; bottom: 1.25rem; transform: translateX(-50%); z-index: 60; max-width: min(92vw, 520px); background: var(--ink); color: #fff; border-radius: 16px; padding: .75rem 1rem; font-weight: 600; box-shadow: 0 18px 40px rgba(11, 27, 20, .3); }
+  .toast.err { background: var(--bad); }
+
+  /* empty state */
+  .empty { border-radius: var(--radius); padding: clamp(1.25rem, 4vw, 2.5rem); display: grid; grid-template-columns: auto 1fr; gap: 1.25rem; align-items: center; margin-bottom: 1rem; }
+  .empty .big { width: 64px; height: 64px; border-radius: 20px; background: var(--ink); color: #7FE0AE; display: grid; place-items: center; }
+  .empty .big .ico { width: 30px; height: 30px; }
+  .empty h2 { margin: 0 0 .25rem; font-size: 1.35rem; letter-spacing: -.02em; }
+  .empty p { margin: 0; color: var(--muted); }
+  .empty ol { margin: .6rem 0 0; padding-left: 1.2rem; color: var(--muted); }
+
+  /* verdicts */
+  .verdicts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .8rem; margin-bottom: .9rem; }
+  .verdict { border-radius: 20px; padding: .9rem 1.1rem; background: var(--surface); border: 1px solid var(--rim); box-shadow: var(--shadow); }
+  .verdict.win { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .verdict .k { font-size: .74rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--faint); }
+  .verdict.win .k { color: #7FE0AE; }
+  .verdict b { display: block; font-size: clamp(1.2rem, 2.2vw, 1.55rem); letter-spacing: -.02em; margin-top: .15rem; }
+  .verdict .s { font-size: .85rem; color: var(--muted); }
+  .verdict.win .s { color: #C7D6CE; }
+
+  /* comparison table */
+  .tablewrap { padding: .6rem; border-radius: var(--radius); }
+  table.cmp { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 4px; font-size: .84rem; }
+  table.cmp th, table.cmp td { padding: .55rem .6rem; vertical-align: top; overflow-wrap: anywhere; border-radius: 12px; text-align: left; }
+  table.cmp thead th { position: sticky; top: 5rem; z-index: 2; background: rgba(255, 255, 255, .95); font-size: .85rem; box-shadow: 0 1px 0 var(--line); }
+  table.cmp th.item { width: 15%; }
+  table.cmp th.down { width: 9%; color: var(--bad); }
+  table.cmp tbody td { background: #F4F8F5; }
+  td.item { background: transparent !important; font-weight: 800; font-size: .9rem; }
+  td.item .qty { color: var(--faint); font-weight: 600; }
+  .aka { display: block; color: var(--faint); font-weight: 600; font-size: .75rem; margin-top: .1rem; }
+  .p { font-size: 1rem; font-weight: 800; letter-spacing: -.01em; }
+  .n { color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-weight: 600; margin-top: .1rem; }
+  .u { color: var(--faint); font-size: .78rem; }
+  .asof { color: var(--amber); font-size: .74rem; font-weight: 700; }
+  td.best { background: var(--g) !important; color: #fff; }
+  td.best .n { color: #E4F7EC; } td.best .u { color: #CDEBDB; } td.best .asof { color: #FDE68A; }
+  td.second { background: var(--g2) !important; }
+  td.miss { color: var(--faint); background: transparent !important; border: 1.5px dashed var(--line); font-weight: 600; }
+  td.dimmed { background: #F1F1EE !important; color: var(--faint); }
+  td.dimmed .p { color: var(--faint); font-size: .9rem; }
+  .badge { display: inline-block; font-size: .66rem; font-weight: 800; padding: .08rem .45rem; border-radius: 999px; margin-left: .25rem; vertical-align: 2px; letter-spacing: .01em; }
+  .low { background: #DCFCE7; color: #065F46; } .above { background: #EEF2EF; color: #334155; } .atlow { background: #DBEAFE; color: #1E3A8A; }
+  .flag { color: var(--amber); font-size: .76rem; font-weight: 700; }
+  td.best .flag { color: #FDE68A; }
+  tfoot td { font-weight: 800; font-size: .95rem; background: rgba(255, 255, 255, .95); }
+  tfoot td.win { background: var(--ink); color: #7FE0AE; }
+  .legend { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem .9rem; font-size: .8rem; color: var(--muted); margin: .6rem .3rem .2rem; }
+  .sw { display: inline-block; width: 12px; height: 12px; border-radius: 4px; vertical-align: -1px; margin-right: .3rem; }
+
+  /* phones: one card per item */
+  .cards { display: none; }
+  .card { background: var(--surface); border: 1px solid var(--rim); box-shadow: var(--shadow); border-radius: 20px; padding: .8rem; }
+  .card h3 { margin: 0 0 .4rem; font-size: 1.05rem; letter-spacing: -.01em; }
+  .card .row { display: grid; grid-template-columns: 84px minmax(0, 1fr) auto; gap: .5rem; padding: .6rem .65rem; border-radius: 14px; align-items: start; min-height: 48px; margin-top: .3rem; background: #F4F8F5; }
+  .card .row.best { background: var(--g); color: #fff; } .card .row.best .u { color: #CDEBDB; }
+  .card .row.second { background: var(--g2); }
+
+  /* saved-price lookup */
+  .look { border-radius: var(--radius); padding: 1rem 1.1rem; margin-bottom: .9rem; }
+  .look h3 { margin: 0 0 .6rem; font-size: 1.1rem; }
+  .look table { width: 100%; border-collapse: collapse; font-size: .9rem; table-layout: fixed; }
+  .look th, .look td { text-align: left; padding: .5rem .55rem; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+  .look th { font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); }
+  .look tr.cheap td { background: #EFFAF4; }
+  .look tr.cheap td:first-child { box-shadow: inset 3px 0 0 var(--g); }
+  .opts { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; }
+  .opts button { min-height: 36px; padding: 0 .8rem; font-size: .85rem; }
+
+  /* after the result */
+  .panel { border-radius: 18px; padding: .8rem 1rem; margin-top: .9rem; }
+  .panel > summary { cursor: pointer; font-weight: 800; min-height: 32px; display: flex; align-items: center; }
+  .errors { margin: .4rem 0 0; padding-left: 1.2rem; } .errors li { margin: .3rem 0; }
+  .errors .kind { font: 600 .82em var(--mono); color: var(--bad); background: var(--bad-bg); border-radius: 6px; padding: .02rem .35rem; }
+  .strip { font-size: .88rem; color: var(--ink); background: var(--amber-bg); border: 1px solid #F3D3A6; border-radius: 16px; padding: .7rem 1rem; margin-top: .9rem; }
+  #footnote { margin: .8rem .2rem 0; font-size: .85rem; }
+  .jobs { width: 100%; border-collapse: collapse; font-size: .88rem; margin-top: .4rem; }
+  .jobs td, .jobs th { text-align: left; padding: .45rem .5rem; border-bottom: 1px solid var(--line); }
+  .jobs th { font-size: .76rem; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); }
+
+  /* sign-in dialog */
+  dialog { border: 1px solid var(--rim); border-radius: 24px; padding: 1.3rem; width: min(460px, 94vw); background: rgba(255, 255, 255, .96); color: var(--ink); box-shadow: 0 30px 80px rgba(11, 27, 20, .25); }
+  dialog::backdrop { background: rgba(11, 27, 20, .35); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  dialog h2 { margin: 0 0 .3rem; font-size: 1.3rem; letter-spacing: -.02em; }
+  dialog label { display: block; margin: .9rem 0 .35rem; }
+  dialog .row2 { display: flex; gap: .5rem; margin-top: 1rem; justify-content: flex-end; }
+  #lotp { font: 700 1.3rem var(--mono); letter-spacing: .35em; text-align: center; }
+  .msg { min-height: 1.4em; margin-top: .6rem; font-size: .9rem; font-weight: 600; } .msg.err { color: var(--bad); } .msg.ok { color: var(--g-ink); }
+  .acct { font-size: .88rem; padding: .55rem 0; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: .6rem; }
+  .signed { color: var(--g-ink); font-weight: 700; }
+
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; }
+    .listbody { grid-template-columns: 1fr; }
   }
-  * { box-sizing: border-box; }
-  [hidden] { display: none !important; }
-  body { margin:0; background:var(--bg); color:var(--text); font:14px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
-  a { color:var(--accent); }
-  .wrap { max-width:1280px; margin:0 auto; padding:16px; }
-  header { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 16px; margin-bottom:10px; }
-  header h1 { font-size:18px; margin:0; }
-  header .sub { color:var(--dim); font-size:12px; }
-  header nav { margin-left:auto; }
-  .bar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:10px; }
-  .bar .grow { flex:1 1 260px; min-width:200px; position:relative; }
-  button { background:#238636; color:#fff; border:1px solid #2ea043; border-radius:8px; padding:7px 14px; font-weight:600; cursor:pointer; font-size:14px; }
-  button.secondary { background:var(--panel2); border-color:var(--line); color:var(--text); }
-  button:disabled { opacity:.55; cursor:not-allowed; }
-  :focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
-  input[type=text], input[type=tel], input[type=search] { width:100%; background:var(--bg); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:7px 10px; font:inherit; }
-  details.panel, .panel { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:10px; }
-  details.panel > summary { cursor:pointer; font-weight:600; }
-  textarea { width:100%; min-height:130px; background:var(--bg); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:8px; font:13px/1.5 ui-monospace,Menlo,monospace; resize:vertical; margin-top:8px; }
-  .sites { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:3px 10px; margin-top:8px; }
-  .sites label { display:flex; gap:6px; align-items:center; }
-  .sites label.skipped { opacity:.55; }
-  .beta { font-size:10px; color:var(--warn); border:1px solid var(--warn); border-radius:4px; padding:0 4px; }
-  .progress { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; font-size:12px; }
-  .chip { padding:4px 9px; border-radius:12px; background:var(--panel); border:1px solid var(--line); }
-  .chip.ok { border-color:var(--ok); color:var(--ok); } .chip.run { border-color:var(--warn); color:var(--warn); }
-  .chip.err { border-color:var(--bad); color:#ffb4ad; white-space:normal; }
-  .banner { display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; background:#2a2412; border:1px solid var(--warn); border-radius:10px; padding:8px 12px; margin-bottom:10px; }
-  .banner.live { background:#12261a; border-color:var(--ok); } .banner.wait { background:#1b2230; border-color:var(--accent); }
-  .banner p { margin:0; flex:1 1 300px; }
-  .verdicts { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-bottom:10px; }
-  .verdict { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:9px 12px; }
-  .verdict.win { border-color:var(--ok); }
-  .verdict .k { color:var(--dim); font-size:11px; text-transform:uppercase; letter-spacing:.04em; }
-  .verdict b { display:block; font-size:19px; margin-top:1px; } .verdict .s { color:var(--dim); font-size:12px; }
-  table.cmp { width:100%; table-layout:fixed; border-collapse:collapse; font-size:12px; }
-  table.cmp th, table.cmp td { border:1px solid var(--line); padding:6px; vertical-align:top; overflow-wrap:anywhere; }
-  table.cmp thead th { background:var(--panel); text-align:left; position:sticky; top:0; z-index:1; }
-  table.cmp th.item { width:15%; } table.cmp th.down { width:9%; color:#ffb4ad; }
-  td.item { font-weight:600; } td.item .qty { color:var(--dim); font-weight:400; }
-  .aka { color:var(--dim); font-weight:400; font-size:12px; display:block; }
-  .p { font-size:15px; font-weight:700; }
-  .n { color:#c9d1d9; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-  .u { color:var(--dim); } .asof { color:#e3b341; font-size:11px; }
-  td.best { background:var(--best); } td.best .p { color:#fff; } td.best .n { color:#e3f6e8; } td.best .u { color:#b8dfc2; }
-  td.second { background:var(--second); } td.second .u { color:#a4c9af; }
-  td.miss { color:#6e7681; } td.dimmed { color:#8b949e; background:#14181f; }
-  td.dimmed .p { color:#8b949e; font-size:13px; }
-  .badge { display:inline-block; font-size:10px; padding:1px 5px; border-radius:8px; margin-left:4px; font-weight:600; vertical-align:2px; }
-  .low { background:#3fb950; color:#04260f; } .above { background:#30363d; color:#c9d1d9; } .atlow { background:#1f6feb; color:#fff; }
-  .flag { color:var(--warn); font-size:11px; }
-  tfoot td { font-weight:700; background:var(--panel); } tfoot td.win { color:#7ee787; }
-  .legend { font-size:11px; color:var(--dim); margin-top:8px; }
-  .sw { display:inline-block; width:10px; height:10px; vertical-align:middle; margin:0 3px 0 10px; }
-  .strip { font-size:12px; color:var(--dim); background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:6px 10px; margin-top:8px; }
-  .cards { display:none; }
-  @media (max-width:700px) { table.cmp { display:none; } .cards { display:grid; gap:10px; } .verdicts { grid-template-columns:1fr; } }
-  .card { background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:10px; }
-  .card h3 { margin:0 0 6px; font-size:15px; }
-  .card .row { display:grid; grid-template-columns:90px 1fr auto; gap:6px; padding:6px; border-radius:6px; align-items:start; }
-  .card .row.best { background:var(--best); } .card .row.second { background:var(--second); }
-  .look { border-color:#1f6feb; }
-  .look h3 { margin:0 0 6px; font-size:15px; }
-  .look table { width:100%; border-collapse:collapse; font-size:13px; table-layout:fixed; }
-  .look td, .look th { overflow-wrap:anywhere; }
-  @media (max-width:700px) { .look .opt-col { display:none; } .bar .grow { flex-basis:100%; } .card .row { grid-template-columns:76px minmax(0,1fr) auto; } }
-  .look th, .look td { text-align:left; padding:4px 6px; border-bottom:1px solid var(--line); }
-  .look tr.cheap td { background:var(--best); }
-  .opts button { margin:2px 4px 0 0; padding:2px 8px; font-size:12px; }
-  .sug { position:absolute; left:0; right:0; top:100%; z-index:5; background:var(--panel2); border:1px solid var(--line); border-radius:8px; margin-top:2px; max-height:260px; overflow:auto; }
-  .sug div { padding:6px 10px; cursor:pointer; display:flex; justify-content:space-between; gap:8px; }
-  .sug div:hover, .sug div[aria-selected=true] { background:#243049; } .sug small { color:var(--dim); }
-  .errors li { margin:4px 0; } .errors .kind { font-family:ui-monospace,monospace; color:var(--bad); }
-  .jobs { width:100%; border-collapse:collapse; font-size:13px; } .jobs td, .jobs th { text-align:left; padding:4px 6px; border-bottom:1px solid var(--line); }
-  .muted { color:var(--dim); } .sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
-  dialog { background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:12px; padding:16px; width:min(440px,92vw); }
-  dialog::backdrop { background:rgba(0,0,0,.6); }
-  dialog h2 { margin:0 0 4px; font-size:17px; } dialog label { display:block; font-weight:600; margin:10px 0 4px; }
-  dialog .row2 { display:flex; gap:8px; margin-top:12px; justify-content:flex-end; }
-  .msg { min-height:1.4em; margin-top:8px; font-size:13px; } .msg.err { color:#ffb4ad; } .msg.ok { color:#7ee787; }
-  .acct { font-size:13px; padding:6px 0; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; gap:8px; }
+  @media (max-width: 700px) {
+    table.cmp { display: none; }
+    .cards { display: grid; gap: .7rem; }
+    .tablewrap { padding: 0; background: none; border: 0; box-shadow: none; }
+    .verdicts { grid-template-columns: 1fr 1fr; gap: .55rem; }
+    .verdict.win { grid-column: 1 / -1; }
+    .verdict { padding: .75rem .85rem; }
+    .look .opt-col { display: none; }
+    .card .row { grid-template-columns: 74px minmax(0, 1fr) auto; }
+    .empty { grid-template-columns: 1fr; }
+    /* the two main actions sit in the thumb zone */
+    body { padding-bottom: calc(92px + env(safe-area-inset-bottom)); }
+    .actions { position: fixed; left: .6rem; right: .6rem; bottom: calc(.6rem + env(safe-area-inset-bottom)); z-index: 40; margin: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 48px; border-radius: 22px; }
+    .actions .note { display: none; }
+    .actions button { width: 100%; padding: 0 .7rem; font-size: .92rem; gap: .35rem; }
+    .actions .long, #stop span, #signin .lbl { display: none; }
+    .actions .short { display: inline; }
+    #stop { width: 48px; padding: 0; }
+    #signin { width: 48px; padding: 0; flex: none; }
+    .toast { bottom: calc(100px + env(safe-area-inset-bottom)); }
+    .topnav { top: .5rem; }
+  }
 </style>
 </head>
 <body>
+<div class="blobs" aria-hidden="true"><i></i><i></i><i></i></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-basket" viewBox="0 0 24 24"><path d="m15 11-1 9"/><path d="m19 11-4-7"/><path d="M2 11h20"/><path d="m3.5 11 1.6 7.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6l1.7-7.4"/><path d="M4.5 15.5h15"/><path d="m5 11 4-7"/><path d="m9 11 1 9"/></symbol>
+  <symbol id="i-scale" viewBox="0 0 24 24"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-zap" viewBox="0 0 24 24"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4"/><path d="m21 2-9.6 9.6"/><circle cx="7.5" cy="15.5" r="5.5"/></symbol>
+</svg>
+
 <div class="wrap">
-  <header>
-    <h1 id="title">Basket</h1>
-    <span class="sub" id="sub">…</span>
-    <nav><a href="/settings">Settings &amp; schedule</a></nav>
+  <header class="topnav glass">
+    <a class="brand" href="/"><span class="mark"><svg class="ico"><use href="#i-basket"/></svg></span>compareprice</a>
+    <nav aria-label="Main">
+      <a href="/" aria-current="page"><svg class="ico"><use href="#i-scale"/></svg><span>Compare</span></a>
+      <a href="/settings"><svg class="ico"><use href="#i-gear"/></svg><span>Settings</span></a>
+      <a href="/guide"><svg class="ico"><use href="#i-book"/></svg><span>Guide</span></a>
+    </nav>
   </header>
 
-  <div class="bar">
-    <button type="button" id="go">Find the cheapest</button>
-    <button type="button" id="fresh" class="secondary">Get fresh prices</button>
-    <button type="button" id="stop" class="secondary" disabled>Stop</button>
-    <button type="button" id="signin" class="secondary">Sign in…</button>
-    <div class="grow">
-      <label for="q" class="sr">Check a saved price</label>
-      <input id="q" type="search" placeholder="Check a saved price: type an item, e.g. onion" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="sug">
-      <div class="sug" id="sug" role="listbox" hidden></div>
+  <section class="hero">
+    <div>
+      <h1 id="title">Basket</h1>
+      <p class="sub"><svg class="ico"><use href="#i-pin"/></svg><span id="sub">…</span></p>
     </div>
-  </div>
+    <div class="tools">
+      <div class="grow search">
+        <label for="q" class="sr">Check a saved price</label>
+        <svg class="ico"><use href="#i-search"/></svg>
+        <input id="q" type="search" placeholder="Check a saved price: onion…" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="sug">
+        <div class="sug" id="sug" role="listbox" hidden></div>
+      </div>
+      <button type="button" id="signin" class="secondary" title="Sign in to Zepto, Milkbasket or Amazon" aria-label="Sign in to a site"><svg class="ico"><use href="#i-key"/></svg><span class="lbl">Sign in</span></button>
+    </div>
+  </section>
 
-  <details class="panel" id="listbox">
-    <summary id="listsum">Your list</summary>
-    <textarea id="items" spellcheck="false" aria-label="Your list, one item per line" placeholder="2x toor dal 1kg&#10;moong dal 500g&#10;amul butter 100g"></textarea>
-    <div class="sites" id="sites"></div>
-    <p class="muted" style="margin:8px 0 0"><b>Find the cheapest</b> uses your saved prices (no site is contacted). <b>Get fresh prices</b> checks the sites live. A line with no brand ("moong dal") matches any brand, never moong-dal namkeen.</p>
+  <details class="listbox glass" id="listbox" open>
+    <summary><svg class="ico"><use href="#i-list"/></svg><span id="listsum">Your list</span><svg class="ico chev"><use href="#i-chev"/></svg></summary>
+    <div class="listbody">
+      <div>
+        <h2>One item per line</h2>
+        <textarea id="items" spellcheck="false" aria-label="Your list, one item per line" placeholder="2x toor dal 1kg&#10;moong dal 500g&#10;amul butter 100g&#10;kismis 500g"></textarea>
+      </div>
+      <div>
+        <h2>Sites to check</h2>
+        <div class="toggles" id="sites"></div>
+        <p class="tip">A line with no brand ("moong dal") matches any brand, never moong-dal namkeen. Other names for a product work too: kismis, kishmish and dry grapes are all <b>raisins</b>.</p>
+      </div>
+    </div>
   </details>
 
+  <div class="actions glass" role="toolbar" aria-label="Run the list">
+    <button type="button" id="go" class="green"><svg class="ico"><use href="#i-zap"/></svg><span class="long">Find the cheapest</span><span class="short" aria-hidden="true">Find cheapest</span></button>
+    <button type="button" id="fresh" class="secondary"><svg class="ico"><use href="#i-refresh"/></svg><span class="long">Get fresh prices</span><span class="short" aria-hidden="true">Fresh prices</span></button>
+    <button type="button" id="stop" class="ghost" disabled aria-label="Stop the run"><svg class="ico"><use href="#i-stop"/></svg><span>Stop</span></button>
+    <span class="note"><b>Find the cheapest</b> uses saved prices and contacts no site.</span>
+  </div>
+
   <div class="banner wait" id="waitbar" hidden role="status" aria-live="polite"></div>
-  <div class="panel look" id="lookup" hidden></div>
+  <div class="look surface" id="lookup" hidden></div>
   <div class="progress" id="chips" aria-live="polite"></div>
+
+  <section class="empty glass" id="empty">
+    <span class="big"><svg class="ico"><use href="#i-basket"/></svg></span>
+    <div>
+      <h2>Your cheapest basket shows up here</h2>
+      <p>Three steps:</p>
+      <ol><li>Type or paste your list above.</li><li>Tick the sites.</li><li>Press <b>Find the cheapest</b>. Saved prices show at once, each with its date. Press <b>Get fresh prices</b> to check the sites live.</li></ol>
+      <p style="margin-top:.6rem">New here? <a href="/guide">Read the two-minute guide</a>.</p>
+    </div>
+  </section>
 
   <section id="result" hidden>
     <div class="banner" id="banner" role="status"></div>
     <div class="verdicts" id="verdicts"></div>
-    <div class="panel" style="padding:8px">
+    <div class="tablewrap surface">
       <table class="cmp" id="table"></table>
       <div class="cards" id="cards"></div>
       <div class="legend">
-        <span class="sw" style="background:var(--best)"></span>cheapest for the item <span class="sw" style="background:var(--second)"></span>second cheapest
-        · badge = vs the lowest price seen so far · names wrap to 2 lines (full name on hover) · greyed = shown but not counted
+        <span><span class="sw" style="background:var(--g)"></span>cheapest for the item</span>
+        <span><span class="sw" style="background:var(--g2)"></span>second cheapest</span>
+        <span>badge = vs the lowest price seen so far</span><span>greyed = shown, not counted</span>
       </div>
     </div>
-    <details class="panel" id="leftout" hidden><summary id="leftsum"></summary><ul class="errors" id="leftlist"></ul></details>
+    <details class="panel glass" id="leftout" hidden><summary id="leftsum"></summary><ul class="errors" id="leftlist"></ul></details>
     <div class="strip" id="problems" hidden></div>
-    <p class="muted" id="footnote" style="margin:8px 0 0"></p>
+    <p class="muted" id="footnote"></p>
   </section>
 
-  <details class="panel" style="margin-top:12px">
+  <details class="panel glass">
     <summary>Recent runs</summary>
     <table class="jobs"><thead><tr><th>#</th><th>When</th><th>Trigger</th><th>Sites</th><th>Status</th></tr></thead><tbody id="jobs"></tbody></table>
   </details>
 </div>
 
+<div class="toast" id="toast" role="status" aria-live="assertive" hidden></div>
+
 <dialog id="dlg" aria-labelledby="dlgt">
   <h2 id="dlgt">Sign in to a site</h2>
-  <p class="muted" style="margin:0 0 8px">Enter your mobile number, then the OTP the site sends. The session is kept in this service's browser (like a phone app), so you won't need the OTP again until the site signs you out.</p>
+  <p class="muted" style="margin:0 0 .6rem">Enter your mobile number, then the OTP the site sends. The session is kept in this service's browser, like a phone app, so you won't need another OTP until the site signs you out.</p>
   <div id="accts"></div>
   <form id="loginform" novalidate>
     <div id="step1">
       <label for="lsite">Site</label>
-      <select id="lsite" style="width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:7px 10px"></select>
+      <select id="lsite"></select>
       <label for="lphone">Mobile number</label>
       <input id="lphone" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="10-digit number">
     </div>
     <div id="step2" hidden>
       <label for="lotp">OTP</label>
-      <input id="lotp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="Enter the OTP">
+      <input id="lotp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="••••••">
     </div>
     <div class="msg" id="lmsg" role="status" aria-live="polite"></div>
     <div class="row2">
@@ -175,9 +312,17 @@ const rs = (n) => n == null ? '—' : '₹' + Number(n).toLocaleString('en-IN', 
 const when = (iso) => iso ? new Date(iso).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
 const ddmmyy = (iso) => iso ? new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'Asia/Kolkata' }) : '';
 const day = (iso) => iso ? new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '';
-let META = { labels: {} }, currentJob = null, countdown = null;
+let META = { labels: {} }, currentJob = null, countdown = null, toastTimer = null;
 const chipState = new Map();
 const label = (p) => META.labels?.[p] ?? p;
+const narrow = () => matchMedia('(max-width: 700px)').matches;
+
+/** A short message near the bottom of the screen, instead of a blocking alert(). */
+function notify(text, kind = '') {
+  const t = $('toast');
+  t.textContent = text; t.className = 'toast ' + kind; t.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 5000);
+}
 
 /** 1000g -> "1 kg", 500ml -> "500 ml", 6piece -> "6 pcs". */
 function fmtPack(size, unit) {
@@ -208,7 +353,8 @@ async function loadMeta() {
 function listItems() { return $('items').value.split('\n').map((l) => l.trim()).filter((l) => l && !l.startsWith('#')); }
 function updateListSummary() {
   const n = document.querySelectorAll('input[name=site]:checked').length;
-  $('listsum').textContent = `Your list · ${listItems().length} items · ${n} sites (click to edit)`;
+  const k = listItems().length;
+  $('listsum').textContent = `Your list · ${k} item${k === 1 ? '' : 's'} · ${n} site${n === 1 ? '' : 's'}`;
 }
 $('items').addEventListener('input', updateListSummary);
 $('sites').addEventListener('change', updateListSummary);
@@ -216,8 +362,8 @@ $('sites').addEventListener('change', updateListSummary);
 function formInput() {
   const items = $('items').value.trim();
   const platforms = [...document.querySelectorAll('input[name=site]:checked')].map((i) => i.value);
-  if (!items) { $('listbox').open = true; $('items').focus(); return null; }
-  if (!platforms.length) { $('listbox').open = true; alert('Pick at least one site.'); return null; }
+  if (!items) { $('listbox').open = true; $('items').focus(); notify('Add at least one item to your list.'); return null; }
+  if (!platforms.length) { $('listbox').open = true; notify('Pick at least one site.'); return null; }
   return { items, platforms };
 }
 
@@ -276,7 +422,7 @@ function renderBanner(r) {
     const span = rg ? (ddmmyy(rg.oldest) === ddmmyy(rg.newest) ? ddmmyy(rg.oldest) : `${ddmmyy(rg.oldest)} – ${ddmmyy(rg.newest)}`) : '';
     const missing = (r.uncached || []).length;
     b.className = 'banner';
-    b.innerHTML = `<p>${rg ? `<b>Saved prices from ${span}</b> — no site was contacted.` : '<b>No saved prices for this list yet.</b>'}${missing ? ` ${missing} item/site pair${missing > 1 ? 's have' : ' has'} no saved price.` : ''} Prices may have changed since.</p><button type="button" id="fresh2">Get fresh prices</button>`;
+    b.innerHTML = `<p>${rg ? `<b>Saved prices from ${span}</b>. No site was contacted.` : '<b>No saved prices for this list yet.</b>'}${missing ? ` ${missing} item/site pair${missing > 1 ? 's have' : ' has'} no saved price.` : ''} Prices may have changed since.</p><button type="button" id="fresh2">Get fresh prices</button>`;
     $('fresh2').addEventListener('click', fetchFresh);
   } else {
     b.className = 'banner live';
@@ -286,7 +432,8 @@ function renderBanner(r) {
 
 function render(r) {
   $('result').hidden = false;
-  $('title').textContent = `Basket · ${r.basket.length} items`;
+  $('empty').hidden = true;
+  $('title').textContent = `Basket · ${r.basket.length} item${r.basket.length === 1 ? '' : 's'}`;
   renderBanner(r);
   const plats = r.platforms;
   const up = plats.filter((p) => !p.failed);
@@ -307,7 +454,7 @@ function render(r) {
     <div class="verdict"><div class="k">Best per item (mix)</div><b>${mixN ? rs(Math.round(mix * 100) / 100) : '—'}</b>
       <div class="s">${mixN}/${r.basket.length} items across ${mixSites.size} site${mixSites.size === 1 ? '' : 's'}${mixSites.size > 1 ? ' · several orders' : ''}</div></div>`;
 
-  const head = up.map((p) => `<th scope="col">${esc(label(p.platform))}<div class="u" style="font-weight:400">${p.fulfilledLines}/${p.totalLines} found</div></th>`).join('')
+  const head = up.map((p) => `<th scope="col">${esc(label(p.platform))}<div class="u" style="font-weight:600">${p.fulfilledLines}/${p.totalLines} found</div></th>`).join('')
     + (down.length ? `<th scope="col" class="down" title="${esc(down.map((p) => `${label(p.platform)}: ${p.errorKind || 'error'}: ${p.error}`).join('\n'))}">${down.length} down ⓘ</th>` : '');
   const rows = r.basket.map((item) => {
     const cls = rankFor(r, item.query);
@@ -315,7 +462,8 @@ function render(r) {
     const downCell = down.length ? `<td class="miss">${down.map((p) => esc(label(p.platform))).join(', ')}</td>` : '';
     return `<tr><td class="item">${item.qty > 1 ? `<span class="qty">${item.qty}× </span>` : ''}${esc(item.query)}${akaHtml(item)}</td>${cells}${downCell}</tr>`;
   }).join('');
-  const foot = up.map((p) => `<td class="${w && w.platform === p.platform ? 'win' : ''}">${rs(p.total)}</td>`).join('') + (down.length ? '<td>—</td>' : '');
+  // A site with nothing found has no total, not a ₹0 one.
+  const foot = up.map((p) => `<td class="${w && w.platform === p.platform ? 'win' : ''}">${p.fulfilledLines ? rs(p.total) : '<span class="u">—</span>'}</td>`).join('') + (down.length ? '<td>—</td>' : '');
   $('table').innerHTML = `<thead><tr><th class="item" scope="col">Item</th>${head}</tr></thead><tbody>${rows}</tbody><tfoot><tr><td>Total</td>${foot}</tr></tfoot>`;
 
   // Phones: one card per item, sites sorted by what you'd pay.
@@ -333,7 +481,7 @@ function render(r) {
 
   // What the price check left out, and why.
   const left = [];
-  for (const p of up) for (const l of p.lines || []) for (const d of l.dropped || []) left.push(`<li><b>${esc(label(p.platform))}</b> · ${esc(l.query)}: <i>${esc(d.name)}</i> ${rs(d.price)} — ${esc(d.reason)}</li>`);
+  for (const p of up) for (const l of p.lines || []) for (const d of l.dropped || []) left.push(`<li><b>${esc(label(p.platform))}</b> · ${esc(l.query)}: <i>${esc(d.name)}</i> ${rs(d.price)}: ${esc(d.reason)}</li>`);
   $('leftout').hidden = left.length === 0;
   $('leftsum').textContent = `Price check: ${left.length} odd price${left.length === 1 ? '' : 's'} left out`;
   $('leftlist').innerHTML = left.join('');
@@ -343,13 +491,16 @@ function render(r) {
   for (const p of down) probs.push(`<b>${esc(label(p.platform))}</b> <span class="kind">${esc(p.errorKind || 'error')}</span>: ${esc(String(p.error).replace(/^[^:]*: /, ''))}`);
   for (const p of up) for (const f of p.failures || []) probs.push(`<b>${esc(label(p.platform))}</b> “${esc(f.query)}” <span class="kind">${esc(f.kind)}</span>: ${esc(f.message)}`);
   $('problems').hidden = probs.length === 0;
-  $('problems').innerHTML = probs.length ? `⚠ <b>Site problems (${probs.length}):</b><ul class="errors">${probs.map((x) => `<li>${x}</li>`).join('')}</ul>` : '';
+  $('problems').innerHTML = probs.length ? `<b>Site problems (${probs.length}).</b> <a href="/guide#fix">What these mean</a><ul class="errors">${probs.map((x) => `<li>${x}</li>`).join('')}</ul>` : '';
   $('footnote').textContent = `${r.locationLabel ? r.locationLabel + ', ' : ''}${r.pincode} · prices are goods only${r.feesKnown ? '' : '; delivery/handling not included'}`;
 }
 
+/** @returns {Promise<boolean>} whether a result was shown */
 async function loadResult(jobId) {
   const res = await fetch('/api/result' + (jobId != null ? `?jobId=${jobId}` : ''));
-  if (res.status === 200) render(await res.json());
+  if (res.status !== 200) return false;
+  render(await res.json());
+  return true;
 }
 
 // ───────────────────────── actions ─────────────────────────
@@ -362,8 +513,9 @@ $('go').addEventListener('click', async () => {
     const body = await res.json();
     if (res.status !== 200) throw new Error(body.error || res.status);
     currentJob = null; $('chips').innerHTML = ''; render(body);
+    if (narrow()) $('listbox').open = false; // on a phone, make room for the answer
     $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  } catch (e) { alert('Could not load saved prices: ' + e.message); } finally { $('go').disabled = false; }
+  } catch (e) { notify('Could not load saved prices: ' + e.message, 'err'); } finally { $('go').disabled = false; }
 });
 
 // Count down "wait 9s…", then run `again`.
@@ -371,7 +523,7 @@ function startWait(ms, text, again) {
   clearInterval(countdown);
   const bar = $('waitbar'); bar.hidden = false;
   let left = Math.ceil(ms / 1000);
-  const paint = () => { bar.innerHTML = `<p>⏳ ${esc(text)} <b>Wait ${left}s…</b> I'll start again automatically.</p><button type="button" class="secondary" id="cancelwait">Cancel</button>`; $('cancelwait').onclick = () => { clearInterval(countdown); bar.hidden = true; }; };
+  const paint = () => { bar.innerHTML = `<p><span class="spin" aria-hidden="true"></span> ${esc(text)} <b>Wait ${left}s…</b> It will start again by itself.</p><button type="button" class="secondary" id="cancelwait">Cancel</button>`; $('cancelwait').onclick = () => { clearInterval(countdown); bar.hidden = true; }; };
   paint();
   countdown = setInterval(() => { left -= 1; if (left <= 0) { clearInterval(countdown); bar.hidden = true; again(); } else paint(); }, 1000);
 }
@@ -388,7 +540,8 @@ async function fetchFresh() {
     currentJob = body.jobId; chipState.clear();
     input.platforms.forEach((p) => chipState.set(p, { text: body.queued ? 'waiting in queue' : 'starting' }));
     renderChips(); loadJobs();
-  } catch (e) { alert('Could not start: ' + e.message); } finally { $('fresh').disabled = false; }
+    if (narrow()) $('listbox').open = false;
+  } catch (e) { notify('Could not start: ' + e.message, 'err'); } finally { $('fresh').disabled = false; }
 }
 $('fresh').addEventListener('click', fetchFresh);
 $('stop').addEventListener('click', async () => {
@@ -398,7 +551,7 @@ $('stop').addEventListener('click', async () => {
 });
 
 function renderChips() {
-  $('chips').innerHTML = [...chipState].map(([site, s]) => `<span class="chip ${s.cls || ''}">${esc(label(site))} · ${esc(s.text)}</span>`).join('');
+  $('chips').innerHTML = [...chipState].map(([site, s]) => `<span class="chip ${s.cls || ''}">${s.cls === 'run' ? '<span class="spin" aria-hidden="true"></span>' : ''}${esc(label(site))} · ${esc(s.text)}</span>`).join('');
 }
 function onProgress({ jobId, event: e }) {
   if (currentJob != null && jobId !== currentJob) return;
@@ -415,7 +568,7 @@ function onProgress({ jobId, event: e }) {
 async function loadJobs() {
   const j = await (await fetch('/api/jobs?limit=10')).json();
   $('stop').disabled = !j.current;
-  $('jobs').innerHTML = (j.jobs || []).map((x) => `<tr><td>${x.id}</td><td>${when(x.createdAt)}</td><td>${esc(x.trigger)}</td><td>${esc((x.sites || []).map(label).join(', ') || 'default')}</td><td>${esc(x.status)}${x.error ? ' — ' + esc(x.error) : ''}</td></tr>`).join('') || '<tr><td colspan="5" class="muted">No runs yet</td></tr>';
+  $('jobs').innerHTML = (j.jobs || []).map((x) => `<tr><td>${x.id}</td><td>${when(x.createdAt)}</td><td>${esc(x.trigger)}</td><td>${esc((x.sites || []).map(label).join(', ') || 'default')}</td><td>${esc(x.status)}${x.error ? ': ' + esc(x.error) : ''}</td></tr>`).join('') || '<tr><td colspan="5" class="muted">No runs yet</td></tr>';
 }
 
 function connect() {
@@ -461,11 +614,11 @@ async function doLookup(q) {
   const b = await res.json();
   if (res.status !== 200) { box.innerHTML = `<p style="margin:0">${esc(b.error)}</p>`; return; }
   const unit = b.per;
-  box.innerHTML = `<h3>${esc(b.query)} — saved prices <span class="muted" style="font-weight:400">(rate per ${esc(unit)})</span></h3>
+  box.innerHTML = `<h3>${esc(b.query)}: saved prices <span class="muted" style="font-weight:600">(rate per ${esc(unit)})</span></h3>
     <table><thead><tr><th>Site</th><th>Rate</th><th>Last price</th><th class="opt-col">Pack</th><th>As of</th><th class="opt-col">Lowest rate seen</th></tr></thead><tbody>
     ${b.sites.map((s, i) => `<tr class="${i === 0 ? 'cheap' : ''}"><td>${esc(label(s.site))}</td><td><b>${rs(s.rate)}</b></td><td>${rs(s.lastPrice)} <span class="muted" title="${esc(s.product)}">${esc((s.product || '').slice(0, 28))}</span></td><td class="opt-col">${esc(s.pack || '')}</td><td>${esc(ddmmyy(s.seenAt))}</td><td class="opt-col">${rs(s.lowRate)} · ${esc(day(s.lowSeenAt))}</td></tr>`).join('')}
     </tbody></table>
-    ${b.options?.length ? `<div class="opts muted" style="margin-top:6px">Also saved: ${b.options.map((o) => `<button type="button" class="secondary" data-q="${esc(o.query)}">${esc(o.query)}</button>`).join('')}</div>` : ''}`;
+    ${b.options?.length ? `<div class="opts muted" style="margin-top:.6rem">Also saved: ${b.options.map((o) => `<button type="button" class="secondary" data-q="${esc(o.query)}">${esc(o.query)}</button>`).join('')}</div>` : ''}`;
   box.querySelectorAll('[data-q]').forEach((btn) => btn.addEventListener('click', () => { $('q').value = btn.dataset.q; doLookup(btn.dataset.q); }));
 }
 
@@ -473,7 +626,7 @@ async function doLookup(q) {
 let loginSite = null, loginStep = 1;
 async function refreshAccounts() {
   const list = await (await fetch('/api/login')).json();
-  $('accts').innerHTML = list.map((a) => `<div class="acct"><span><b>${esc(a.label)}</b> <span class="muted">— ${esc(a.why)}</span></span><span>${a.loggedIn ? `<span style="color:#7ee787">signed in ${esc(day(a.since))} ${esc(a.phoneHint || '')}</span>` : '<span class="muted">not signed in</span>'}</span></div>`).join('');
+  $('accts').innerHTML = list.map((a) => `<div class="acct"><span><b>${esc(a.label)}</b> <span class="muted">· ${esc(a.why)}</span></span><span>${a.loggedIn ? `<span class="signed">signed in ${esc(day(a.since))} ${esc(a.phoneHint || '')}</span>` : '<span class="muted">not signed in</span>'}</span></div>`).join('');
   $('lsite').innerHTML = list.map((a) => `<option value="${esc(a.id)}">${esc(a.label)}</option>`).join('');
 }
 function setStep(n) { loginStep = n; $('step1').hidden = n !== 1; $('step2').hidden = n !== 2; $('lgo').textContent = n === 1 ? 'Send OTP' : 'Verify'; }
@@ -504,7 +657,8 @@ $('loginform').addEventListener('submit', async (ev) => {
   } catch (e) { lmsg(e.message, 'err'); } finally { go.disabled = false; }
 });
 
-loadMeta().then(() => { loadResult(); loadJobs(); connect(); });
+// A saved result on load: show it, and fold the list away so the answer is in view.
+loadMeta().then(async () => { if (await loadResult()) $('listbox').open = false; loadJobs(); connect(); });
 </script>
 </body>
 </html>

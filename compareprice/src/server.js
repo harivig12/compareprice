@@ -34,6 +34,19 @@ const PORT_ATTEMPTS = 10;
 const MAX_BODY = 256 * 1024;
 const KEEP_RESULTS = 20;
 const SETTINGS_FILE = join(PKG_ROOT, 'src', 'ui', 'settings.html');
+const GUIDE_FILE = join(PKG_ROOT, 'src', 'ui', 'guide.html');
+const UI_DIR = join(PKG_ROOT, 'src', 'ui');
+// Shared stylesheet, home-screen icons and the web app manifest. A fixed
+// allow-list: no path from the request ever reaches the filesystem.
+const STATIC = {
+  '/theme.css': ['theme.css', 'text/css; charset=utf-8'],
+  '/manifest.webmanifest': ['manifest.webmanifest', 'application/manifest+json; charset=utf-8'],
+  '/icon.svg': ['icon.svg', 'image/svg+xml'],
+  '/favicon.svg': ['icon.svg', 'image/svg+xml'],
+  '/apple-touch-icon.png': ['icon-180.png', 'image/png'],
+  '/icon-192.png': ['icon-192.png', 'image/png'],
+  '/icon-512.png': ['icon-512.png', 'image/png'],
+};
 
 function json(res, status, payload) {
   const body = JSON.stringify(payload);
@@ -162,6 +175,13 @@ export function startServer({
     try {
       if (req.method === 'GET' && (path === '/' || path === '/index.html')) return html(res, PAGE_FILE);
       if (req.method === 'GET' && (path === '/settings' || path === '/settings.html')) return html(res, SETTINGS_FILE);
+      if (req.method === 'GET' && (path === '/guide' || path === '/guide.html')) return html(res, GUIDE_FILE);
+      if (req.method === 'GET' && STATIC[path]) {
+        const [file, type] = STATIC[path];
+        res.writeHead(200, { 'content-type': type, 'cache-control': 'no-cache' });
+        res.end(readFileSync(join(UI_DIR, file)));
+        return;
+      }
 
       if (req.method === 'GET' && path === '/health') {
         return json(res, 200, { ok: true, service: 'basket', busy: q.current() !== null, queued: q.pending().length });

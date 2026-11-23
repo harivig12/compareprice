@@ -1,0 +1,644 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F4F7F2">
+<title>Basket · compareprice — how to use it on the website and on your phone</title>
+<meta name="description" content="How to use compareprice: paste a grocery list, find the cheapest basket across seven quick-commerce sites, on a computer or on your phone.">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="stylesheet" href="/theme.css">
+<style>
+  html { scroll-behavior: smooth; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 clamp(.75rem, 2.5vw, 1.5rem) 3rem; }
+  section[id] { scroll-margin-top: 5.5rem; }
+
+  /* ── hero */
+  .hero { text-align: center; padding: clamp(1.5rem, 5vw, 3.5rem) 0 .5rem; }
+  .eyebrow { display: inline-flex; align-items: center; gap: .45rem; font-size: .8rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--g-ink); background: rgba(255, 255, 255, .7); border: 1px solid var(--rim); border-radius: 999px; padding: .35rem .8rem; }
+  .hero h1 { font-size: clamp(2.5rem, 7vw, 5rem); line-height: .98; letter-spacing: -.05em; margin: 1rem auto .9rem; max-width: 13ch; font-weight: 800; }
+  .hero h1 span { background: linear-gradient(90deg, #0E7A4B, #2F9C6B 40%, #C2410C); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hero p.lede { color: var(--muted); font-size: clamp(1.02rem, 2vw, 1.2rem); max-width: 40rem; margin: 0 auto 1.4rem; }
+  .ctas { display: flex; flex-wrap: wrap; justify-content: center; gap: .6rem; }
+  .ctas .btn { min-height: 52px; padding: 0 1.4rem; font-size: 1rem; }
+
+  /* ── device scene (tilts with the pointer) */
+  .scene { perspective: 1400px; display: flex; justify-content: center; align-items: flex-end; margin: 2.5rem auto 2.75rem; max-width: 940px; min-height: 360px; overflow: clip; overflow-clip-margin: 40px; padding-bottom: 30px; }
+  .os code, .step code { overflow-wrap: anywhere; }
+  .lap { width: min(72%, 640px); border-radius: 20px; padding: 12px; transform: rotateX(var(--rx, 8deg)) rotateY(var(--ry, -10deg)); transition: transform .25s var(--ease); }
+  .ph { width: min(27%, 220px); margin-left: -7%; margin-bottom: -26px; border-radius: 36px; padding: 9px; transform: rotateX(var(--rx, 8deg)) rotateY(calc(var(--ry, -10deg) * -1.4)) translateZ(60px); transition: transform .25s var(--ease); }
+  .scr { border-radius: 10px; background: #fff; padding: .75rem; font-size: .74rem; text-align: left; }
+  .ph .scr { border-radius: 28px; min-height: 350px; font-size: .64rem; padding: .65rem; }
+  .scr .bar { display: flex; gap: 5px; align-items: center; margin-bottom: .55rem; }
+  .scr .bar i { width: 8px; height: 8px; border-radius: 50%; background: #D5DED8; }
+  .scr .bar span { margin-left: .35rem; font: 600 .7rem var(--mono); color: var(--faint); }
+  .scr .verd { display: grid; grid-template-columns: repeat(3, 1fr); gap: .3rem; margin-bottom: .45rem; }
+  .scr .verd div { background: #F2F6F3; border-radius: 9px; padding: .35rem .45rem; color: var(--faint); font-weight: 700; font-size: .62rem; text-transform: uppercase; letter-spacing: .05em; }
+  .scr .verd div.w { background: var(--ink); color: #7FE0AE; }
+  .scr .verd b { display: block; color: var(--ink); font-size: .85rem; text-transform: none; letter-spacing: 0; }
+  .scr .verd .w b { color: #fff; }
+  .scr table { width: 100%; border-collapse: separate; border-spacing: 3px; table-layout: fixed; }
+  .scr th { color: var(--faint); font-weight: 700; text-align: left; padding: .1rem .3rem; }
+  .scr td { background: #F2F6F3; border-radius: 7px; padding: .32rem .38rem; overflow-wrap: anywhere; font-weight: 700; }
+  .scr td.it { background: none; }
+  .scr td.it small { display: block; color: var(--faint); font-weight: 600; }
+  .scr td.b { background: var(--g); color: #fff; }
+  .scr td.s { background: var(--g2); }
+  .scr .r { display: grid; grid-template-columns: 50px 1fr auto; gap: .25rem; padding: .38rem; border-radius: 9px; margin-top: .22rem; align-items: center; background: #F2F6F3; }
+  .scr .r.b { background: var(--g); color: #fff; font-weight: 700; }
+  .scr .r.s { background: var(--g2); }
+  .scr .r span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .scr .pbar { display: grid; grid-template-columns: 1fr 1fr; gap: .3rem; margin-top: .6rem; }
+  .scr .pbar span { border-radius: 999px; min-height: 26px; display: grid; place-items: center; font-weight: 800; background: var(--g); color: #fff; }
+  .scr .pbar span.o { background: #fff; color: var(--ink); border: 1.5px solid var(--ink); }
+
+  /* ── track switcher */
+  .tracks { position: sticky; top: 4.9rem; z-index: 15; display: flex; justify-content: center; margin: 0 0 1.5rem; pointer-events: none; }
+  .tracks .seg { pointer-events: auto; display: flex; gap: 2px; padding: 4px; border-radius: 999px; }
+  .tracks a { min-height: 44px; padding: 0 1.1rem; border-radius: 999px; display: inline-flex; align-items: center; gap: .45rem; font-weight: 800; color: var(--muted); text-decoration: none; transition: background .15s, color .15s; }
+  .tracks a:hover { color: var(--ink); background: rgba(255, 255, 255, .7); }
+  .tracks a.on { background: var(--ink); color: #fff; }
+
+  /* ── quick start */
+  .quick { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-bottom: 3rem; }
+  .qc { border-radius: var(--radius); padding: 1.15rem 1.2rem; }
+  .qc h3 { margin: .1rem 0 .35rem; font-size: 1.1rem; letter-spacing: -.02em; display: flex; align-items: center; gap: .5rem; }
+  .qc p { margin: 0 0 .6rem; color: var(--muted); font-size: .93rem; }
+  pre.cmd { margin: 0; font: 600 .82rem/1.6 var(--mono); background: var(--ink); color: #D9F99D; border-radius: 14px; padding: .7rem .85rem; overflow-x: auto; white-space: pre; }
+  pre.cmd .c { color: #8FA89B; }
+
+  /* ── section heads */
+  .shead { display: flex; flex-wrap: wrap; align-items: end; gap: .5rem 1rem; margin: 0 0 1.1rem; }
+  .shead .bubble { width: 52px; height: 52px; border-radius: 18px; background: var(--ink); color: #7FE0AE; display: grid; place-items: center; }
+  .shead .bubble .ico { width: 26px; height: 26px; }
+  .shead h2 { font-size: clamp(2rem, 4.5vw, 3rem); line-height: 1; letter-spacing: -.045em; margin: 0; }
+  .shead p { flex-basis: 100%; margin: 0; color: var(--muted); font-size: 1.05rem; max-width: 46rem; }
+
+  /* ── steps */
+  .steps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-bottom: 3.25rem; }
+  .step { border-radius: var(--radius); padding: 1.1rem 1.15rem; display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: .9rem; align-content: start; }
+  .step.wide { grid-column: 1 / -1; }
+  .step .n { width: 46px; height: 46px; border-radius: 15px; background: var(--ink); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 1.05rem; }
+  .step h3 { margin: .2rem 0 .35rem; font-size: 1.15rem; letter-spacing: -.02em; }
+  .step p { margin: 0 0 .5rem; color: var(--muted); }
+  .step ul { margin: .2rem 0 .5rem; padding-left: 1.1rem; color: var(--muted); }
+  .step li { margin: .2rem 0; }
+  .step li b, .step p b { color: var(--ink); }
+  .mini { margin-top: .4rem; border-radius: 16px; background: #fff; border: 1px solid var(--line); padding: .65rem; font-size: .8rem; }
+  .mini.mono { font: 600 .82rem/1.65 var(--mono); }
+  .mini .hl { background: #FDF3C4; border-radius: 4px; padding: 0 .2rem; }
+  .mini .chips { display: flex; flex-wrap: wrap; gap: .3rem; }
+  .mini table { width: 100%; border-collapse: separate; border-spacing: 3px; table-layout: fixed; }
+  .mini th { color: var(--faint); font-weight: 700; text-align: left; padding: .1rem .3rem; font-size: .74rem; }
+  .mini td { background: #F2F6F3; border-radius: 8px; padding: .35rem .4rem; font-weight: 700; overflow-wrap: anywhere; }
+  .mini td.b { background: var(--g); color: #fff; } .mini td.s { background: var(--g2); } .mini td.it { background: none; }
+  .mini td.it small { display: block; font-weight: 600; color: var(--faint); }
+  .mini td.d { background: #F1F1EE; color: var(--faint); }
+  .badge { display: inline-block; font-size: .66rem; font-weight: 800; padding: .08rem .45rem; border-radius: 999px; }
+  .badge.low { background: #DCFCE7; color: #065F46; } .badge.at { background: #DBEAFE; color: #1E3A8A; } .badge.up { background: #EEF2EF; color: #334155; }
+  .verd3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .4rem; }
+  .verd3 div { background: #F2F6F3; border-radius: 12px; padding: .45rem .55rem; font-size: .7rem; font-weight: 800; color: var(--faint); text-transform: uppercase; letter-spacing: .05em; }
+  .verd3 div.w { background: var(--ink); color: #7FE0AE; }
+  .verd3 b { display: block; color: var(--ink); font-size: .95rem; text-transform: none; letter-spacing: 0; }
+  .verd3 .w b { color: #fff; }
+  .os { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; margin-top: .3rem; }
+  .os div { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: .6rem .7rem; font-size: .88rem; }
+  .os b { display: block; margin-bottom: .15rem; }
+
+  /* ── phone rail */
+  .rail { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+  .phone { border-radius: 38px; padding: 9px; }
+  .phone .scr { border-radius: 30px; min-height: 420px; font-size: .78rem; padding: .75rem; }
+  .phone .scr .field { background: #F2F6F3; border-radius: 12px; padding: .45rem .6rem; margin-bottom: .45rem; font-weight: 700; }
+  .phone .scr .field small { display: block; font-weight: 600; color: var(--faint); font-size: .66rem; }
+  .phone .scr .card { background: #F7FAF8; border: 1px solid var(--line); border-radius: 16px; padding: .55rem; margin-bottom: .45rem; }
+  .phone .scr .card h6 { margin: 0; font-size: .86rem; }
+  .phone .scr .card small { color: var(--faint); font-weight: 600; }
+  .phone .scr .otp { display: grid; grid-template-columns: repeat(6, 1fr); gap: .3rem; margin: .4rem 0; }
+  .phone .scr .otp span { aspect-ratio: 1 / 1.2; border: 1.5px solid var(--line); border-radius: 10px; display: grid; place-items: center; font: 700 .95rem var(--mono); background: #fff; }
+  .phone .scr .otp .f { border-color: var(--ink); }
+  .phone .scr .big { display: grid; place-items: center; min-height: 34px; border-radius: 999px; background: var(--ink); color: #fff; font-weight: 800; margin-top: .4rem; }
+  .phone .scr .menu { background: #fff; border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 10px 24px rgba(11, 27, 20, .12); padding: .3rem; margin-top: .4rem; }
+  .phone .scr .menu div { padding: .45rem .55rem; border-radius: 9px; font-weight: 700; }
+  .phone .scr .menu div.on { background: #EFFAF4; color: var(--g-ink); }
+  .cap { display: flex; gap: .6rem; margin-top: .75rem; align-items: flex-start; }
+  .cap .n { width: 34px; height: 34px; border-radius: 12px; background: var(--ink); color: #fff; display: grid; place-items: center; font-weight: 800; flex: none; }
+  .cap h3 { margin: .1rem 0 .15rem; font-size: 1.02rem; letter-spacing: -.01em; }
+  .cap p { margin: 0; color: var(--muted); font-size: .9rem; }
+  .phone-more { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin: 1rem 0 1rem; }
+
+  /* ── callouts */
+  .note { border-radius: 20px; padding: 1rem 1.15rem; display: flex; gap: .8rem; align-items: flex-start; margin-bottom: 3.25rem; }
+  .note.warn { background: rgba(255, 240, 228, .8); border-color: #F6C7A3; }
+  .note.warn .ico { color: #9A3412; }
+  .note .ico { width: 24px; height: 24px; margin-top: 2px; }
+  .note h3 { margin: 0 0 .2rem; font-size: 1.05rem; }
+  .note p { margin: 0; }
+
+  /* ── good to know */
+  .know { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-bottom: 3.25rem; }
+  .kc { border-radius: var(--radius); padding: 1.1rem 1.15rem; }
+  .kc.wide { grid-column: span 2; }
+  .kc h3 { display: flex; align-items: center; gap: .5rem; margin: 0 0 .4rem; font-size: 1.12rem; letter-spacing: -.02em; }
+  .kc h3 .ico { color: var(--g); }
+  .kc p { margin: 0 0 .5rem; color: var(--muted); }
+  .try { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; align-items: start; }
+  .try input { font: 700 1.1rem var(--mono); min-height: 52px; }
+  .try .out { border-radius: 16px; background: #fff; border: 1px solid var(--line); padding: .8rem .9rem; min-height: 112px; }
+  .try .out .canon { font: 800 1.35rem var(--mono); color: var(--g-ink); letter-spacing: -.01em; }
+  .try .out .meta { color: var(--muted); font-size: .9rem; margin-top: .25rem; }
+  .try .ex { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .6rem; }
+  .try .ex button { min-height: 36px; padding: 0 .8rem; font-size: .85rem; }
+
+  /* ── fix it */
+  .fix { border-radius: var(--radius); padding: .6rem; margin-bottom: 1rem; }
+  .fix table { width: 100%; border-collapse: collapse; font-size: .93rem; }
+  .fix th, .fix td { text-align: left; padding: .7rem .8rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .fix thead th { font-size: .76rem; text-transform: uppercase; letter-spacing: .07em; color: var(--faint); }
+  .fix tbody tr:last-child td, .fix tbody tr:last-child th { border-bottom: 0; }
+  .fix .k { font: 700 .82rem var(--mono); color: var(--bad); background: var(--bad-bg); border-radius: 6px; padding: .1rem .4rem; white-space: nowrap; }
+  .faq { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; margin-bottom: 3rem; }
+  .faq details { border-radius: 18px; padding: .2rem 1rem; }
+  .faq summary { cursor: pointer; font-weight: 800; min-height: 52px; display: flex; align-items: center; gap: .5rem; }
+  .faq details p, .faq details pre { margin: 0 0 .9rem; color: var(--muted); }
+
+  .cheat { border-radius: var(--radius); padding: 1rem; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; margin-bottom: 2.5rem; }
+  .cheat div { display: grid; gap: .3rem; }
+  .cheat span { color: var(--muted); font-size: .88rem; }
+
+  footer { text-align: center; color: var(--faint); font-size: .88rem; padding: 1rem 0 0; }
+
+  @media (max-width: 980px) {
+    .rail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .know { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 760px) {
+    .quick, .steps, .know, .faq, .cheat, .phone-more, .try, .os { grid-template-columns: 1fr; }
+    .step { grid-template-columns: 1fr; gap: .6rem; }
+    .verd3 { grid-template-columns: 1fr; }
+    .mini table { font-size: .7rem; }
+    .kc.wide { grid-column: auto; }
+    .scene { min-height: 230px; margin: 1.75rem auto 2rem; }
+    .lap { width: 76%; } .ph { width: 32%; }
+    .ph .scr { min-height: 240px; font-size: .5rem; }
+    .lap .scr { font-size: .5rem; padding: .45rem; }
+    .tracks { top: 4.4rem; }
+    .tracks a span { display: none; }
+    .rail { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(240px, 80%); overflow-x: auto; scroll-snap-type: x mandatory; padding: .25rem .1rem 1rem; }
+    .rail > div { scroll-snap-align: start; }
+    .fix thead { display: none; }
+    .fix table, .fix tbody, .fix tr, .fix th, .fix td { display: block; width: 100%; }
+    .fix tr { border-bottom: 1px solid var(--line); padding: .5rem 0; }
+    .fix th, .fix td { border: 0; padding: .25rem .6rem; }
+  }
+  @media print {
+    .blobs, .topnav, .tracks, .scene, .ctas { display: none !important; }
+    body { background: #fff; }
+    .glass, .surface { box-shadow: none !important; background: #fff !important; border: 1px solid #ddd !important; }
+    .rail { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="blobs" aria-hidden="true"><i></i><i></i><i></i></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-basket" viewBox="0 0 24 24"><path d="m15 11-1 9"/><path d="m19 11-4-7"/><path d="M2 11h20"/><path d="m3.5 11 1.6 7.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6l1.7-7.4"/><path d="M4.5 15.5h15"/><path d="m5 11 4-7"/><path d="m9 11 1 9"/></symbol>
+  <symbol id="i-scale" viewBox="0 0 24 24"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></symbol>
+  <symbol id="i-laptop" viewBox="0 0 24 24"><path d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-tag" viewBox="0 0 24 24"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="m18 14 4 4-4 4"/><path d="m18 2 4 4-4 4"/><path d="M2 18h1.973a4 4 0 0 0 3.3-1.7l5.454-8.6a4 4 0 0 1 3.3-1.7H22"/><path d="M2 6h1.972a4 4 0 0 1 3.6 2.2"/><path d="M22 18h-6.041a4 4 0 0 1-3.3-1.8l-.359-.45"/></symbol>
+  <symbol id="i-truck" viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></symbol>
+  <symbol id="i-terminal" viewBox="0 0 24 24"><path d="m4 17 6-6-6-6"/><path d="M12 19h8"/></symbol>
+  <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+</svg>
+
+<div class="wrap">
+  <header class="topnav glass">
+    <a class="brand" href="/"><span class="mark"><svg class="ico"><use href="#i-basket"/></svg></span>compareprice</a>
+    <nav aria-label="Main">
+      <a href="/"><svg class="ico"><use href="#i-scale"/></svg><span>Compare</span></a>
+      <a href="/settings"><svg class="ico"><use href="#i-gear"/></svg><span>Settings</span></a>
+      <a href="/guide" aria-current="page"><svg class="ico"><use href="#i-book"/></svg><span>Guide</span></a>
+    </nav>
+  </header>
+
+  <!-- ═════════════ hero ═════════════ -->
+  <section class="hero" aria-labelledby="h-hero">
+    <span class="eyebrow"><svg class="ico" style="width:16px;height:16px"><use href="#i-book"/></svg>How to use compareprice</span>
+    <h1 id="h-hero">Groceries, <span>priced everywhere</span> at once.</h1>
+    <p class="lede">Write your list once. compareprice checks Instamart, BigBasket, Zepto, Blinkit, KPN Fresh, JioMart and Flipkart Minutes at your address. It tells you where the whole basket costs least, and where each item does. Use it on the computer it runs on, or on your phone over home Wi-Fi.</p>
+    <div class="ctas">
+      <a class="btn" href="/">Open the app <svg class="ico"><use href="#i-arrow"/></svg></a>
+      <a class="btn secondary" href="#web"><svg class="ico"><use href="#i-laptop"/></svg>Website steps</a>
+      <a class="btn secondary" href="#phone"><svg class="ico"><use href="#i-phone"/></svg>Phone steps</a>
+    </div>
+  </section>
+
+  <div class="scene" id="scene" aria-hidden="true">
+    <div class="lap glass"><div class="scr">
+      <div class="bar"><i></i><i></i><i></i><span>localhost:7777</span></div>
+      <div class="verd"><div class="w">Cheapest basket<b>JioMart ₹495</b></div><div>Runner-up<b>KPN ₹516</b></div><div>Best mix<b>₹487</b></div></div>
+      <table><thead><tr><th>Item</th><th>KPN</th><th>JioMart</th><th>BigBasket</th><th>Blinkit</th></tr></thead><tbody>
+        <tr><td class="it">toor dal 1kg</td><td class="s">₹168</td><td class="b">₹159</td><td>₹172</td><td>₹179</td></tr>
+        <tr><td class="it">raisins 500g<small>you typed: kismis</small></td><td class="s">₹249</td><td class="b">₹229</td><td>₹251</td><td>₹267</td></tr>
+        <tr><td class="it">onion 1kg</td><td class="b">₹38</td><td class="s">₹42</td><td>₹45</td><td>₹49</td></tr>
+        <tr><td class="it">amul butter 100g</td><td class="b">₹61</td><td class="s">₹65</td><td>₹66</td><td>₹66</td></tr></tbody></table>
+    </div></div>
+    <div class="ph glass"><div class="scr">
+      <b>raisins 500g</b><div style="color:var(--faint);font-weight:600">you typed: kismis</div>
+      <div class="r b"><b>JioMart</b><span>Indian Long Kishmish</span><b>₹229</b></div>
+      <div class="r s"><b>KPN</b><span>ProV Raisin</span><b>₹249</b></div>
+      <div class="r"><b>Blinkit</b><span>Whole Farm</span><b>₹267</b></div>
+      <b style="display:block;margin-top:.55rem">onion 1kg</b>
+      <div class="r b"><b>KPN</b><span>Onion</span><b>₹38</b></div>
+      <div class="r s"><b>JioMart</b><span>Onion</span><b>₹42</b></div>
+      <div class="pbar"><span>Find</span><span class="o">Fresh</span></div>
+    </div></div>
+  </div>
+
+  <nav class="tracks" aria-label="Guide sections">
+    <div class="seg glass">
+      <a href="#start" data-sec="start"><svg class="ico"><use href="#i-box"/></svg><span>Start</span></a>
+      <a href="#web" data-sec="web"><svg class="ico"><use href="#i-laptop"/></svg><span>Website</span></a>
+      <a href="#phone" data-sec="phone"><svg class="ico"><use href="#i-phone"/></svg><span>Phone</span></a>
+      <a href="#know" data-sec="know"><svg class="ico"><use href="#i-tag"/></svg><span>Good to know</span></a>
+      <a href="#fix" data-sec="fix"><svg class="ico"><use href="#i-wrench"/></svg><span>Fix it</span></a>
+    </div>
+  </nav>
+
+  <!-- ═════════════ start ═════════════ -->
+  <section id="start" aria-labelledby="h-start">
+    <div class="shead">
+      <span class="bubble"><svg class="ico"><use href="#i-box"/></svg></span>
+      <h2 id="h-start">Start the service</h2>
+      <p>compareprice runs on one computer, which can be a laptop, a desktop or a small home server. It keeps a browser warm for each site, checks your list on a schedule, and serves the page you use. Do this once.</p>
+    </div>
+    <div class="quick">
+      <div class="qc surface">
+        <h3>With Docker <span class="pill">recommended</span></h3>
+        <p>It stays on and starts again with the machine.</p>
+<pre class="cmd"><span class="c"># in the compareprice folder</span>
+mkdir -p ~/basket-data
+docker compose up -d --build</pre>
+      </div>
+      <div class="qc surface">
+        <h3>Without Docker</h3>
+        <p>You need Node 22.13 or newer and Google Chrome. If Chrome isn't on your PATH, set <code>CHROME_PATH</code>.</p>
+<pre class="cmd">npm install
+node src/cli.js serve</pre>
+      </div>
+      <div class="qc surface">
+        <h3>Then open it</h3>
+        <p>In a browser on the same computer:</p>
+<pre class="cmd">http://localhost:7777</pre>
+        <p style="margin:.6rem 0 0">Settings are at <code>/settings</code>, and this guide is at <code>/guide</code>.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════════ website ═════════════ -->
+  <section id="web" aria-labelledby="h-web">
+    <div class="shead">
+      <span class="bubble"><svg class="ico"><use href="#i-laptop"/></svg></span>
+      <h2 id="h-web">On the website</h2>
+      <p>This is the full view on a computer: a table with items as rows and sites as columns. It works best at 1280 px or wider. With six or more sites, every column still fits without scrolling sideways.</p>
+    </div>
+    <div class="steps">
+      <article class="step surface">
+        <span class="n">1</span>
+        <div>
+          <h3>Write your list</h3>
+          <p>Open <b>Your list</b> and type one item per line.</p>
+          <ul>
+            <li>Put a quantity in front: <code>2x</code>, <code>2 x</code> or <code>2</code>.</li>
+            <li>A pack size such as <code>500g</code>, <code>1kg</code> or <code>1L</code> is optional.</li>
+            <li>Blank lines and lines starting with <code>#</code> are ignored.</li>
+          </ul>
+          <div class="mini mono">2x toor dal 1kg<br>amul butter 100g<br><span class="hl">kismis 500g</span><br># weekend<br>onion 1kg</div>
+        </div>
+      </article>
+      <article class="step surface">
+        <span class="n">2</span>
+        <div>
+          <h3>Tick the sites</h3>
+          <p>Pick which sites to compare. Your defaults come from <b>Settings</b>. Sites marked <b>needs login</b> work once you've signed in (step 8).</p>
+          <div class="mini"><div class="chips"><span class="chip ok">✓ JioMart</span><span class="chip ok">✓ KPN</span><span class="chip ok">✓ BigBasket</span><span class="chip ok">✓ Blinkit</span><span class="chip">Zepto</span><span class="chip">Instamart</span></div></div>
+        </div>
+      </article>
+      <article class="step surface">
+        <span class="n">3</span>
+        <div>
+          <h3>Press Find the cheapest</h3>
+          <p>You get an answer at once from <b>saved prices</b>, and no site is contacted. Every price shows when it was saved (<b>as of 22/11/26</b>). An item with nothing saved yet says <b>no saved price</b>.</p>
+          <div class="mini"><div class="chips"><span class="chip">Saved prices from 21/11/26 – 23/11/26. No site was contacted.</span></div></div>
+        </div>
+      </article>
+      <article class="step surface">
+        <span class="n">4</span>
+        <div>
+          <h3>Press Get fresh prices</h3>
+          <p>This checks the sites live. Each site gets a progress chip. If a site was searched moments ago, or is resting after a block, the page counts down (<b>wait 3s…</b>) and then starts by itself. <b>Stop</b> cancels the run.</p>
+          <div class="mini"><div class="chips"><span class="chip ok">JioMart · ✓ done</span><span class="chip run">BigBasket · 3/5 · moong dal</span><span class="chip err">Zepto · ✖ session</span></div></div>
+        </div>
+      </article>
+      <article class="step surface wide">
+        <span class="n">5</span>
+        <div>
+          <h3>Read the answer</h3>
+          <p>Three boxes at the top give the verdict. Below them, the table shows every item at every site.</p>
+          <div class="verd3" style="margin:.5rem 0"><div class="w">Cheapest basket<b>JioMart ₹495</b></div><div>Runner-up<b>KPN ₹516</b></div><div>Best per item (mix)<b>₹487 · 2 sites</b></div></div>
+          <div class="mini">
+            <table><thead><tr><th>Item</th><th>KPN</th><th>JioMart</th><th>BigBasket</th><th>Blinkit</th></tr></thead><tbody>
+              <tr><td class="it">amul butter 100g</td><td class="b">₹61 <span class="badge low">new low</span></td><td class="s">₹65</td><td>₹66 <span class="badge at">at lowest</span></td><td>₹66 <span class="badge up">low ₹60/100g</span></td></tr>
+              <tr><td class="it">raisins 500g<small>you typed: kismis</small></td><td class="s">₹249</td><td class="b">₹229</td><td>₹251</td><td class="d">₹480 for 1 kg · not counted</td></tr>
+            </tbody></table>
+          </div>
+          <ul style="margin-top:.6rem">
+            <li><b>Dark green</b> is the cheapest price for that item, and <b>light green</b> is second.</li>
+            <li>Badges compare the price with the lowest each site has ever shown: <b>new low</b>, <b>at lowest</b>, or the low and its date.</li>
+            <li><b>Greyed</b> cells are shown but not counted. That covers a bigger pack than you asked for, a weak name match (marked ?), or a price far from what other sites charge (<b>price looks wrong, left out</b>).</li>
+            <li>Totals are for goods only. Delivery and handling fees are added only if you set them up (see <a href="#know">Good to know</a>).</li>
+          </ul>
+        </div>
+      </article>
+      <article class="step surface">
+        <span class="n">6</span>
+        <div>
+          <h3>Check a saved price</h3>
+          <p>Start typing in the search box at the top, such as <b>onion</b> or <b>kis</b>, and pick a suggestion. You'll see what each site last charged per 100 g, 100 ml or piece, with dates and the lowest rate seen.</p>
+          <div class="mini mono">⌕ kis → <span class="hl">raisins 500g</span> · 3 sites · 23/11/26</div>
+        </div>
+      </article>
+      <article class="step surface">
+        <span class="n">7</span>
+        <div>
+          <h3>See recent runs</h3>
+          <p><b>Recent runs</b> at the bottom lists the last ten jobs, whether started by you, a schedule or the sweep, with their status and errors. You can follow a scheduled run there as it happens.</p>
+        </div>
+      </article>
+      <article class="step surface">
+        <span class="n">8</span>
+        <div>
+          <h3>Sign in, only where needed</h3>
+          <p>Every site works as a guest except <b>Zepto</b>, <b>Milkbasket</b> and <b>Amazon</b>. Press <b>Sign in</b>, pick the site, enter your mobile number and type the OTP it sends. The session stays in the service's browser, so you won't need another OTP until the site signs you out.</p>
+        </div>
+      </article>
+      <article class="step surface">
+        <span class="n">9</span>
+        <div>
+          <h3>Set it and forget it</h3>
+          <p>In <a href="/settings">Settings</a>, set your <b>delivery location</b>, <b>default sites</b>, a <b>default list</b> and <b>schedules</b>. Schedules use 24-hour times, as many per day as you like, and each can have its own sites. Scheduled runs keep the saved prices fresh, so <b>Find the cheapest</b> is always recent.</p>
+          <div class="mini"><div class="chips"><span class="chip">daily-check</span><span class="chip ok">07:00</span><span class="chip ok">09:00</span><span class="chip ok">12:00</span></div></div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ═════════════ phone ═════════════ -->
+  <section id="phone" aria-labelledby="h-phone">
+    <div class="shead">
+      <span class="bubble"><svg class="ico"><use href="#i-phone"/></svg></span>
+      <h2 id="h-phone">On your phone</h2>
+      <p>It's the same app and the same saved prices, just laid out for a small screen. Each item becomes a card with its sites sorted cheapest first. The two main buttons sit at the bottom, within reach of your thumb. Your phone must be on the same Wi-Fi as the computer running the service.</p>
+    </div>
+
+    <div class="phone-more">
+      <article class="step surface">
+        <span class="n">1</span>
+        <div>
+          <h3>Let the phone reach the service</h3>
+          <p>By default the service only answers on the computer it runs on. To open it to your home network, do one of these:</p>
+          <div class="os">
+            <div><b>Without Docker</b><code>node src/cli.js serve --host=0.0.0.0</code></div>
+            <div><b>With Docker</b>In <code>docker-compose.yml</code>, change <code>"127.0.0.1:7777:7777"</code> to <code>"7777:7777"</code>, then run <code>docker compose up -d</code>.</div>
+          </div>
+          <p style="margin-top:.6rem">If Windows asks about the firewall, allow access on <b>private</b> networks only.</p>
+        </div>
+      </article>
+      <article class="step surface">
+        <span class="n">2</span>
+        <div>
+          <h3>Find the computer's address</h3>
+          <p>Look for an address that starts with <b>192.168.</b> or <b>10.</b>:</p>
+          <div class="os">
+            <div><b>Windows</b><code>ipconfig</code> · "IPv4 Address"</div>
+            <div><b>macOS</b><code>ipconfig getifaddr en0</code></div>
+            <div><b>Linux</b><code>hostname -I</code></div>
+            <div><b>On the phone</b><code>http://192.168.1.20:7777</code></div>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <div class="rail" role="list" aria-label="Phone screens">
+      <div role="listitem">
+        <div class="phone glass"><div class="scr">
+          <div class="field"><small>Address bar</small>192.168.1.20:7777</div>
+          <div class="menu"><div>New tab</div><div>Bookmarks</div><div class="on">Add to Home screen</div><div>Share…</div></div>
+          <div class="card" style="display:flex;gap:.5rem;align-items:center;margin-top:.6rem"><span style="width:40px;height:40px;border-radius:12px;background:var(--ink);color:#7FE0AE;display:grid;place-items:center"><svg class="ico"><use href="#i-basket"/></svg></span><b>compareprice</b></div>
+        </div></div>
+        <div class="cap"><span class="n">3</span><div><h3>Pin it to your home screen</h3><p>Android (Chrome): tap the <b>⋮</b> menu, then <b>Add to Home screen</b>. iPhone (Safari): tap <b>Share</b>, then <b>Add to Home Screen</b>. After that it opens with one tap.</p></div></div>
+      </div>
+      <div role="listitem">
+        <div class="phone glass"><div class="scr">
+          <div class="card"><h6>Your list · 4 items · 4 sites</h6><small>Tap to edit</small></div>
+          <div class="field" style="font-family:var(--mono);font-weight:600">2x toor dal 1kg<br>kismis 500g<br>onion 1kg</div>
+          <div style="margin-top:3.2rem"></div>
+          <div class="pbar" style="display:grid;grid-template-columns:1fr 1fr;gap:.3rem"><span class="big" style="background:var(--g)">Find the cheapest</span><span class="big" style="background:#fff;color:var(--ink);border:1.5px solid var(--ink)">Get fresh</span></div>
+        </div></div>
+        <div class="cap"><span class="n">4</span><div><h3>Edit the list, tap Find</h3><p>Tap <b>Your list</b> to open it. Your keyboard's voice typing works well for long lists. After you tap Find, the list folds away so the answer has room.</p></div></div>
+      </div>
+      <div role="listitem">
+        <div class="phone glass"><div class="scr">
+          <div class="card" style="background:var(--ink);color:#fff;border-color:var(--ink)"><small style="color:#7FE0AE">CHEAPEST BASKET</small><h6 style="font-size:1rem">JioMart ₹495</h6></div>
+          <div class="card"><h6>raisins 500g</h6><small>you typed: kismis</small>
+            <div class="r b"><b>JioMart</b><span>Indian Long Kishmish</span><b>₹229</b></div>
+            <div class="r s"><b>KPN</b><span>ProV Raisin</span><b>₹249</b></div>
+            <div class="r"><b>Blinkit</b><span>Whole Farm</span><b>₹267</b></div></div>
+          <div class="card"><h6>onion 1kg</h6><div class="r b"><b>KPN</b><span>Onion</span><b>₹38</b></div></div>
+        </div></div>
+        <div class="cap"><span class="n">5</span><div><h3>One card per item</h3><p>Sites are listed cheapest first, in the same greens as the table. Scroll down for the next item. The verdict boxes stack at the top.</p></div></div>
+      </div>
+      <div role="listitem">
+        <div class="phone glass"><div class="scr">
+          <div class="card"><h6>Sign in to Zepto</h6><small>Kept in the service's browser</small></div>
+          <div class="field"><small>Mobile number</small>98••••••21</div>
+          <div class="otp" aria-hidden="true"><span class="f">4</span><span class="f">8</span><span class="f">1</span><span></span><span></span><span></span></div>
+          <div class="big">Verify</div>
+        </div></div>
+        <div class="cap"><span class="n">6</span><div><h3>Sign in with an OTP</h3><p>Tap <b>Sign in</b> at the top. The OTP box takes your phone's autofill, so the code often fills itself in.</p></div></div>
+      </div>
+    </div>
+
+    <div class="note warn glass" role="note">
+      <svg class="ico"><use href="#i-alert"/></svg>
+      <div><h3>Keep it on your home Wi-Fi</h3><p>The page has no login. Once it listens on <b>0.0.0.0</b> or port <b>7777:7777</b>, anyone on the same network can run comparisons and change your settings. Never forward port 7777 to the internet or use it on public Wi-Fi. To lock it down again, go back to the default <code>127.0.0.1</code>.</p></div>
+    </div>
+  </section>
+
+  <!-- ═════════════ good to know ═════════════ -->
+  <section id="know" aria-labelledby="h-know">
+    <div class="shead">
+      <span class="bubble"><svg class="ico"><use href="#i-tag"/></svg></span>
+      <h2 id="h-know">Good to know</h2>
+      <p>A few things that make the results more useful once you know how they work.</p>
+    </div>
+    <div class="know">
+      <div class="kc surface wide">
+        <h3><svg class="ico"><use href="#i-tag"/></svg>One product, many names</h3>
+        <p>The catalogue has about 230 products, each with its English, Hindi, Tamil, Telugu and Kannada names and common misspellings. Any of them is searched and saved under one name, so <b>kismis</b>, <b>kishmish</b> and <b>raisins</b> never split into separate results. Try it:</p>
+        <div class="try">
+          <div>
+            <label for="tryq">A grocery word, the way you'd say it</label>
+            <input id="tryq" type="text" value="kismis 500g" autocomplete="off" spellcheck="false" style="margin-top:.35rem">
+            <div class="ex" aria-label="Examples">
+              <button type="button" class="secondary">gud</button><button type="button" class="secondary">vellam 1kg</button><button type="button" class="secondary">arhar dal</button><button type="button" class="secondary">chawal 5kg</button><button type="button" class="secondary">harpic</button><button type="button" class="secondary">good day cashew</button>
+            </div>
+          </div>
+          <div class="out" id="tryout" aria-live="polite"><div class="canon">raisins 500g</div><div class="meta">Raisins · dry-fruits</div></div>
+        </div>
+      </div>
+      <div class="kc surface">
+        <h3><svg class="ico"><use href="#i-clock"/></svg>Saved vs fresh</h3>
+        <p><b>Find the cheapest</b> reads saved prices instantly and shows each one's date. <b>Get fresh prices</b> checks the sites and adds what it finds to the history.</p>
+        <p>Scheduled runs and the sweep keep the saved prices up to date without you doing anything.</p>
+      </div>
+      <div class="kc surface">
+        <h3><svg class="ico"><use href="#i-tag"/></svg>Brand or any brand</h3>
+        <p><b>moong dal</b> matches any brand of moong dal, but never moong dal namkeen. <b>amul butter</b> only matches Amul. A brand you name is never swapped for another.</p>
+      </div>
+      <div class="kc surface">
+        <h3><svg class="ico"><use href="#i-shuffle"/></svg>Catalogue sweep</h3>
+        <p>In the background, the service prices 2–4 catalogue products at a time at random 5–20 minute gaps, starting with ones that have no saved price. That way new searches often have an answer already. You can change it or turn it off in <a href="/settings#s-sweep">Settings</a>.</p>
+      </div>
+      <div class="kc surface">
+        <h3><svg class="ico"><use href="#i-truck"/></svg>Delivery fees</h3>
+        <p>Sites only show their fees at checkout, so totals are for goods only. If you know a site's fees, add them once:</p>
+        <pre class="cmd">basket fees --set blinkit \
+  --delivery 25 --handling 9 \
+  --free-above 199</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════════ fix it ═════════════ -->
+  <section id="fix" aria-labelledby="h-fix">
+    <div class="shead">
+      <span class="bubble"><svg class="ico"><use href="#i-wrench"/></svg></span>
+      <h2 id="h-fix">Fix it</h2>
+      <p>When a site fails, the page says why. It names one of these kinds and includes the site's own message, never just "offline".</p>
+    </div>
+    <div class="fix surface">
+      <table>
+        <thead><tr><th scope="col">Kind</th><th scope="col">What it means</th><th scope="col">What to do</th></tr></thead>
+        <tbody>
+          <tr><th scope="row"><span class="k">blocked</span></th><td>The site hit a bot wall or rate limit (403 or 429).</td><td>Wait. The site rests for a while before it's searched again. Keep your schedule to once or twice a day.</td></tr>
+          <tr><th scope="row"><span class="k">session</span></th><td>The site's guest session expired, or it wants you to sign in.</td><td>It refreshes itself and retries once. For Zepto, use <b>Sign in</b>.</td></tr>
+          <tr><th scope="row"><span class="k">unserviceable</span></th><td>The site doesn't deliver to your address.</td><td>Check the location in <a href="/settings#s-loc">Settings</a>, or untick that site.</td></tr>
+          <tr><th scope="row"><span class="k">timeout</span></th><td>The site took too long to answer.</td><td>Try <b>Get fresh prices</b> again later.</td></tr>
+          <tr><th scope="row"><span class="k">parse</span></th><td>The site changed what it sends back.</td><td>This needs a code fix. Note the message and report it.</td></tr>
+          <tr><th scope="row"><span class="k">not_found</span></th><td>The site answered but has nothing matching.</td><td>Try a more general name, such as "moong dal" instead of "organic split moong dal".</td></tr>
+          <tr><th scope="row"><span class="k">browser</span></th><td>The headless Chrome or its tab stopped.</td><td>Run again. If it keeps happening, restart the service.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="faq">
+      <details class="glass"><summary><svg class="ico"><use href="#i-chev"/></svg>"Could not start Chrome"</summary><p>Chrome is installed but the service didn't find it. Set <code>CHROME_PATH</code> to it, for example on Windows: <code>setx CHROME_PATH "C:\Program Files\Google\Chrome\Application\chrome.exe"</code>. Then restart the service.</p></details>
+      <details class="glass"><summary><svg class="ico"><use href="#i-chev"/></svg>The phone can't open the page</summary><p>Check that the phone and computer are on the same Wi-Fi, that the service listens on <code>0.0.0.0</code> (or Docker publishes <code>7777:7777</code>), and that the firewall allows port 7777 on private networks.</p></details>
+      <details class="glass"><summary><svg class="ico"><use href="#i-chev"/></svg>Everything says "no saved price"</summary><p>Nothing has been checked for those items yet. Press <b>Get fresh prices</b> once, or wait for the next scheduled run or sweep.</p></details>
+      <details class="glass"><summary><svg class="ico"><use href="#i-chev"/></svg>A run sits in "queued"</summary><p>Only one job runs at a time, so it's waiting for the one ahead of it. <b>Recent runs</b> shows what's running, and <b>Stop</b> cancels it.</p></details>
+      <details class="glass"><summary><svg class="ico"><use href="#i-chev"/></svg>Did today's scheduled runs happen?</summary><p>Run <code>node scripts/verify-runs.js</code>. Every finished run is also written to <code>results/runs.jsonl</code> in the data folder.</p></details>
+      <details class="glass"><summary><svg class="ico"><use href="#i-chev"/></svg>A price looks wrong</summary><p>Prices far from what other sites charge are left out automatically and listed under <b>Price check</b>. A cell marked <b>?</b> is a weak name match, so check the product name in it.</p></details>
+    </div>
+
+    <div class="shead" style="margin-top:.5rem">
+      <span class="bubble"><svg class="ico"><use href="#i-terminal"/></svg></span>
+      <h2>In the terminal</h2>
+      <p>Everything the page does, you can also do from the command line. <code>basket</code> is short for <code>node src/cli.js</code>.</p>
+    </div>
+    <div class="cheat surface">
+      <div><code>basket search "amul butter"</code><span>One item across all sites</span></div>
+      <div><code>basket basket.txt --ui</code><span>Compare a list file in a boxed terminal view</span></div>
+      <div><code>basket "toor dal 1kg" --cached</code><span>From saved prices only, without contacting any site</span></div>
+      <div><code>basket history "toor dal 1kg"</code><span>The lowest price each site has shown, with dates</span></div>
+      <div><code>basket catalog "kismis"</code><span>What a word resolves to (kismis → raisins)</span></div>
+      <div><code>basket run-now</code><span>Queue your default list on the running service</span></div>
+      <div><code>basket sweep-now</code><span>Queue one catalogue sweep batch now</span></div>
+      <div><code>basket serve --host=0.0.0.0</code><span>Start the service and let your phone reach it</span></div>
+    </div>
+  </section>
+
+  <footer>compareprice · totals are goods only unless you add fees · <a href="/">Open the app</a></footer>
+</div>
+
+<script>
+(() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // The device scene tilts with the pointer.
+  const scene = document.getElementById('scene');
+  if (!reduce && scene && matchMedia('(pointer: fine)').matches) {
+    document.addEventListener('pointermove', (e) => {
+      const x = e.clientX / innerWidth - 0.5, y = e.clientY / innerHeight - 0.5;
+      scene.style.setProperty('--ry', `${(-10 + x * 14).toFixed(1)}deg`);
+      scene.style.setProperty('--rx', `${(8 - y * 10).toFixed(1)}deg`);
+    }, { passive: true });
+  }
+
+  // Highlight the section in view in the sticky switcher.
+  const links = [...document.querySelectorAll('.tracks a')];
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) if (e.isIntersecting) links.forEach((a) => a.classList.toggle('on', a.dataset.sec === e.target.id));
+  }, { rootMargin: '-40% 0px -55% 0px' });
+  for (const a of links) { const s = document.getElementById(a.dataset.sec); if (s) io.observe(s); }
+
+  // "Try it": the real catalogue when served by the app (/api/catalog), a small sample when opened from disk.
+  const SAMPLE = {
+    raisins: ['Raisins', 'dry-fruits', 'kismis khismis kishmish kishmis dry grapes'],
+    jaggery: ['Jaggery', 'sweetener', 'gud gur ghood ghud jagrey jagreey vellam bellam bella'],
+    'toor dal': ['Toor dal', 'pulses', 'arhar dal|tuvar dal|tur dal|thuvaram paruppu|kandi pappu'],
+    rice: ['Rice', 'staples', 'chawal arisi chaval akki biyyam'],
+  };
+  const inp = document.getElementById('tryq'), out = document.getElementById('tryout');
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const paint = (canon, name, cat, note) => { out.innerHTML = `<div class="canon">${esc(canon)}</div><div class="meta">${name ? `${esc(name)} · ${esc(cat)}` : ''}${note ? `${name ? '<br>' : ''}${esc(note)}` : ''}</div>`; };
+  function local(v) {
+    const pack = (v.match(/\s+\d+(?:\.\d+)?\s*(?:kg|g|l|ml)$/i) || [''])[0];
+    const core = v.slice(0, v.length - pack.length).trim().toLowerCase();
+    for (const [canon, [name, cat, names]] of Object.entries(SAMPLE)) {
+      const all = [canon, ...names.split(names.includes('|') ? '|' : ' ')];
+      if (all.includes(core)) return paint(canon + pack, name, cat);
+    }
+    paint(v, '', '', 'Not in this sample. Open the guide from the app to try the full catalogue.');
+  }
+  let timer;
+  async function run() {
+    const v = inp.value.trim();
+    if (!v) { out.innerHTML = ''; return; }
+    try {
+      const res = await fetch('/api/catalog?q=' + encodeURIComponent(v));
+      if (!res.ok) throw new Error();
+      const b = await res.json();
+      if (!b.product) return paint(b.canonical, '', '', 'Not a catalogue product, so it is searched as typed.');
+      const how = b.product.matchedBy === 'brand' ? `brand "${b.product.brand}" · searched as typed`
+        : b.product.matchedBy === 'sub' ? 'a narrower name · searched as typed' : b.canonical !== v.toLowerCase() ? `you typed "${v}"` : 'already the canonical name';
+      paint(b.canonical, b.product.name, b.product.category, how);
+    } catch { local(v); }
+  }
+  inp.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(run, 150); });
+  document.querySelectorAll('.try .ex button').forEach((b) => b.addEventListener('click', () => { inp.value = b.textContent; run(); }));
+  run();
+})();
+</script>
+</body>
+</html>

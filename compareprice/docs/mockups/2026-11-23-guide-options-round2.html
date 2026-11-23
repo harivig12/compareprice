@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>compareprice · how-to guide · round 2 options (Awwwards app-style)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@500;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ───────────── Review sheet ───────────── */
+*{box-sizing:border-box}
+body{margin:0;background:#E9EDF5;color:#1f2937;font:16px/1.5 'Segoe UI',system-ui,sans-serif}
+.sheet{max-width:1240px;margin:0 auto;padding:2rem 1.25rem}
+.sheet h1{margin:0 0 .25rem;font-size:1.75rem}
+.sheet p{margin:.25rem 0 .75rem;max-width:900px}
+.jump{display:flex;flex-wrap:wrap;gap:.5rem;margin:.75rem 0}
+.jump a{background:#fff;border:1px solid #cbd5e1;border-radius:999px;padding:0 .9rem;color:#1e3a8a;text-decoration:none;font-weight:600;min-height:44px;display:inline-flex;align-items:center}
+.jump a:hover{background:#eef2ff}
+.note{background:#fff;border-left:4px solid #2563EB;padding:.75rem 1rem;border-radius:.4rem;margin:.75rem 0;font-size:.95rem;max-width:900px}
+.note ul{margin:.3rem 0 0;padding-left:1.2rem}
+.opt{max-width:1240px;margin:0 auto 3rem;padding:0 1.25rem}
+.opt-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:.25rem 1rem;border-top:2px solid #cbd5e1;padding:1.5rem 0 .75rem}
+.opt-head h2{margin:0;font-size:1.35rem}
+.opt-head .insp{color:#475569;font-size:.95rem;flex-basis:100%}
+.opt-head .tag{font-size:.75rem;font-weight:800;padding:.1rem .55rem;border-radius:999px;background:#1e3a8a;color:#fff}
+.sr{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+:focus-visible{outline:3px solid #2563EB;outline-offset:2px}
+.ico{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.cmp{width:100%;border-collapse:collapse;background:#fff;border-radius:.6rem;overflow:hidden;font-size:.95rem}
+.cmp th,.cmp td{text-align:left;padding:.6rem .75rem;border-bottom:1px solid #e2e8f0;vertical-align:top}
+.cmp th{background:#f1f5f9}
+@media (max-width:700px){
+  .cmp thead{display:none}.cmp,.cmp tbody,.cmp tr,.cmp th,.cmp td{display:block;width:100%}
+  .cmp tr{border-bottom:2px solid #cbd5e1}.cmp td{border-bottom:0;padding-top:.2rem}
+  .cmp td::before{content:attr(data-label);display:block;font-weight:700;font-size:.8rem;color:#475569}
+}
+
+/* ═════════════ OPTION D · Scroll Story ═════════════
+   Awwwards app-site staple: oversized type, a marquee, and a sticky device
+   whose screen changes as each step scrolls past (Cash App-style green on black). */
+.od{--bg:#0A0A0A;--ink:#F4F4EF;--muted:#A1A19A;--line:#262624;--g:#00E05A;--g2:#0B3D22;--card:#141413;
+  background:var(--bg);color:var(--ink);border-radius:24px;font-family:'Inter',system-ui,sans-serif;overflow:clip}
+.od-top{display:flex;align-items:center;gap:.6rem;padding:1.1rem clamp(1rem,3vw,2rem);font-weight:700}
+.od-top .m{width:34px;height:34px;border-radius:10px;background:var(--g);color:#000;display:grid;place-items:center}
+.od-top .seg{margin-left:auto;display:flex;background:#1B1B19;border-radius:999px;padding:4px;border:1px solid var(--line)}
+.od-top .seg button{all:unset;cursor:pointer;min-height:40px;padding:0 1rem;border-radius:999px;color:var(--muted);font-weight:700;font-size:.9rem;display:inline-flex;align-items:center;gap:.4rem}
+.od-top .seg button[aria-pressed=true]{background:var(--ink);color:#000}
+.od-top .seg button:focus-visible{outline:3px solid var(--g);outline-offset:2px}
+.od-hero{padding:clamp(1.5rem,5vw,4rem) clamp(1rem,3vw,2rem) 1.5rem}
+.od-hero h3{font:800 clamp(2.6rem,9vw,7.2rem)/.9 'Unbounded',sans-serif;letter-spacing:-.04em;margin:0;text-transform:uppercase}
+.od-hero h3 span{display:block}
+.od-hero h3 .g{color:var(--g)}
+.od-hero h3 .o{-webkit-text-stroke:2px var(--ink);color:transparent}
+.od-hero .row{display:flex;flex-wrap:wrap;gap:1.5rem;align-items:end;justify-content:space-between;margin-top:1.5rem}
+.od-hero p{max-width:30rem;color:var(--muted);font-size:1.08rem;margin:0}
+.od-cta{display:inline-flex;align-items:center;gap:.6rem;min-height:56px;padding:0 1.5rem;border-radius:999px;background:var(--g);color:#000;font-weight:800;text-decoration:none;font-size:1.05rem;transition:transform .2s ease}
+.od-cta:hover{transform:translateY(-2px)}
+/* marquee */
+.od-mq{border-block:1px solid var(--line);overflow:hidden;white-space:nowrap;padding:.9rem 0;font:700 1.05rem 'Unbounded',sans-serif;text-transform:uppercase;letter-spacing:.02em}
+.od-mq .t{display:inline-flex;gap:2.2rem;padding-right:2.2rem;animation:odmq 28s linear infinite}
+.od-mq .t i{font-style:normal;color:var(--g)}
+.od-mq .t s{text-decoration:none;color:var(--muted)}
+@keyframes odmq{to{transform:translateX(-100%)}}
+/* story */
+.od-story{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:2rem;padding:2rem clamp(1rem,3vw,2rem) 3rem}
+.od-steps{list-style:none;margin:0;padding:0}
+.od-step{min-height:62vh;display:flex;flex-direction:column;justify-content:center;padding:1rem 0;opacity:.35;transition:opacity .35s ease}
+.od-step.on{opacity:1}
+.od-step .n{font:800 4.5rem/1 'Unbounded',sans-serif;color:transparent;-webkit-text-stroke:1.5px #3A3A37;margin-bottom:.4rem}
+.od-step.on .n{-webkit-text-stroke-color:var(--g)}
+.od-step h4{font:700 clamp(1.5rem,2.6vw,2.1rem)/1.1 'Unbounded',sans-serif;margin:0 0 .6rem;letter-spacing:-.02em}
+.od-step p{color:var(--muted);font-size:1.05rem;margin:0;max-width:30rem}
+.od-step code{font:500 .9em 'JetBrains Mono',monospace;background:#1B1B19;border:1px solid var(--line);border-radius:6px;padding:.05rem .35rem;color:#B6F7CC}
+.od-stage{position:sticky;top:1.5rem;height:min(78vh,640px);display:grid;place-items:center}
+.od-dev{position:relative;transition:width .4s ease,height .4s ease,border-radius .4s ease}
+.od-dev.laptop{width:min(100%,560px);aspect-ratio:16/10.5;border-radius:16px;background:#1B1B19;padding:12px 12px 22px;border:1px solid var(--line)}
+.od-dev.phone{width:min(100%,290px);aspect-ratio:9/18.5;border-radius:42px;background:#1B1B19;padding:11px;border:1px solid var(--line)}
+.od-scr{position:relative;width:100%;height:100%;border-radius:8px;overflow:hidden;background:#0F0F0E}
+.od-dev.phone .od-scr{border-radius:32px}
+.od-s{position:absolute;inset:0;padding:.9rem;opacity:0;transform:translateY(14px) scale(.98);transition:opacity .4s ease,transform .4s ease;font-size:.78rem}
+.od-s.on{opacity:1;transform:none}
+.od-s .bar{display:flex;gap:6px;margin-bottom:.7rem}.od-s .bar i{width:9px;height:9px;border-radius:50%;background:#33332F}
+.od-s .url{margin-left:.4rem;font:500 .7rem 'JetBrains Mono',monospace;color:var(--muted)}
+.od-s .ta{background:#141413;border:1px solid var(--line);border-radius:10px;padding:.6rem;font:500 .78rem/1.6 'JetBrains Mono',monospace}
+.od-s .ta .c{display:inline-block;width:7px;height:1em;background:var(--g);vertical-align:-2px;animation:odblink 1s steps(1) infinite}
+@keyframes odblink{50%{opacity:0}}
+.od-s .btns{display:flex;flex-wrap:wrap;gap:.35rem;margin:.6rem 0}
+.od-s .btns span{border-radius:999px;padding:.35rem .7rem;font-weight:700;background:#1B1B19;border:1px solid var(--line)}
+.od-s .btns .go{background:var(--g);color:#000;border-color:transparent}
+.od-s .chips{display:flex;flex-wrap:wrap;gap:.3rem}
+.od-s .chips span{border-radius:999px;padding:.2rem .55rem;border:1px solid var(--line);font-size:.7rem}
+.od-s .chips .ok{border-color:#00E05A88;color:#7CF5A8}.od-s .chips .run{border-color:#F5B94288;color:#F8D27A}
+.od-s table{width:100%;border-collapse:separate;border-spacing:3px;table-layout:fixed;font-size:.7rem}
+.od-s th{color:var(--muted);font-weight:500;text-align:left;padding:.15rem .3rem}
+.od-s td{background:#141413;border-radius:6px;padding:.35rem .35rem;overflow-wrap:anywhere}
+.od-s td.it{background:none;font-weight:700}.od-s td.it small{display:block;color:var(--muted);font-weight:400}
+.od-s td.b{background:var(--g);color:#000;font-weight:800}.od-s td.s{background:var(--g2)}
+.od-s .verd{display:grid;grid-template-columns:repeat(3,1fr);gap:.35rem;margin-bottom:.5rem}
+.od-s .verd div{border:1px solid var(--line);border-radius:10px;padding:.35rem .45rem;color:var(--muted);font-size:.65rem}
+.od-s .verd b{display:block;color:var(--ink);font-size:.85rem}.od-s .verd .w{border-color:var(--g)}
+.od-s .card{background:#141413;border:1px solid var(--line);border-radius:14px;padding:.55rem;margin-bottom:.45rem}
+.od-s .card h6{margin:0;font-size:.85rem}.od-s .card small{color:var(--muted)}
+.od-s .r{display:grid;grid-template-columns:62px 1fr auto;gap:.3rem;align-items:center;padding:.4rem;border-radius:9px;margin-top:.25rem}
+.od-s .r.b{background:var(--g);color:#000;font-weight:700}.od-s .r.s{background:var(--g2)}
+.od-s .r span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.od-s .otp{display:grid;grid-template-columns:repeat(6,1fr);gap:.3rem;margin:.5rem 0}
+.od-s .otp span{aspect-ratio:1/1.2;border:1px solid var(--line);border-radius:9px;display:grid;place-items:center;font:700 1rem 'JetBrains Mono',monospace}
+.od-s .otp .f{border-color:var(--g)}
+.od-s .big{display:grid;place-items:center;min-height:42px;border-radius:999px;background:var(--g);color:#000;font-weight:800}
+.od-s .qr{width:110px;height:110px;margin:.6rem auto;background:
+  conic-gradient(from 90deg at 30% 30%,#F4F4EF 25%,#0F0F0E 0) 0 0/22px 22px;border:8px solid #F4F4EF;border-radius:12px}
+.od-s .warn{border:1px solid #F5B94288;background:#2A2110;border-radius:12px;padding:.55rem;color:#F8D27A}
+.od-track[hidden]{display:none}
+@media (max-width:860px){
+  .od-story{grid-template-columns:1fr;gap:0}
+  .od-stage{top:0;height:330px;z-index:2;background:linear-gradient(var(--bg) 85%,transparent);order:-1}
+  .od-dev.laptop{width:min(100%,380px)}.od-dev.phone{width:150px}
+  .od-dev.phone .od-s{font-size:.5rem;padding:.5rem}
+  .od-step{min-height:48vh}
+}
+
+/* ═════════════ OPTION E · Receipt Bento 2.0 ═════════════
+   Your pick (B), with app-site motion added: the receipt prints, a price ticker,
+   a "try it" synonym box, spotlight tiles and outline step numbers. */
+.oe{--paper:#FAF7F2;--ink:#1B1A17;--muted:#5B5750;--line:#E6DFD3;--tomato:#C93A22;--leaf:#1F7A4D;--leafbg:#E3F1E8;--butter:#F6D776;--card:#FFFFFF;
+  background:var(--paper);color:var(--ink);border-radius:24px;padding:clamp(1rem,3vw,2.25rem);font-family:'Inter',system-ui,sans-serif;border:1px solid var(--line);overflow:clip}
+.oe h3,.oe h4,.oe h5{font-family:'Space Grotesk',sans-serif;letter-spacing:-.015em}
+.oe-nav{display:flex;align-items:center;gap:.6rem;font:700 1rem 'Space Grotesk',sans-serif}
+.oe-nav .mark{width:34px;height:34px;border-radius:50%;background:var(--tomato);color:#fff;display:grid;place-items:center}
+.oe-nav nav{margin-left:auto;display:flex;gap:.2rem}
+.oe-nav nav a{color:var(--ink);text-decoration:none;font-weight:600;padding:0 .8rem;min-height:44px;display:inline-flex;align-items:center;border-radius:999px}
+.oe-nav nav a:hover{background:#EFE8DC}
+.oe-hero{display:grid;grid-template-columns:1.2fr .9fr;gap:2rem;align-items:start;margin:2rem 0 1.5rem}
+.oe h3.big{font-size:clamp(2.6rem,6.4vw,5.2rem);line-height:.95;margin:0 0 1rem;font-weight:700}
+.oe h3.big mark{background:linear-gradient(transparent 58%,var(--butter) 58%);color:inherit;padding:0 .1em}
+.oe h3.big .swap{color:var(--tomato)}
+.oe-lede{font-size:1.1rem;color:var(--muted);max-width:32rem;margin:0 0 1.3rem}
+.oe-cta{display:flex;flex-wrap:wrap;gap:.7rem}
+.oe-btn{display:inline-flex;align-items:center;gap:.5rem;min-height:50px;padding:0 1.25rem;border-radius:999px;font-weight:600;text-decoration:none;border:1.5px solid var(--ink);color:var(--ink);background:transparent;transition:background .15s,color .15s,border-color .15s}
+.oe-btn.solid{background:var(--ink);color:var(--paper)}
+.oe-btn:hover{background:var(--tomato);border-color:var(--tomato);color:#fff}
+/* printer + receipt that prints */
+.oe-printer{position:relative}
+.oe-slot{height:18px;border-radius:9px;background:#1B1A17;box-shadow:inset 0 -5px 0 #3A3731;position:relative;z-index:2}
+.oe-paperwrap{overflow:hidden;margin:-9px 14px 0;padding-bottom:20px}
+.oe-receipt{background:var(--card);font:500 .82rem 'JetBrains Mono',monospace;padding:1.4rem 1.2rem 1.6rem;box-shadow:0 18px 30px #1b1a1714;animation:oeprint 2.4s cubic-bezier(.2,.7,.2,1) .3s both;
+  -webkit-mask:radial-gradient(circle 7px at 50% 100%,#0000 98%,#000) 0 100%/18px 51% repeat-x,linear-gradient(#000,#000) 0 0/100% 51% no-repeat;
+          mask:radial-gradient(circle 7px at 50% 100%,#0000 98%,#000) 0 100%/18px 51% repeat-x,linear-gradient(#000,#000) 0 0/100% 51% no-repeat}
+@keyframes oeprint{from{transform:translateY(-100%)}to{transform:none}}
+.oe-receipt h5{margin:0;text-align:center;font:700 .95rem 'JetBrains Mono',monospace;letter-spacing:.12em}
+.oe-receipt .c{text-align:center;color:var(--muted);margin:.1rem 0 .7rem}
+.oe-rl{display:flex;justify-content:space-between;gap:.6rem;padding:.18rem 0}
+.oe-rl small{color:var(--muted)}
+.oe-dash{border-top:1.5px dashed #CFC6B6;margin:.55rem 0}
+.oe-tot{font-weight:700;font-size:.95rem}
+.oe-stamp{display:inline-block;margin-top:.6rem;border:2px solid var(--leaf);color:var(--leaf);font-weight:700;padding:.15rem .5rem;transform:rotate(-4deg);border-radius:4px;letter-spacing:.06em;animation:oestamp .35s ease 2.7s both}
+@keyframes oestamp{from{transform:rotate(-4deg) scale(1.8);opacity:0}to{transform:rotate(-4deg) scale(1);opacity:1}}
+/* ticker */
+.oe-tick{margin:0 calc(-1*clamp(1rem,3vw,2.25rem)) 2.2rem;background:var(--ink);color:var(--paper);overflow:hidden;white-space:nowrap;padding:.75rem 0;font:600 .92rem 'JetBrains Mono',monospace}
+.oe-tick .t{display:inline-flex;gap:2rem;padding-right:2rem;animation:odmq 32s linear infinite}
+.oe-tick .dn{color:#7EE0A6}.oe-tick .up{color:#F59E8B}
+/* sections */
+.oe-sec{display:flex;flex-wrap:wrap;align-items:end;gap:.4rem 1rem;margin:0 0 1rem}
+.oe-sec h4{margin:0;font-size:clamp(1.8rem,4vw,2.8rem);line-height:1}
+.oe-sec .chip{margin-left:auto;font-size:.9rem;color:var(--muted)}
+.oe-bento{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:minmax(160px,auto);gap:.9rem;margin-bottom:2.75rem}
+.oe-tile{--x:50%;--y:50%;position:relative;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:1.05rem 1.15rem;display:flex;flex-direction:column;gap:.45rem;overflow:hidden;transition:transform .2s ease,border-color .2s}
+.oe-tile::after{content:"";position:absolute;inset:0;background:radial-gradient(260px circle at var(--x) var(--y),#F6D77640,transparent 60%);opacity:0;transition:opacity .2s;pointer-events:none}
+.oe-tile:hover{transform:translateY(-3px);border-color:#CFC6B6}.oe-tile:hover::after{opacity:1}
+.oe-tile .num{font:700 3rem/1 'Space Grotesk',sans-serif;color:transparent;-webkit-text-stroke:1.5px var(--tomato)}
+.oe-tile h5{margin:0;font-size:1.15rem}
+.oe-tile p{margin:0;color:var(--muted);font-size:.93rem}
+.oe-tile.big{grid-column:span 2;grid-row:span 2;background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.oe-tile.big p{color:#C9C2B6}.oe-tile.big .num{-webkit-text-stroke-color:var(--butter)}
+.oe-tile.big::after{background:radial-gradient(300px circle at var(--x) var(--y),#ffffff14,transparent 60%)}
+.oe-tile.leaf{background:var(--leafbg);border-color:#C5E3D0}
+.oe-tile.wide{grid-column:span 2}
+.oe-mini{margin-top:auto;font:500 .8rem 'JetBrains Mono',monospace;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:.55rem .65rem}
+.oe-mini .hl{background:var(--butter);padding:0 .2rem}
+.oe-chips{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:auto}
+.oe-chips span{font-size:.76rem;font-weight:600;border-radius:999px;padding:.2rem .6rem;border:1px solid var(--line);background:var(--paper)}
+.oe-chips .ok{border-color:#8FCBA6;color:var(--leaf);background:var(--leafbg)}
+.oe-chips .run{border-color:#E7B66B;color:#8A4B07;background:#FFF4E5}
+.oe-win{margin-top:auto;background:#2A2824;border-radius:12px;overflow:hidden;border:1px solid #3A3731}
+.oe-win .bar{display:flex;gap:6px;align-items:center;padding:.45rem .6rem;background:#34312C}
+.oe-win .bar i{width:9px;height:9px;border-radius:50%;background:#5C574F}
+.oe-win .bar span{margin-left:.4rem;font:500 .72rem 'JetBrains Mono',monospace;color:#C9C2B6}
+.oe-win table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:.75rem;color:#EDE7DC}
+.oe-win th,.oe-win td{padding:.42rem .45rem;border-bottom:1px solid #3A3731;text-align:left;overflow-wrap:anywhere}
+.oe-win th{color:#A9A296;font-weight:500}
+.oe-win td.best{background:#1F7A4D;color:#fff;font-weight:700}.oe-win td.sec{background:#2C4A38}
+.oe-win small{display:block;color:#A9A296}
+/* try-it synonym box */
+.oe-try label{font-weight:700;font-size:.9rem}
+.oe-try input{width:100%;min-height:48px;border:1.5px solid var(--ink);border-radius:12px;padding:0 .8rem;font:600 1.05rem 'JetBrains Mono',monospace;background:var(--card);color:var(--ink);margin-top:.35rem}
+.oe-try .out{margin-top:.55rem;font:600 .95rem 'JetBrains Mono',monospace;min-height:1.6em}
+.oe-try .out b{background:var(--butter);padding:0 .25rem}
+.oe-try .hint{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.5rem}
+.oe-try .hint button{all:unset;cursor:pointer;font-size:.8rem;font-weight:600;border:1px solid #C5E3D0;background:#fff;border-radius:999px;padding:.3rem .65rem;min-height:32px;display:inline-flex;align-items:center}
+.oe-try .hint button:focus-visible{outline:3px solid var(--leaf);outline-offset:2px}
+/* phone row: grid on desktop, swipe on phones */
+.oe-phones{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1.1rem;margin-bottom:.5rem}
+.oe-phf{border-radius:36px;background:#1B1A17;padding:9px;transition:transform .25s ease}
+.oe-ph:hover .oe-phf{transform:translateY(-4px) rotate(-1deg)}
+.oe-scr{border-radius:28px;background:var(--paper);min-height:440px;padding:.8rem;font-size:.82rem}
+.oe-cap{display:flex;gap:.6rem;margin-top:.7rem;align-items:flex-start}
+.oe-cap .num{font:700 2rem/1 'Space Grotesk',sans-serif;color:transparent;-webkit-text-stroke:1.2px var(--tomato)}
+.oe-cap h5{margin:0;font-size:1.05rem}.oe-cap p{margin:.1rem 0 0;color:var(--muted);font-size:.9rem}
+.oe-field{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:.55rem .7rem;margin-bottom:.5rem;min-height:44px}
+.oe-field small{display:block;color:var(--muted);font-size:.72rem}
+.oe-mc{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:.6rem;margin-bottom:.5rem}
+.oe-mc h6{margin:0;font:700 .95rem 'Space Grotesk',sans-serif}.oe-mc .aka{color:var(--muted);font-size:.72rem}
+.oe-mr{display:grid;grid-template-columns:66px 1fr auto;gap:.35rem;padding:.45rem;border-radius:9px;margin-top:.25rem;min-height:40px;align-items:center}
+.oe-mr.best{background:var(--leaf);color:#fff}.oe-mr.sec{background:var(--leafbg)}
+.oe-mr .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.85}
+.oe-pbtn{display:grid;place-items:center;min-height:46px;border-radius:999px;background:var(--ink);color:var(--paper);font-weight:600;margin-top:.5rem}
+.oe-pbtn.o{background:transparent;color:var(--ink);border:1.5px solid var(--ink)}
+.oe-otp{display:grid;grid-template-columns:repeat(6,1fr);gap:.35rem;margin:.4rem 0}
+.oe-otp span{aspect-ratio:1/1.15;border:1.5px solid var(--line);border-radius:10px;display:grid;place-items:center;font:700 1.05rem 'JetBrains Mono',monospace;background:var(--card)}
+.oe-otp span.f{border-color:var(--ink)}
+.oe-warn{background:#FFF4E5;border:1px solid #F3D3A6;border-radius:20px;padding:1.1rem;display:flex;flex-direction:column;justify-content:center;gap:.4rem;min-height:440px}
+.oe-warn .ico{width:32px;height:32px;color:#9A4A06}.oe-warn h5{margin:0;font-size:1.15rem}.oe-warn p{margin:0;color:#5B3A12}
+@media (max-width:960px){.oe-hero{grid-template-columns:1fr}.oe-bento{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .oe-phones{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(240px,78%);overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:1rem}
+  .oe-ph{scroll-snap-align:start}}
+@media (max-width:560px){.oe-bento{grid-template-columns:1fr}.oe-tile.big,.oe-tile.wide{grid-column:auto;grid-row:auto}.oe-nav nav{display:none}}
+
+/* ═════════════ OPTION F · Liquid Glass ═════════════
+   Soft mesh gradient, frosted glass panels and a laptop + phone that tilt
+   with the pointer (the Apple-era "liquid glass" app-site look). */
+.of{--ink:#0B1B14;--muted:#3E5148;--glass:rgba(255,255,255,.55);--rim:rgba(255,255,255,.75);--g:#0E7A4B;--g2:#D5F2E3;
+  position:relative;border-radius:24px;overflow:clip;color:var(--ink);font-family:'Manrope',system-ui,sans-serif;padding:clamp(1rem,3vw,2.25rem);
+  background:radial-gradient(60% 50% at 10% 10%,#BFF0D4 0,transparent 60%),radial-gradient(50% 50% at 90% 20%,#FFD9C2 0,transparent 60%),radial-gradient(60% 60% at 70% 90%,#DCD3FF 0,transparent 60%),#F4F7F2}
+.of-blob{position:absolute;border-radius:50%;filter:blur(40px);opacity:.55;animation:ofdrift 18s ease-in-out infinite alternate;pointer-events:none}
+.of-blob.a{width:340px;height:340px;background:#7FE0AE;left:-80px;top:120px}
+.of-blob.b{width:280px;height:280px;background:#FFB48F;right:-60px;top:40px;animation-delay:-6s}
+@keyframes ofdrift{to{transform:translate(60px,40px) scale(1.15)}}
+.of>*{position:relative}
+.glass{background:var(--glass);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);border:1px solid var(--rim);box-shadow:0 10px 30px #0b1b1412,inset 0 1px 0 #ffffffb0}
+.of-nav{display:flex;align-items:center;gap:.6rem;border-radius:999px;padding:.45rem .5rem .45rem .6rem;font-weight:800}
+.of-nav .m{width:34px;height:34px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center}
+.of-seg{margin-left:auto;display:flex;border-radius:999px;padding:4px;background:#ffffff66}
+.of-seg a{min-height:40px;padding:0 1rem;border-radius:999px;display:inline-flex;align-items:center;gap:.4rem;font-weight:700;color:var(--muted);text-decoration:none}
+.of-seg a.on{background:var(--ink);color:#fff}
+.of-hero{text-align:center;padding:3rem 0 1rem}
+.of-hero h3{font:800 clamp(2.4rem,6vw,4.6rem)/1 'Manrope',sans-serif;letter-spacing:-.045em;margin:0 auto .8rem;max-width:14ch}
+.of-hero h3 span{background:linear-gradient(90deg,#0E7A4B,#2F9C6B 40%,#C2410C);-webkit-background-clip:text;background-clip:text;color:transparent}
+.of-hero p{color:var(--muted);font-size:1.12rem;max-width:36rem;margin:0 auto 1.2rem}
+.of-cta{display:inline-flex;align-items:center;gap:.5rem;min-height:52px;padding:0 1.4rem;border-radius:999px;background:var(--ink);color:#fff;font-weight:700;text-decoration:none}
+.of-scene{perspective:1400px;display:flex;justify-content:center;align-items:flex-end;gap:0;margin:2.2rem auto 2.5rem;max-width:900px;min-height:360px}
+.of-lap{width:min(70%,600px);transform:rotateX(var(--rx,8deg)) rotateY(var(--ry,-10deg));transition:transform .25s ease;transform-style:preserve-3d;border-radius:18px;padding:12px}
+.of-ph{width:min(28%,210px);margin-left:-8%;margin-bottom:-24px;transform:rotateX(var(--rx,8deg)) rotateY(calc(var(--ry,-10deg) * -1.4)) translateZ(60px);transition:transform .25s ease;border-radius:34px;padding:9px}
+.of-scr{border-radius:10px;background:#fff;padding:.7rem;font-size:.72rem}
+.of-ph .of-scr{border-radius:26px;min-height:340px;font-size:.62rem}
+.of-scr table{width:100%;border-collapse:separate;border-spacing:3px;table-layout:fixed}
+.of-scr th{color:var(--muted);font-weight:600;text-align:left;padding:.1rem .3rem}
+.of-scr td{background:#F2F6F3;border-radius:6px;padding:.3rem .35rem;overflow-wrap:anywhere}
+.of-scr td.b{background:var(--g);color:#fff;font-weight:800}.of-scr td.s{background:var(--g2)}
+.of-scr .r{display:grid;grid-template-columns:48px 1fr auto;gap:.25rem;padding:.35rem;border-radius:8px;margin-top:.2rem;align-items:center}
+.of-scr .r.b{background:var(--g);color:#fff;font-weight:700}.of-scr .r.s{background:var(--g2)}
+.of-scr .r span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.of-scr .verd{display:grid;grid-template-columns:repeat(3,1fr);gap:.3rem;margin-bottom:.4rem}
+.of-scr .verd div{background:#F2F6F3;border-radius:8px;padding:.3rem .4rem;color:var(--muted)}
+.of-scr .verd b{display:block;color:var(--ink)}
+.of-rail{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin-bottom:1rem}
+.of-col{border-radius:26px;padding:1.2rem}
+.of-col h4{display:flex;align-items:center;gap:.5rem;margin:0 0 .8rem;font-size:1.4rem;letter-spacing:-.02em}
+.of-col h4 .pill{margin-left:auto;font-size:.75rem;font-weight:700;border-radius:999px;padding:.2rem .6rem;background:#ffffff99;color:var(--muted)}
+.of-st{display:grid;grid-template-columns:42px 1fr;gap:.8rem;padding:.75rem;border-radius:18px;margin-bottom:.5rem;background:#ffffff55;border:1px solid #ffffff99}
+.of-st .n{width:42px;height:42px;border-radius:14px;background:var(--ink);color:#fff;display:grid;place-items:center;font-weight:800}
+.of-st h5{margin:.1rem 0 .15rem;font-size:1.02rem}.of-st p{margin:0;color:var(--muted);font-size:.93rem}
+.of code{font:600 .85em 'JetBrains Mono',monospace;background:#ffffffaa;border-radius:6px;padding:.05rem .3rem}
+.of-note{border-radius:20px;padding:.9rem 1.1rem;display:flex;gap:.7rem;align-items:flex-start;border-color:#F6C7A3;background:rgba(255,240,228,.7)}
+.of-note .ico{color:#9A3412;margin-top:2px}.of-note p{margin:0}
+@media (max-width:860px){.of-rail{grid-template-columns:1fr}.of-scene{min-height:240px}.of-ph{width:34%}.of-seg a span{display:none}}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .od-s{transform:none}.of-lap,.of-ph{--rx:6deg;--ry:-8deg}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-laptop" viewBox="0 0 24 24"><path d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></symbol>
+  <symbol id="i-basket" viewBox="0 0 24 24"><path d="m15 11-1 9"/><path d="m19 11-4-7"/><path d="M2 11h20"/><path d="m3.5 11 1.6 7.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6l1.7-7.4"/><path d="M4.5 15.5h15"/><path d="m5 11 4-7"/><path d="m9 11 1 9"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></symbol>
+</svg>
+
+<header class="sheet">
+  <h1>compareprice · how-to guide · round 2 options</h1>
+  <p>I tried three more directions after looking at the Awwwards "App" category. The gallery page loads with JavaScript, so I could only read part of it, such as the Cash App Fall Release and VELTO fintech concept entries. So these options borrow the patterns that keep winning in that category rather than copying any one site. Each one shows the same content as before: the opening section, the website steps and the phone steps. Scroll slowly through D and move your pointer over E and F, because all three have motion.</p>
+  <nav class="jump" aria-label="Options">
+    <a href="#opt-d">D · Scroll Story</a>
+    <a href="#opt-e">E · Receipt Bento 2.0 (your B, upgraded)</a>
+    <a href="#opt-f">F · Liquid Glass</a>
+    <a href="#compare">Side by side</a>
+  </nav>
+  <div class="note"><b>What I took from the Awwwards app sites:</b>
+    <ul>
+      <li>One device that stays on screen while its screens change as you scroll.</li>
+      <li>Very large headlines and a scrolling marquee strip.</li>
+      <li>A demo you can try on the page (type "kismis" in E).</li>
+      <li>Tiles that light up under the pointer, and glass panels with a gradient behind them.</li>
+    </ul>
+    All motion stops if your device is set to reduce motion, and every page still works without JavaScript. Text contrast, 44 px touch targets and no sideways scroll at 390 px are kept from round 1.</div>
+</header>
+
+<!-- ═══════════════════════ OPTION D ═══════════════════════ -->
+<section class="opt" id="opt-d" aria-labelledby="hd">
+  <div class="opt-head">
+    <h2 id="hd">Option D · Scroll Story</h2><span class="tag">most "Awwwards"</span>
+    <span class="insp">Cash App-style green on black with headline type as big as the screen. A marquee shows that kismis, kishmish and raisins are one product. In the steps, one device stays put and its screen changes as each step scrolls past. The Website / Phone switch swaps a laptop for a phone.</span>
+  </div>
+  <div class="od">
+    <div class="od-top">
+      <span class="m"><svg class="ico"><use href="#i-basket"/></svg></span>compareprice
+      <div class="seg" role="group" aria-label="Show steps for">
+        <button type="button" aria-pressed="true" data-track="web"><svg class="ico"><use href="#i-laptop"/></svg>Website</button>
+        <button type="button" aria-pressed="false" data-track="phone"><svg class="ico"><use href="#i-phone"/></svg>Phone</button>
+      </div>
+    </div>
+    <div class="od-hero">
+      <h3><span>One list.</span><span class="g">Seven sites.</span><span class="o">One answer.</span></h3>
+      <div class="row">
+        <p>Paste your groceries once. compareprice checks Instamart, BigBasket, Zepto, Blinkit, KPN Fresh, JioMart and Flipkart Minutes at your address, and tells you where the basket costs least.</p>
+        <a class="od-cta" href="#od-story">See how <svg class="ico"><use href="#i-down"/></svg></a>
+      </div>
+    </div>
+    <div class="od-mq" aria-hidden="true"><div class="t">
+      <span>kismis</span><i>→</i><span>raisins</span><s>✦</s><span>gud</span><i>→</i><span>jaggery</span><s>✦</s><span>arhar dal</span><i>→</i><span>toor dal</span><s>✦</s><span>chawal</span><i>→</i><span>rice</span><s>✦</s><span>JioMart ₹495</span><s>✦</s>
+    </div><div class="t">
+      <span>kismis</span><i>→</i><span>raisins</span><s>✦</s><span>gud</span><i>→</i><span>jaggery</span><s>✦</s><span>arhar dal</span><i>→</i><span>toor dal</span><s>✦</s><span>chawal</span><i>→</i><span>rice</span><s>✦</s><span>JioMart ₹495</span><s>✦</s>
+    </div></div>
+
+    <div class="od-story" id="od-story">
+      <div>
+        <ol class="od-steps od-track" data-track="web">
+          <li class="od-step on" data-s="w1"><span class="n">01</span><h4>Open the app</h4><p>Start it with <code>docker compose up -d</code> or <code>basket serve</code>, then go to <code>localhost:7777</code> in your browser.</p></li>
+          <li class="od-step" data-s="w2"><span class="n">02</span><h4>Paste your list</h4><p>Open <b>Your list</b> and type one item per line. Put <code>2x</code> in front for a quantity, then tick the sites you want checked.</p></li>
+          <li class="od-step" data-s="w3"><span class="n">03</span><h4>Find the cheapest</h4><p>You get an answer at once from saved prices, each tagged with its date. Click <b>Get fresh prices</b> to check live, and a chip shows each site's progress.</p></li>
+          <li class="od-step" data-s="w4"><span class="n">04</span><h4>Read the answer</h4><p>Dark green is the cheapest price for an item and light green is second. Three boxes show the cheapest site, the runner-up and the cheapest mix.</p></li>
+        </ol>
+        <ol class="od-steps od-track" data-track="phone" hidden>
+          <li class="od-step on" data-s="p1"><span class="n">01</span><h4>Open it on Wi-Fi</h4><p>Run <code>basket serve --host=0.0.0.0</code> on the computer. On your phone, open <code>http://&lt;computer-ip&gt;:7777</code>.</p></li>
+          <li class="od-step" data-s="p2"><span class="n">02</span><h4>Pin it</h4><p>In the browser menu, tap <b>Add to Home screen</b>. After that it opens with one tap, like an app.</p></li>
+          <li class="od-step" data-s="p3"><span class="n">03</span><h4>Cards, cheapest first</h4><p>On a phone each item becomes a card, with its sites sorted by what you'd pay.</p></li>
+          <li class="od-step" data-s="p4"><span class="n">04</span><h4>Sign in with an OTP</h4><p>Only Zepto, Milkbasket and Amazon need this. Enter your mobile number, then type the OTP the site sends.</p></li>
+        </ol>
+      </div>
+      <div class="od-stage" aria-hidden="true">
+        <div class="od-dev laptop" id="od-dev">
+          <div class="od-scr">
+            <div class="od-s on" data-s="w1"><div class="bar"><i></i><i></i><i></i><span class="url">localhost:7777</span></div>
+              <div class="ta">$ docker compose up -d<br><span style="color:#7CF5A8">✓</span> basket service on http://localhost:7777<br>catalogue sweep: 2–4 products every 5–20 min<span class="c"></span></div></div>
+            <div class="od-s" data-s="w2"><div class="bar"><i></i><i></i><i></i><span class="url">localhost:7777</span></div>
+              <div class="ta">2x toor dal 1kg<br>amul butter 100g<br>kismis 500g<br>onion 1kg<span class="c"></span></div>
+              <div class="chips" style="margin-top:.6rem"><span>☑ JioMart</span><span>☑ KPN</span><span>☑ BigBasket</span><span>☑ Blinkit</span><span>☐ Zepto</span></div></div>
+            <div class="od-s" data-s="w3"><div class="bar"><i></i><i></i><i></i><span class="url">localhost:7777</span></div>
+              <div class="btns"><span class="go">Find the cheapest</span><span>Get fresh prices</span><span>Sign in…</span></div>
+              <div class="chips"><span class="ok">✓ JioMart</span><span class="ok">✓ KPN</span><span class="run">BigBasket · 3/4 · raisins</span><span class="run">wait 3s…</span></div></div>
+            <div class="od-s" data-s="w4"><div class="bar"><i></i><i></i><i></i><span class="url">localhost:7777</span></div>
+              <div class="verd"><div class="w">Cheapest site<b>JioMart ₹495</b></div><div>Runner-up<b>KPN ₹516</b></div><div>Cheapest mix<b>₹487</b></div></div>
+              <table><thead><tr><th>Item</th><th>KPN</th><th>JioMart</th><th>Blinkit</th></tr></thead><tbody>
+                <tr><td class="it">toor dal 1kg</td><td class="s">₹168</td><td class="b">₹159</td><td>₹179</td></tr>
+                <tr><td class="it">raisins 500g<small>you typed: kismis</small></td><td class="s">₹249</td><td class="b">₹229</td><td>₹267</td></tr>
+                <tr><td class="it">onion 1kg</td><td class="b">₹38</td><td class="s">₹42</td><td>₹49</td></tr></tbody></table></div>
+            <div class="od-s" data-s="p1"><div class="ta" style="font-size:.95em">http://192.168.1.20:7777</div><div class="qr"></div><p style="text-align:center;color:var(--muted);margin:.3rem 0 0">Same Wi-Fi as the computer</p></div>
+            <div class="od-s" data-s="p2"><div class="card"><h6>Add to Home screen</h6><small>Android: ⋮ menu · iPhone: Share</small></div><div class="card" style="display:flex;gap:.5rem;align-items:center"><span style="width:44px;height:44px;border-radius:12px;background:var(--g);display:grid;place-items:center;color:#000"><svg class="ico"><use href="#i-basket"/></svg></span><b>compareprice</b></div><div class="big">Add</div></div>
+            <div class="od-s" data-s="p3"><div class="card"><h6>raisins 500g</h6><small>you typed: kismis</small>
+                <div class="r b"><b>JioMart</b><span>Indian Long Kishmish</span><b>₹229</b></div><div class="r s"><b>KPN</b><span>ProV Raisin</span><b>₹249</b></div><div class="r"><b>Blinkit</b><span>Whole Farm</span><b>₹267</b></div></div>
+              <div class="card"><h6>onion 1kg</h6><div class="r b"><b>KPN</b><span>Onion</span><b>₹38</b></div><div class="r s"><b>JioMart</b><span>Onion</span><b>₹42</b></div></div></div>
+            <div class="od-s" data-s="p4"><div class="card"><h6>Sign in to Zepto</h6><small>Kept in the service's browser</small></div><div class="card">98••••••21</div><div class="otp"><span class="f">4</span><span class="f">8</span><span class="f">1</span><span></span><span></span><span></span></div><div class="big">Verify OTP</div><div class="warn" style="margin-top:.5rem">Home Wi-Fi only · the page has no login</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ OPTION E ═══════════════════════ -->
+<section class="opt" id="opt-e" aria-labelledby="he">
+  <div class="opt-head">
+    <h2 id="he">Option E · Receipt Bento 2.0</h2><span class="tag">your B, upgraded</span>
+    <div class="insp">It keeps everything you liked about B and adds the app-site touches:
+      <ul style="margin:.3rem 0 0;padding-left:1.2rem">
+        <li>The receipt prints out of a slot, and a "SAVES ₹74" stamp lands on it.</li>
+        <li>The headline word changes between list, basket and kismis.</li>
+        <li>A ticker shows price drops.</li>
+        <li>A "Try it" box turns kismis into raisins as you type.</li>
+        <li>Tiles light up under your pointer, and the step numbers are large outlines.</li>
+        <li>The phone screens sit in a grid on a computer and become a swipe row on a phone.</li>
+      </ul></div>
+  </div>
+  <div class="oe">
+    <div class="oe-nav">
+      <span class="mark"><svg class="ico"><use href="#i-basket"/></svg></span>compareprice
+      <nav aria-label="Guide sections"><a href="#oe-web">Website</a><a href="#oe-phone">Phone</a><a href="#oe-try">Try it</a></nav>
+    </div>
+    <div class="oe-hero">
+      <div>
+        <h3 class="big">Shop the <span style="white-space:nowrap"><mark><span class="swap" id="oe-swap">list</span></mark>,</span><br>not the apps.</h3>
+        <p class="oe-lede">compareprice checks Instamart, BigBasket, Zepto, Blinkit, KPN Fresh, JioMart and Flipkart Minutes at your address, then prints the cheapest way to buy the whole basket.</p>
+        <div class="oe-cta">
+          <a class="oe-btn solid" href="#oe-web"><svg class="ico"><use href="#i-laptop"/></svg>On the website</a>
+          <a class="oe-btn" href="#oe-phone"><svg class="ico"><use href="#i-phone"/></svg>On your phone</a>
+        </div>
+      </div>
+      <div class="oe-printer" aria-label="Example result printed as a receipt">
+        <div class="oe-slot"></div>
+        <div class="oe-paperwrap"><div class="oe-receipt">
+          <h5>YOUR BASKET</h5>
+          <div class="c">600045 · 23/11/26 · 4 items</div>
+          <div class="oe-rl"><span>amul butter 100g</span><span>KPN ₹61</span></div>
+          <div class="oe-rl"><span>toor dal 1kg</span><span>JioMart ₹159</span></div>
+          <div class="oe-rl"><span>raisins 500g<br><small>you typed: kismis</small></span><span>JioMart ₹229</span></div>
+          <div class="oe-rl"><span>onion 1kg</span><span>KPN ₹38</span></div>
+          <div class="oe-dash"></div>
+          <div class="oe-rl oe-tot"><span>CHEAPEST MIX</span><span>₹487</span></div>
+          <div class="oe-rl"><small>All on JioMart</small><small>₹495</small></div>
+          <div class="oe-rl"><small>Priciest · Blinkit</small><small>₹561</small></div>
+          <div style="text-align:center"><span class="oe-stamp">SAVES ₹74</span></div>
+        </div></div>
+      </div>
+    </div>
+    <div class="oe-tick" aria-hidden="true"><div class="t">
+      <span><span class="dn">▼ ₹9</span> toor dal at JioMart</span><span><span class="dn">▼ new low</span> onion at KPN</span><span><span class="up">▲ ₹6</span> butter at Blinkit</span><span><span class="dn">▼ ₹22</span> raisins at JioMart</span><span>as of 23/11/26 07:00</span>
+    </div><div class="t">
+      <span><span class="dn">▼ ₹9</span> toor dal at JioMart</span><span><span class="dn">▼ new low</span> onion at KPN</span><span><span class="up">▲ ₹6</span> butter at Blinkit</span><span><span class="dn">▼ ₹22</span> raisins at JioMart</span><span>as of 23/11/26 07:00</span>
+    </div></div>
+
+    <div class="oe-sec" id="oe-web"><h4>On the website</h4><span class="chip">5 steps · about 2 min</span></div>
+    <div class="oe-bento">
+      <div class="oe-tile big">
+        <span class="num">→</span>
+        <h5>Green is cheapest. Lighter green is second.</h5>
+        <p>A badge compares the price with the lowest one seen so far: new low, at lowest, or +₹6 vs low. Greyed cells are shown but not counted in the total.</p>
+        <div class="oe-win" aria-label="Mock of the compare table">
+          <div class="bar"><i></i><i></i><i></i><span>localhost:7777</span></div>
+          <table>
+            <thead><tr><th>Item</th><th>KPN</th><th>JioMart</th><th>BigBasket</th><th>Blinkit</th></tr></thead>
+            <tbody>
+              <tr><td>amul butter 100g</td><td class="best">₹61</td><td class="sec">₹65</td><td>₹66</td><td>₹66</td></tr>
+              <tr><td>toor dal 1kg</td><td class="sec">₹168</td><td class="best">₹159</td><td>₹172</td><td>₹179</td></tr>
+              <tr><td>raisins 500g<small>you typed: kismis</small></td><td class="sec">₹249</td><td class="best">₹229</td><td>₹251</td><td>₹267</td></tr>
+              <tr><td>onion 1kg</td><td class="best">₹38</td><td class="sec">₹42</td><td>₹45</td><td>₹49</td></tr>
+              <tr><td><b>Total</b></td><td>₹516</td><td class="best">₹495</td><td>₹534</td><td>₹561</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="oe-tile"><span class="num">01</span><h5>Paste your list</h5><p>One item per line. Add a quantity in front if you need it.</p>
+        <div class="oe-mini">2x toor dal 1kg<br>amul butter 100g<br><span class="hl">kismis 500g</span></div></div>
+      <div class="oe-tile"><span class="num">02</span><h5>Find the cheapest</h5><p>Answers at once from saved prices, each with its date. No site is contacted.</p>
+        <div class="oe-chips"><span>as of 22/11/26</span><span>no saved price</span></div></div>
+      <div class="oe-tile"><span class="num">03</span><h5>Get fresh prices</h5><p>Checks the sites live. Each site shows its progress.</p>
+        <div class="oe-chips"><span class="ok">✓ JioMart</span><span class="run">Zepto 2/4</span><span>wait 3s…</span></div></div>
+      <div class="oe-tile leaf"><span class="num">04</span><h5>Check a saved price</h5><p>Start typing an item to see what each site charged, per 100 g.</p>
+        <div class="oe-mini"><svg class="ico" style="width:14px;height:14px;vertical-align:-2px"><use href="#i-search"/></svg> kis<br><span class="hl">raisins 500g</span> · 3 sites</div></div>
+      <div class="oe-tile"><span class="num">05</span><h5>Settings &amp; schedule</h5><p>Set your location, default sites and list, and when it runs each day.</p>
+        <div class="oe-chips"><span>07:00</span><span>09:00</span><span>12:00</span></div></div>
+      <div class="oe-tile wide leaf oe-try" id="oe-try">
+        <h5>Try it: one product, many names</h5>
+        <label for="oe-in">Type a grocery word the way you'd say it</label>
+        <input id="oe-in" type="text" value="kismis" autocomplete="off" spellcheck="false">
+        <div class="out" id="oe-out" aria-live="polite">searched and saved as <b>raisins</b> · dry-fruits</div>
+        <div class="hint" aria-label="Examples"><button type="button">gud</button><button type="button">vellam</button><button type="button">arhar dal</button><button type="button">chawal</button><button type="button">kishmish</button></div>
+      </div>
+    </div>
+
+    <div class="oe-sec" id="oe-phone"><h4>On your phone</h4><span class="chip">3 steps · same Wi-Fi</span></div>
+    <div class="oe-phones" tabindex="0" aria-label="Phone steps">
+      <div class="oe-ph">
+        <div class="oe-phf"><div class="oe-scr">
+          <div class="oe-field"><small>Address bar</small>http://192.168.1.20:7777</div>
+          <div class="oe-mc"><h6>Same Wi-Fi as the computer</h6><span class="aka">The service runs with --host=0.0.0.0</span></div>
+          <div class="oe-mc"><h6>Add to Home screen</h6><span class="aka">From the browser's Share or ⋮ menu</span></div>
+          <div class="oe-pbtn">Find the cheapest</div><div class="oe-pbtn o">Get fresh prices</div>
+        </div></div>
+        <div class="oe-cap"><span class="num">01</span><div><h5>Open it on Wi-Fi</h5><p>Type the address once, then keep it on your home screen.</p></div></div>
+      </div>
+      <div class="oe-ph">
+        <div class="oe-phf"><div class="oe-scr">
+          <div class="oe-mc"><h6>raisins 500g</h6><span class="aka">you typed: kismis</span>
+            <div class="oe-mr best"><b>JioMart</b><span class="nm">Indian Long Kishmish</span><b>₹229</b></div>
+            <div class="oe-mr sec"><b>KPN</b><span class="nm">ProV Raisin</span><b>₹249</b></div>
+            <div class="oe-mr"><b>BigBasket</b><span class="nm">bb Popular</span><b>₹251</b></div></div>
+          <div class="oe-mc"><h6>toor dal 1kg</h6>
+            <div class="oe-mr best"><b>JioMart</b><span class="nm">Toor Dal</span><b>₹159</b></div>
+            <div class="oe-mr sec"><b>KPN</b><span class="nm">Toor Dal</span><b>₹168</b></div></div>
+        </div></div>
+        <div class="oe-cap"><span class="num">02</span><div><h5>One card per item</h5><p>Sites are sorted by what you'd pay.</p></div></div>
+      </div>
+      <div class="oe-ph">
+        <div class="oe-phf"><div class="oe-scr">
+          <div class="oe-mc"><h6>Sign in to Zepto</h6><span class="aka">Kept in the service's browser, like a phone app</span></div>
+          <div class="oe-field"><small>Mobile number</small>98••••••21</div>
+          <div class="oe-otp" aria-hidden="true"><span class="f">4</span><span class="f">8</span><span class="f">1</span><span></span><span></span><span></span></div>
+          <div class="oe-pbtn">Verify OTP</div>
+        </div></div>
+        <div class="oe-cap"><span class="num">03</span><div><h5>Sign in with an OTP</h5><p>Only Zepto, Milkbasket and Amazon. Every other site works as a guest.</p></div></div>
+      </div>
+      <div class="oe-ph">
+        <div class="oe-warn"><svg class="ico"><use href="#i-alert"/></svg><h5>Keep it on home Wi-Fi</h5><p>The page has no login. Once it listens on 0.0.0.0, anyone on your network can open it and start runs. Don't forward port 7777 to the internet.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ OPTION F ═══════════════════════ -->
+<section class="opt" id="opt-f" aria-labelledby="hf">
+  <div class="opt-head">
+    <h2 id="hf">Option F · Liquid Glass</h2><span class="tag">softest, most premium</span>
+    <span class="insp">A pastel gradient that drifts slowly behind frosted-glass panels, in the style of Apple's recent product pages. The opening section shows a laptop and a phone at an angle, and they tilt with your pointer. The website and phone steps sit side by side on two glass panels.</span>
+  </div>
+  <div class="of" id="of">
+    <span class="of-blob a"></span><span class="of-blob b"></span>
+    <div class="of-nav glass">
+      <span class="m"><svg class="ico"><use href="#i-basket"/></svg></span>compareprice
+      <div class="of-seg"><a class="on" href="#of-rail"><svg class="ico"><use href="#i-laptop"/></svg><span>Website</span></a><a href="#of-rail"><svg class="ico"><use href="#i-phone"/></svg><span>Phone</span></a></div>
+    </div>
+    <div class="of-hero">
+      <h3>Groceries, <span>priced everywhere</span> at once.</h3>
+      <p>One list, seven quick-commerce sites, one clear answer: on your computer, or on your phone over home Wi-Fi.</p>
+      <a class="of-cta" href="#of-rail">Start the guide <svg class="ico"><use href="#i-arrow"/></svg></a>
+    </div>
+    <div class="of-scene" id="of-scene" aria-hidden="true">
+      <div class="of-lap glass"><div class="of-scr">
+        <div class="verd"><div>Cheapest site<b>JioMart ₹495</b></div><div>Runner-up<b>KPN ₹516</b></div><div>Cheapest mix<b>₹487</b></div></div>
+        <table><thead><tr><th>Item</th><th>KPN</th><th>JioMart</th><th>BigBasket</th><th>Blinkit</th></tr></thead><tbody>
+          <tr><td>toor dal 1kg</td><td class="s">₹168</td><td class="b">₹159</td><td>₹172</td><td>₹179</td></tr>
+          <tr><td>raisins 500g</td><td class="s">₹249</td><td class="b">₹229</td><td>₹251</td><td>₹267</td></tr>
+          <tr><td>onion 1kg</td><td class="b">₹38</td><td class="s">₹42</td><td>₹45</td><td>₹49</td></tr>
+          <tr><td>amul butter</td><td class="b">₹61</td><td class="s">₹65</td><td>₹66</td><td>₹66</td></tr></tbody></table>
+      </div></div>
+      <div class="of-ph glass"><div class="of-scr">
+        <b>raisins 500g</b><div style="color:var(--muted)">you typed: kismis</div>
+        <div class="r b"><b>JioMart</b><span>Kishmish</span><b>₹229</b></div><div class="r s"><b>KPN</b><span>Raisin</span><b>₹249</b></div><div class="r"><b>Blinkit</b><span>Raisins</span><b>₹267</b></div>
+        <b style="display:block;margin-top:.5rem">onion 1kg</b>
+        <div class="r b"><b>KPN</b><span>Onion</span><b>₹38</b></div><div class="r s"><b>JioMart</b><span>Onion</span><b>₹42</b></div>
+      </div></div>
+    </div>
+    <div class="of-rail" id="of-rail">
+      <div class="of-col glass">
+        <h4><svg class="ico"><use href="#i-laptop"/></svg>Website<span class="pill">computer browser</span></h4>
+        <div class="of-st"><span class="n">1</span><div><h5>Open localhost:7777</h5><p>After <code>docker compose up -d</code> or <code>basket serve</code>.</p></div></div>
+        <div class="of-st"><span class="n">2</span><div><h5>Paste your list</h5><p>One item per line in <b>Your list</b>, then tick the sites.</p></div></div>
+        <div class="of-st"><span class="n">3</span><div><h5>Find the cheapest</h5><p>Saved prices show at once with their dates. Click <b>Get fresh prices</b> to check live.</p></div></div>
+        <div class="of-st"><span class="n">4</span><div><h5>Set the schedule</h5><p><b>Settings &amp; schedule</b> holds your location, list and daily run times.</p></div></div>
+      </div>
+      <div class="of-col glass">
+        <h4><svg class="ico"><use href="#i-phone"/></svg>Phone<span class="pill">same Wi-Fi</span></h4>
+        <div class="of-st"><span class="n">1</span><div><h5>Open http://&lt;computer-ip&gt;:7777</h5><p>The service needs <code>--host=0.0.0.0</code>.</p></div></div>
+        <div class="of-st"><span class="n">2</span><div><h5>Add to Home screen</h5><p>From the browser's Share or ⋮ menu.</p></div></div>
+        <div class="of-st"><span class="n">3</span><div><h5>Tap Find the cheapest</h5><p>Each item becomes a card, with sites sorted cheapest first.</p></div></div>
+        <div class="of-st"><span class="n">4</span><div><h5>Sign in with an OTP</h5><p>Only for Zepto, Milkbasket or Amazon.</p></div></div>
+      </div>
+    </div>
+    <div class="of-note glass"><svg class="ico"><use href="#i-alert"/></svg><p><b>Home Wi-Fi only.</b> The page has no login. Never forward port 7777 to the internet.</p></div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ COMPARISON ═══════════════════════ -->
+<section class="sheet" id="compare" aria-labelledby="hcmp">
+  <h2 id="hcmp" style="margin-top:0">Side by side (with B for reference)</h2>
+  <table class="cmp">
+    <thead><tr><th scope="col">Option</th><th scope="col">Feel</th><th scope="col">Strongest part</th><th scope="col">Trade-off</th><th scope="col">Pick it if</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">B · Receipt Bento</th><td data-label="Feel">Editorial, warm</td><td data-label="Strongest part">The receipt makes the result clear right away.</td><td data-label="Trade-off">Mostly static, so it's less memorable than the others.</td><td data-label="Pick it if">You want the round 1 pick as it is.</td></tr>
+      <tr><th scope="row">D · Scroll Story</th><td data-label="Feel">Bold, cinematic, dark</td><td data-label="Strongest part">It feels the most like an award-winning app site. The device on screen shows exactly what each step looks like.</td><td data-label="Trade-off">It takes long scrolling to read. On a phone the device has to shrink to a strip at the top.</td><td data-label="Pick it if">You want it to look like an Awwwards entry.</td></tr>
+      <tr><th scope="row">E · Receipt Bento 2.0</th><td data-label="Feel">Warm, playful, alive</td><td data-label="Strongest part">It keeps your B layout and adds motion and the "Try it" box, which actually teaches the kismis = raisins idea.</td><td data-label="Trade-off">Not as dramatic as D.</td><td data-label="Pick it if">You liked B and want it to stand out more. <b>My recommendation.</b></td></tr>
+      <tr><th scope="row">F · Liquid Glass</th><td data-label="Feel">Soft, airy, premium</td><td data-label="Strongest part">The laptop and phone together show both ways of using it in one picture.</td><td data-label="Trade-off">Text on glass needs care to stay readable, and the blur is heavy on older phones.</td><td data-label="Pick it if">You want an Apple-like polish.</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:1rem">Tell me D, E or F, or a mix (for example "E, with D's scroll story for the phone part"). I'll then build the full guide in that style, served by the app at <code>/guide</code>.</p>
+</section>
+
+<script>
+(() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ── D: track switch + scroll-driven device screens
+  const od = document.querySelector('.od');
+  const dev = document.getElementById('od-dev');
+  const screens = [...od.querySelectorAll('.od-s')];
+  const show = (id) => {
+    for (const s of screens) s.classList.toggle('on', s.dataset.s === id);
+    for (const st of od.querySelectorAll('.od-step')) st.classList.toggle('on', st.dataset.s === id);
+  };
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) if (e.isIntersecting) show(e.target.dataset.s);
+  }, { rootMargin: '-45% 0px -45% 0px' });
+  od.querySelectorAll('.od-step').forEach((s) => io.observe(s));
+  od.querySelectorAll('.seg button').forEach((b) => b.addEventListener('click', () => {
+    const t = b.dataset.track;
+    od.querySelectorAll('.seg button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    od.querySelectorAll('.od-track').forEach((x) => (x.hidden = x.dataset.track !== t));
+    dev.className = 'od-dev ' + (t === 'web' ? 'laptop' : 'phone');
+    show(t === 'web' ? 'w1' : 'p1');
+  }));
+
+  // ── E: headline word swap
+  const words = ['list', 'basket', 'kismis'];
+  const sw = document.getElementById('oe-swap');
+  let wi = 0;
+  if (!reduce) setInterval(() => { wi = (wi + 1) % words.length; sw.textContent = words[wi]; }, 2200);
+
+  // ── E: spotlight tiles
+  document.querySelectorAll('.oe-tile').forEach((t) => t.addEventListener('pointermove', (e) => {
+    const r = t.getBoundingClientRect();
+    t.style.setProperty('--x', `${e.clientX - r.left}px`);
+    t.style.setProperty('--y', `${e.clientY - r.top}px`);
+  }));
+
+  // ── E: try-it synonyms (a few rows of src/catalog-data.js)
+  const CAT = [
+    ['raisins', 'dry-fruits', 'raisins,kismis,khismis,kishmish,kishmis,kismish,dry grapes,manuka'],
+    ['jaggery', 'sweetener', 'jaggery,gud,gur,ghood,ghud,jagrey,jagreey,vellam,bellam,bella'],
+    ['toor dal', 'pulses', 'toor dal,tuvar dal,arhar dal,thuvaram paruppu,kandi pappu,tur dal'],
+    ['rice', 'staples', 'rice,chawal,arisi,chaval,akki,biyyam'],
+    ['cashew', 'dry-fruits', 'cashew,kaju,cashewnut,munthiri,godambi'],
+    ['atta', 'staples', 'atta,whole wheat flour,gehu atta,godhumai maavu'],
+    ['curd', 'dairy', 'curd,dahi,thayir,yogurt,yoghurt'],
+    ['salt', 'staples', 'salt,uppu,namak'],
+  ].map(([c, cat, s]) => [c, cat, s.split(',')]);
+  const inp = document.getElementById('oe-in'), out = document.getElementById('oe-out');
+  const run = () => {
+    const v = inp.value.trim().toLowerCase().replace(/\s+/g, ' ');
+    if (!v) { out.textContent = ''; return; }
+    const hit = CAT.find(([, , names]) => names.includes(v));
+    out.innerHTML = hit
+      ? `searched and saved as <b>${hit[0]}</b> · ${hit[1]}`
+      : 'not one of these examples. The real catalogue has about 230 products.';
+  };
+  inp.addEventListener('input', run);
+  document.querySelectorAll('.oe-try .hint button').forEach((b) => b.addEventListener('click', () => { inp.value = b.textContent; run(); inp.focus(); }));
+
+  // ── F: pointer tilt
+  const of = document.getElementById('of');
+  if (!reduce) of.addEventListener('pointermove', (e) => {
+    const r = of.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+    of.style.setProperty('--ry', `${(-10 + x * 14).toFixed(1)}deg`);
+    of.style.setProperty('--rx', `${(8 - y * 10).toFixed(1)}deg`);
+  });
+})();
+</script>
+</body>
+</html>

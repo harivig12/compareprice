@@ -85,6 +85,49 @@ test('GET / serves the page', async () => {
   });
 });
 
+test('GET /guide, /settings and /theme.css serve the shared-theme pages', async () => {
+  await withServer(async (s) => {
+    for (const path of ['/guide', '/settings']) {
+      const res = await fetch(`${s.url}${path}`);
+      assert.equal(res.status, 200, path);
+      const html = await res.text();
+      assert.match(html, /<link rel="stylesheet" href="\/theme.css">/, path);
+      assert.match(html, /href="\/guide"/, `${path} links to the guide`);
+    }
+    const css = await fetch(`${s.url}/theme.css`);
+    assert.equal(css.status, 200);
+    assert.match(css.headers.get('content-type'), /text\/css/);
+    assert.match(await css.text(), /--g:/);
+  });
+});
+
+test('pages use system fonts and ship a home-screen icon and manifest', async () => {
+  await withServer(async (s) => {
+    for (const path of ['/', '/settings', '/guide']) {
+      const html = await (await fetch(`${s.url}${path}`)).text();
+      assert.doesNotMatch(html, /fonts\.googleapis|fonts\.gstatic/, `${path} fetches no web fonts`);
+      assert.match(html, /<link rel="manifest" href="\/manifest.webmanifest">/, path);
+      assert.match(html, /<link rel="apple-touch-icon" href="\/apple-touch-icon.png">/, path);
+    }
+    const man = await fetch(`${s.url}/manifest.webmanifest`);
+    assert.match(man.headers.get('content-type'), /application\/manifest\+json/);
+    const m = await man.json();
+    assert.equal(m.start_url, '/');
+    assert.equal(m.display, 'standalone');
+    for (const icon of m.icons) {
+      const r = await fetch(`${s.url}${icon.src}`);
+      assert.equal(r.status, 200, icon.src);
+      assert.equal(r.headers.get('content-type'), icon.type, icon.src);
+    }
+    const png = Buffer.from(await (await fetch(`${s.url}/apple-touch-icon.png`)).arrayBuffer());
+    assert.equal(png.subarray(1, 4).toString(), 'PNG');
+    assert.equal(png.readUInt32BE(16), 180, 'apple-touch-icon is 180 px wide');
+    // Only listed files are served.
+    assert.equal((await fetch(`${s.url}/../package.json`)).status, 404);
+    assert.equal((await fetch(`${s.url}/icon-999.png`)).status, 404);
+  });
+});
+
 test('POST /api/compare rejects an empty basket with 400', async () => {
   await withServer(async (s) => {
     const res = await fetch(`${s.url}/api/compare`, {

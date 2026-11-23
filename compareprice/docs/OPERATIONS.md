@@ -49,6 +49,16 @@ On startup the store:
 - On start the store re-keys saved prices, so rows saved under a synonym join the canonical product's history (`store: regrouped N saved price(s)…`).
 - `basket catalog "<item>"` shows what a line resolves to. `basket catalog --category=spices` lists one category. `GET /api/catalog` returns the same information.
 
+## Using it from a phone
+
+The user guide at `/guide` covers this step by step. In short:
+
+- **Natively:** run `basket serve --host=0.0.0.0`.
+- **With Docker:** change the compose port line to `"7777:7777"`.
+- **Then:** open `http://<computer-ip>:7777` on a phone that is on the same Wi-Fi.
+
+The page has no login, so only do this on a trusted home network.
+
 ## Catalogue sweep
 
 The service also fills in prices for catalogue products that no basket asked for. Each sweep picks a random 2–4 products, queues them as one job (trigger `sweep`), then waits a random 5–20 minutes before the next one (for example 3 products at 00:00, 2 at 00:09, 4 at 00:23). Products with no saved price on some site come first. When none are missing, prices older than `staleHours` are refreshed. A product is swept at most once a day. A sweep never starts while another job is running or queued. It looks again a minute or two later.

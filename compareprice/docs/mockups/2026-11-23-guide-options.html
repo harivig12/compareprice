@@ -1,0 +1,607 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>compareprice · how-to guide · three design options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;700;800&family=Fira+Code:wght@500&family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&family=Rubik:wght@500;600;700&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* ───────────── Review sheet (neutral, not part of any option) ───────────── */
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:#E9EDF5;color:#1f2937;font:16px/1.5 'Segoe UI',system-ui,sans-serif}
+.sheet{max-width:1240px;margin:0 auto;padding:2rem 1.25rem}
+.sheet h1{margin:0 0 .25rem;font-size:1.75rem}
+.sheet p{margin:.25rem 0 .75rem;max-width:860px}
+.jump{display:flex;flex-wrap:wrap;gap:.5rem;margin:.75rem 0}
+.jump a{background:#fff;border:1px solid #cbd5e1;border-radius:999px;padding:.35rem .9rem;color:#1e3a8a;text-decoration:none;font-weight:600;min-height:44px;display:inline-flex;align-items:center}
+.jump a:hover{background:#eef2ff}
+.note{background:#fff;border-left:4px solid #2563EB;padding:.75rem 1rem;border-radius:.4rem;margin:.75rem 0;font-size:.95rem;max-width:860px}
+.opt{max-width:1240px;margin:0 auto 3rem;padding:0 1.25rem}
+.opt-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:.25rem 1rem;border-top:2px solid #cbd5e1;padding:1.5rem 0 .75rem}
+.opt-head h2{margin:0;font-size:1.35rem}
+.opt-head .insp{color:#475569;font-size:.95rem}
+.opt-head .tag{font-size:.75rem;font-weight:800;padding:.1rem .55rem;border-radius:999px;background:#1e3a8a;color:#fff}
+.sr{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+:focus-visible{outline:3px solid #2563EB;outline-offset:2px}
+.cmp{width:100%;border-collapse:collapse;background:#fff;border-radius:.6rem;overflow:hidden;font-size:.95rem}
+.cmp th,.cmp td{text-align:left;padding:.6rem .75rem;border-bottom:1px solid #e2e8f0;vertical-align:top}
+.cmp th{background:#f1f5f9}
+@media (max-width:700px){
+  .cmp thead{display:none}
+  .cmp,.cmp tbody,.cmp tr,.cmp th,.cmp td{display:block;width:100%}
+  .cmp tr{border-bottom:2px solid #cbd5e1}
+  .cmp td{border-bottom:0;padding-top:.2rem}
+  .cmp td::before{content:attr(data-label);display:block;font-weight:700;font-size:.8rem;color:#475569}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+
+/* Shared mock bits */
+.ico{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* ═════════════ OPTION A · Night Market (checkpay lineage, NeoPOP) ═════════════ */
+.oa{--bg:#0B1530;--surface:#111D3D;--surface2:#16244A;--rim:rgba(255,255,255,.14);--ink:#E6ECF8;--muted:#A3B0CC;
+  --lime:#C6F432;--emerald:#16A34A;--amber:#D97706;--crimson:#DC2626;
+  background:var(--bg);color:var(--ink);border-radius:22px;padding:clamp(1rem,3vw,2.25rem);font-family:'Fira Sans','Segoe UI',system-ui,sans-serif;overflow:hidden;position:relative}
+.oa::before{content:"";position:absolute;inset:-30% -10% auto auto;width:60%;aspect-ratio:1;background:radial-gradient(circle,#C6F43222,transparent 60%);pointer-events:none}
+.oa-nav{display:flex;align-items:center;gap:.75rem;position:relative}
+.oa-logo{width:36px;height:36px;border-radius:10px;background:var(--lime);color:#0B1530;display:grid;place-items:center}
+.oa-nav b{font-size:1.05rem;letter-spacing:.01em}
+.oa-nav .pill{margin-left:auto;font:500 .8rem 'Fira Code',Consolas,monospace;color:var(--muted);border:.8px solid var(--rim);border-radius:999px;padding:.25rem .7rem}
+.oa-hero{display:grid;grid-template-columns:1.2fr 1fr;gap:2rem;align-items:center;margin:2.25rem 0 1.5rem;position:relative}
+.oa-eye{font-size:.75rem;font-weight:800;letter-spacing:.16em;color:var(--lime);text-transform:uppercase}
+.oa h3.big{font-size:clamp(2rem,4.6vw,3.3rem);line-height:1.05;margin:.4rem 0 .8rem;font-weight:800;letter-spacing:-.02em}
+.oa h3.big em{font-style:normal;color:var(--lime)}
+.oa-lede{color:var(--muted);font-size:1.05rem;max-width:34rem;margin:0 0 1.25rem}
+/* NeoPOP plinth buttons */
+.oa-btns{display:flex;flex-wrap:wrap;gap:.9rem}
+.neo{display:inline-flex;align-items:center;gap:.5rem;min-height:48px;padding:0 1.15rem;font:700 1rem 'Fira Sans',sans-serif;color:#0B1530;background:var(--lime);border:0;border-radius:2px;cursor:pointer;
+  box-shadow:4px 4px 0 #6E8A12;transition:transform .12s ease,box-shadow .12s ease}
+.neo:active{transform:translate(3px,4px);box-shadow:1px 0 0 #6E8A12}
+.neo.ghost{background:transparent;color:var(--ink);border:.8px solid var(--rim);box-shadow:4px 4px 0 #22305A}
+.neo.ghost:active{box-shadow:1px 0 0 #22305A}
+.oa-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.75rem}
+.oa-stat{background:var(--surface);border:.8px solid var(--rim);border-radius:14px;padding:.9rem 1rem}
+.oa-stat b{display:block;font-size:1.6rem;line-height:1.1}
+.oa-stat span{color:var(--muted);font-size:.9rem}
+/* two-track switch (radio, works without script) */
+.oa-switch{display:inline-flex;background:var(--surface);border:.8px solid var(--rim);border-radius:999px;padding:4px;margin:.5rem 0 1.25rem;position:relative}
+.oa-switch label{display:inline-flex;align-items:center;gap:.45rem;min-height:44px;padding:0 1.1rem;border-radius:999px;color:var(--muted);font-weight:700;cursor:pointer;transition:background .15s,color .15s}
+#oa-w:checked~.oa-switch label[for=oa-w],#oa-p:checked~.oa-switch label[for=oa-p]{background:var(--ink);color:#0B1530}
+#oa-w:focus-visible~.oa-switch label[for=oa-w],#oa-p:focus-visible~.oa-switch label[for=oa-p]{outline:3px solid var(--lime);outline-offset:2px}
+.oa-track{display:none;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:1.5rem;align-items:start}
+#oa-w:checked~.oa-tracks .oa-web,#oa-p:checked~.oa-tracks .oa-phone{display:grid}
+.oa-steps{list-style:none;margin:0;padding:0;display:grid;gap:.7rem}
+.oa-steps li{display:grid;grid-template-columns:auto 1fr;gap:.85rem;background:var(--surface);border:.8px solid var(--rim);border-radius:14px;padding:.9rem 1rem}
+.oa-n{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font:700 .95rem 'Fira Code',monospace;background:var(--surface2);border:.8px solid var(--rim);color:var(--lime)}
+.oa-steps h4{margin:0 0 .15rem;font-size:1rem}
+.oa-steps p{margin:0;color:var(--muted);font-size:.92rem}
+.oa code{font:500 .85em 'Fira Code',Consolas,monospace;background:#0B1530;border:.8px solid var(--rim);border-radius:6px;padding:.05rem .35rem;color:#D9F99D}
+/* browser frame */
+.oa-browser{background:var(--surface);border:.8px solid var(--rim);border-radius:16px;overflow:hidden;box-shadow:0 20px 50px #0008}
+.oa-bar{display:flex;align-items:center;gap:.5rem;padding:.6rem .8rem;border-bottom:.8px solid var(--rim)}
+.oa-dots{display:flex;gap:6px}.oa-dots i{width:10px;height:10px;border-radius:50%;background:#33415f}
+.oa-url{flex:1;font:500 .8rem 'Fira Code',monospace;color:var(--muted);background:#0B1530;border-radius:8px;padding:.3rem .6rem}
+.oa-app{padding:.9rem}
+.oa-appbtns{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.7rem}
+.oa-appbtns span{font-size:.78rem;font-weight:700;border-radius:2px;padding:.35rem .6rem;background:var(--surface2);border:.8px solid var(--rim)}
+.oa-appbtns span.go{background:var(--lime);color:#0B1530;border-color:transparent}
+.oa-verd{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.5rem;margin-bottom:.7rem}
+.oa-verd div{background:#0B1530;border:.8px solid var(--rim);border-radius:10px;padding:.45rem .6rem;font-size:.72rem;color:var(--muted)}
+.oa-verd b{display:block;color:var(--ink);font-size:1rem}
+.oa-verd .win{border-color:#16A34A88;box-shadow:0 0 22px #16A34A33}
+.oa-tbl{width:100%;border-collapse:separate;border-spacing:3px;table-layout:fixed;font-size:.72rem}
+.oa-tbl th{color:var(--muted);text-align:left;font-weight:500;padding:.2rem .3rem}
+.oa-tbl td{background:#0B1530;border-radius:6px;padding:.35rem .4rem;vertical-align:top;overflow-wrap:anywhere}
+.oa-tbl td.it{background:none;font-weight:700;color:var(--ink)}
+.oa-tbl td.it small{display:block;color:var(--muted);font-weight:400}
+.oa-tbl td.best{background:#0F3B22;box-shadow:0 0 18px #16A34A55;outline:.8px solid #16A34A}
+.oa-tbl td.sec{background:#14301F}
+.oa-tbl .p{font-weight:700;font-size:.8rem;display:block}
+.oa-badge{display:inline-block;font-size:.62rem;font-weight:800;border-radius:999px;padding:0 .4rem;background:var(--emerald);color:#04260f;margin-top:2px}
+.oa-asof{display:inline-block;font-size:.62rem;color:#FCD34D}
+/* callouts with state auras */
+.oa-call{display:flex;gap:.75rem;align-items:flex-start;border-radius:14px;padding:.85rem 1rem;margin-top:.75rem;background:var(--surface);border:.8px solid var(--rim)}
+.oa-call.warn{border-color:#D9770688;box-shadow:0 0 22px #D9770622}
+.oa-call.good{border-color:#16A34A88;box-shadow:0 0 22px #16A34A22}
+.oa-call p{margin:0;font-size:.92rem;color:var(--ink)}
+.oa-call .ico{margin-top:2px}
+.oa-call.warn .ico{color:#FBBF24}.oa-call.good .ico{color:#4ADE80}
+/* phone frame */
+.oa-phonewrap{display:flex;justify-content:center}
+.oa-phonef{width:min(320px,100%);border-radius:36px;background:#05070D;padding:10px;box-shadow:0 18px 40px #0009;border:.8px solid var(--rim)}
+.oa-screen{border-radius:28px;background:var(--bg);padding:.8rem;min-height:560px}
+.oa-stbar{display:flex;justify-content:space-between;font:500 .72rem 'Fira Code',monospace;color:var(--muted);padding:0 .3rem .6rem}
+.oa-mcard{background:var(--surface);border:.8px solid var(--rim);border-radius:14px;padding:.75rem;margin-bottom:.6rem}
+.oa-mcard h5{margin:0 0 .1rem;font-size:.95rem}
+.oa-mcard small{color:var(--muted)}
+.oa-mrow{display:grid;grid-template-columns:76px 1fr auto;gap:.4rem;align-items:center;padding:.45rem .5rem;border-radius:9px;font-size:.8rem;margin-top:.3rem;min-height:44px}
+.oa-mrow.best{background:#0F3B22;outline:.8px solid #16A34A;box-shadow:0 0 16px #16A34A44}
+.oa-mrow.sec{background:#14301F}
+.oa-mrow b{font-size:.9rem}
+.oa-mrow .nm{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.oa-tabbar{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-top:.6rem}
+.oa-tabbar span{min-height:44px;display:grid;place-items:center;border-radius:2px;font-weight:800;font-size:.85rem;background:var(--lime);color:#0B1530;box-shadow:3px 3px 0 #6E8A12}
+.oa-tabbar span.g{background:var(--surface2);color:var(--ink);box-shadow:3px 3px 0 #22305A}
+@media (max-width:860px){.oa-hero,.oa-track{grid-template-columns:1fr}.oa-stats{grid-template-columns:1fr 1fr 1fr}}
+@media (max-width:520px){.oa-stats{grid-template-columns:1fr}.oa-verd{grid-template-columns:1fr}}
+
+/* ═════════════ OPTION B · Receipt Bento (editorial, light) ═════════════ */
+.ob{--paper:#FAF7F2;--ink:#1B1A17;--muted:#5B5750;--line:#E6DFD3;--tomato:#C93A22;--leaf:#1F7A4D;--leafbg:#E3F1E8;--butter:#F6D776;--card:#FFFFFF;
+  background:var(--paper);color:var(--ink);border-radius:22px;padding:clamp(1rem,3vw,2.25rem);font-family:'Inter','Segoe UI',system-ui,sans-serif;border:1px solid var(--line)}
+.ob h3,.ob h4,.ob h5{font-family:'Space Grotesk','Segoe UI',sans-serif;letter-spacing:-.01em}
+.ob-nav{display:flex;align-items:center;gap:.6rem;font-family:'Space Grotesk',sans-serif;font-weight:700}
+.ob-nav .mark{width:34px;height:34px;border-radius:50%;background:var(--tomato);color:#fff;display:grid;place-items:center}
+.ob-nav nav{margin-left:auto;display:flex;gap:.25rem}
+.ob-nav nav a{color:var(--ink);text-decoration:none;font-weight:600;padding:0 .8rem;min-height:44px;display:inline-flex;align-items:center;border-radius:999px}
+.ob-nav nav a:hover{background:#EFE8DC}
+.ob-hero{display:grid;grid-template-columns:1.25fr .9fr;gap:2rem;align-items:center;margin:2rem 0 2.5rem}
+.ob h3.big{font-size:clamp(2.3rem,5.4vw,4rem);line-height:.98;margin:0 0 1rem;font-weight:700}
+.ob h3.big mark{background:linear-gradient(transparent 58%,var(--butter) 58%);color:inherit;padding:0 .1em}
+.ob-lede{font-size:1.1rem;color:var(--muted);max-width:32rem;margin:0 0 1.4rem}
+.ob-cta{display:flex;flex-wrap:wrap;gap:.7rem}
+.ob-btn{display:inline-flex;align-items:center;gap:.5rem;min-height:48px;padding:0 1.2rem;border-radius:999px;font-weight:600;font-size:1rem;text-decoration:none;cursor:pointer;border:1.5px solid var(--ink);color:var(--ink);background:transparent;transition:background .15s,color .15s}
+.ob-btn.solid{background:var(--ink);color:var(--paper)}
+.ob-btn:hover{background:var(--tomato);border-color:var(--tomato);color:#fff}
+/* receipt */
+.ob-receipt{background:var(--card);font-family:'JetBrains Mono',Consolas,monospace;font-size:.82rem;padding:1.4rem 1.2rem 1.6rem;position:relative;transform:rotate(1.5deg);
+  box-shadow:0 18px 30px #1b1a1714;
+  -webkit-mask:radial-gradient(circle 7px at 50% 0,#0000 98%,#000) 0 0/18px 51% repeat-x,radial-gradient(circle 7px at 50% 100%,#0000 98%,#000) 0 100%/18px 51% repeat-x;
+          mask:radial-gradient(circle 7px at 50% 0,#0000 98%,#000) 0 0/18px 51% repeat-x,radial-gradient(circle 7px at 50% 100%,#0000 98%,#000) 0 100%/18px 51% repeat-x}
+.ob-receipt h5{margin:0;text-align:center;font:700 .95rem 'JetBrains Mono',monospace;letter-spacing:.12em}
+.ob-receipt .c{text-align:center;color:var(--muted);margin:.1rem 0 .7rem}
+.ob-rl{display:flex;justify-content:space-between;gap:.6rem;padding:.18rem 0}
+.ob-rl small{color:var(--muted)}
+.ob-dash{border-top:1.5px dashed #CFC6B6;margin:.55rem 0}
+.ob-tot{font-weight:700;font-size:.95rem}
+.ob-stamp{display:inline-block;margin-top:.6rem;border:2px solid var(--leaf);color:var(--leaf);font-weight:700;padding:.15rem .5rem;transform:rotate(-4deg);border-radius:4px;letter-spacing:.06em}
+.ob-sec{display:flex;align-items:center;gap:.6rem;margin:0 0 1rem}
+.ob-sec h4{margin:0;font-size:1.6rem}
+.ob-sec .chip{margin-left:auto;font-size:.85rem;color:var(--muted)}
+.ob-sec .ico{width:28px;height:28px;color:var(--tomato)}
+.ob-bento{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:minmax(150px,auto);gap:.9rem;margin-bottom:2.5rem}
+.ob-tile{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:1rem 1.1rem;display:flex;flex-direction:column;gap:.45rem;transition:transform .15s ease,border-color .15s}
+.ob-tile:hover{transform:translateY(-2px);border-color:#CFC6B6}
+.ob-tile .num{font:700 .8rem 'JetBrains Mono',monospace;color:var(--tomato)}
+.ob-tile h5{margin:0;font-size:1.12rem}
+.ob-tile p{margin:0;color:var(--muted);font-size:.92rem}
+.ob-tile.big{grid-column:span 2;grid-row:span 2;background:#1B1A17;color:var(--paper);border-color:#1B1A17}
+.ob-tile.big p{color:#C9C2B6}
+.ob-tile.leaf{background:var(--leafbg);border-color:#C5E3D0}
+.ob-tile.wide{grid-column:span 3}
+.ob-tile.warn{background:#FFF4E5;border-color:#F3D3A6}
+.ob-tile.warn .ico{color:#9A4A06}
+.ob-mini{margin-top:auto;font:500 .78rem 'JetBrains Mono',monospace;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:.55rem .65rem;color:var(--ink)}
+.ob-mini .hl{background:var(--butter);padding:0 .2rem}
+.ob-chips{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:auto}
+.ob-chips span{font-size:.75rem;font-weight:600;border-radius:999px;padding:.2rem .6rem;border:1px solid var(--line);background:var(--paper)}
+.ob-chips .ok{border-color:#8FCBA6;color:var(--leaf);background:var(--leafbg)}
+.ob-chips .run{border-color:#E7B66B;color:#8A4B07;background:#FFF4E5}
+/* dark browser inside big tile */
+.ob-win{margin-top:auto;background:#2A2824;border-radius:12px;overflow:hidden;border:1px solid #3A3731}
+.ob-win .bar{display:flex;gap:6px;align-items:center;padding:.45rem .6rem;background:#34312C}
+.ob-win .bar i{width:9px;height:9px;border-radius:50%;background:#5C574F}
+.ob-win .bar span{margin-left:.4rem;font:500 .72rem 'JetBrains Mono',monospace;color:#C9C2B6}
+.ob-win table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:.74rem;color:#EDE7DC}
+.ob-win th,.ob-win td{padding:.4rem .45rem;border-bottom:1px solid #3A3731;text-align:left;overflow-wrap:anywhere}
+.ob-win th{color:#A9A296;font-weight:500}
+.ob-win td.best{background:#1F7A4D;color:#fff;font-weight:700}
+.ob-win td.sec{background:#2C4A38}
+.ob-win small{display:block;color:#A9A296;font-weight:400}
+/* phones carousel */
+.ob-phones{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(250px,300px);gap:1.1rem;overflow-x:auto;scroll-snap-type:x mandatory;padding:.25rem .25rem 1rem;margin-bottom:.5rem}
+.ob-ph{scroll-snap-align:start}
+.ob-phf{border-radius:34px;background:#1B1A17;padding:9px}
+.ob-scr{border-radius:26px;background:var(--paper);min-height:470px;padding:.8rem;font-size:.82rem}
+.ob-cap{display:flex;gap:.6rem;margin-top:.7rem}
+.ob-cap .num{font:700 .85rem 'JetBrains Mono',monospace;color:var(--tomato);padding-top:.1rem}
+.ob-cap h5{margin:0;font-size:1.05rem}
+.ob-cap p{margin:.1rem 0 0;color:var(--muted);font-size:.9rem}
+.ob-field{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:.55rem .7rem;margin-bottom:.5rem;min-height:44px}
+.ob-field small{display:block;color:var(--muted);font-size:.72rem}
+.ob-mc{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:.6rem;margin-bottom:.5rem}
+.ob-mc h6{margin:0;font:700 .95rem 'Space Grotesk',sans-serif}
+.ob-mc .aka{color:var(--muted);font-size:.72rem}
+.ob-mr{display:grid;grid-template-columns:70px 1fr auto;gap:.35rem;padding:.45rem .45rem;border-radius:9px;margin-top:.25rem;min-height:40px;align-items:center}
+.ob-mr.best{background:var(--leaf);color:#fff}
+.ob-mr.sec{background:var(--leafbg)}
+.ob-mr .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.85}
+.ob-pbtn{display:grid;place-items:center;min-height:46px;border-radius:999px;background:var(--ink);color:var(--paper);font-weight:600;margin-top:.5rem}
+.ob-pbtn.o{background:transparent;color:var(--ink);border:1.5px solid var(--ink)}
+.ob-otp{display:grid;grid-template-columns:repeat(6,1fr);gap:.35rem;margin:.4rem 0}
+.ob-otp span{aspect-ratio:1/1.15;border:1.5px solid var(--line);border-radius:10px;display:grid;place-items:center;font:700 1.05rem 'JetBrains Mono',monospace;background:var(--card)}
+.ob-otp span.f{border-color:var(--ink)}
+@media (max-width:900px){.ob-hero{grid-template-columns:1fr}.ob-bento{grid-template-columns:repeat(2,minmax(0,1fr))}.ob-tile.wide{grid-column:span 2}}
+@media (max-width:560px){.ob-bento{grid-template-columns:1fr}.ob-tile.big,.ob-tile.wide{grid-column:auto;grid-row:auto}.ob-nav nav{display:none}}
+
+/* ═════════════ OPTION C · Fresh Flat (design-system pick: green + amber, no shadows) ═════════════ */
+.oc{--bg:#ECFDF5;--card:#FFFFFF;--ink:#0F172A;--muted:#475569;--line:#CDEBE0;--green:#047857;--green2:#10B981;--greenbg:#D1FAE5;--amber:#B45309;--amberbg:#FEF3C7;
+  background:var(--bg);color:var(--ink);border-radius:22px;padding:clamp(1rem,3vw,2.25rem);font-family:'Nunito Sans','Segoe UI',system-ui,sans-serif}
+.oc h3,.oc h4,.oc h5{font-family:'Rubik','Segoe UI',sans-serif}
+.oc-nav{display:flex;align-items:center;gap:.6rem;font-family:'Rubik',sans-serif;font-weight:700;font-size:1.05rem}
+.oc-nav .mark{width:36px;height:36px;border-radius:10px;background:var(--green);color:#fff;display:grid;place-items:center}
+.oc-nav .lang{margin-left:auto;font-weight:600;font-size:.9rem;color:var(--muted)}
+.oc-hero{text-align:center;max-width:760px;margin:2rem auto 1.75rem}
+.oc h3.big{font-size:clamp(2rem,4.6vw,3.1rem);line-height:1.08;margin:.3rem 0 .7rem;font-weight:700}
+.oc h3.big span{color:var(--green)}
+.oc-lede{color:var(--muted);font-size:1.08rem;margin:0 auto}
+.oc-doors{display:grid;grid-template-columns:1fr 1fr;gap:1rem;max-width:880px;margin:0 auto 2.25rem}
+.oc-door{display:grid;grid-template-columns:auto 1fr auto;gap:1rem;align-items:center;background:var(--card);border:2px solid var(--line);border-radius:18px;padding:1.1rem 1.2rem;text-decoration:none;color:inherit;transition:border-color .15s,background .15s;min-height:96px}
+.oc-door:hover{border-color:var(--green);background:#F7FFFB}
+.oc-door .big-ico{width:56px;height:56px;border-radius:14px;background:var(--greenbg);color:var(--green);display:grid;place-items:center}
+.oc-door .big-ico .ico{width:28px;height:28px}
+.oc-door.ph .big-ico{background:var(--amberbg);color:var(--amber)}
+.oc-door h4{margin:0;font-size:1.2rem}
+.oc-door p{margin:.1rem 0 0;color:var(--muted);font-size:.92rem}
+.oc-door .go{color:var(--green)}
+.oc-split{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.oc-col{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:1.1rem}
+.oc-colh{display:flex;align-items:center;gap:.6rem;margin-bottom:.8rem}
+.oc-colh h4{margin:0;font-size:1.25rem}
+.oc-colh .badge{margin-left:auto;font-size:.78rem;font-weight:700;border-radius:999px;padding:.15rem .6rem;background:var(--greenbg);color:var(--green)}
+.oc-col.ph .oc-colh .badge{background:var(--amberbg);color:var(--amber)}
+.oc-colh .ico{color:var(--green)}.oc-col.ph .oc-colh .ico{color:var(--amber)}
+.oc-step{display:grid;grid-template-columns:36px 1fr;gap:.75rem;padding:.75rem 0;border-top:1.5px solid #E6F4EE}
+.oc-colh+.oc-step{border-top:0}
+.oc-step .n{width:36px;height:36px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font:600 .95rem 'Rubik',sans-serif}
+.oc-col.ph .oc-step .n{background:var(--amber)}
+.oc-step h5{margin:.15rem 0 .15rem;font-size:1.02rem}
+.oc-step p{margin:0;color:var(--muted);font-size:.93rem}
+.oc kbd,.oc code{font:600 .82em Consolas,'Fira Code',monospace;background:#F1F5F9;border:1px solid #E2E8F0;border-radius:6px;padding:.05rem .35rem;color:var(--ink)}
+.oc-shot{margin-top:.5rem;border:1.5px solid var(--line);border-radius:12px;padding:.5rem;background:#F8FFFC;font-size:.78rem}
+.oc-shot table{width:100%;border-collapse:collapse;table-layout:fixed}
+.oc-shot th,.oc-shot td{padding:.3rem .35rem;text-align:left;border-bottom:1px solid #E6F4EE;overflow-wrap:anywhere}
+.oc-shot th{color:var(--muted);font-weight:600}
+.oc-shot td.best{background:var(--green);color:#fff;font-weight:700}
+.oc-shot td.sec{background:var(--greenbg)}
+.oc-shot .row{display:grid;grid-template-columns:72px 1fr auto;gap:.35rem;padding:.35rem .4rem;border-radius:8px;min-height:36px;align-items:center}
+.oc-shot .row.best{background:var(--green);color:#fff}
+.oc-shot .row.sec{background:var(--greenbg)}
+.oc-good{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;margin-top:1rem}
+.oc-gk{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:1rem 1.1rem}
+.oc-gk h5{margin:0 0 .3rem;font-size:1.05rem;display:flex;align-items:center;gap:.5rem}
+.oc-gk p{margin:0;color:var(--muted);font-size:.93rem}
+.oc-gk.warn{border-color:#F5D9A8;background:#FFFBEB}
+.oc-gk.warn h5{color:var(--amber)}
+.oc-kinds{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.5rem}
+.oc-kinds span{font:600 .75rem Consolas,monospace;border-radius:6px;padding:.1rem .45rem;background:#FEE2E2;color:#991B1B}
+@media (max-width:860px){.oc-doors,.oc-split,.oc-good{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-laptop" viewBox="0 0 24 24"><path d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></symbol>
+  <symbol id="i-basket" viewBox="0 0 24 24"><path d="m15 11-1 9"/><path d="m19 11-4-7"/><path d="M2 11h20"/><path d="m3.5 11 1.6 7.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6l1.7-7.4"/><path d="M4.5 15.5h15"/><path d="m5 11 4-7"/><path d="m9 11 1 9"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+  <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.86a10 10 0 0 1 14 0"/><path d="M8.5 16.43a5 5 0 0 1 7 0"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-tag" viewBox="0 0 24 24"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol>
+</svg>
+
+<header class="sheet">
+  <h1>compareprice · how-to guide · three design options</h1>
+  <p>These are three ways the guide could look. Each one shows the same content: the opening section, how to use it in a web browser on a computer, and how to use it on a phone. Pick one, or name parts to combine, and I'll build the full guide in that style. The prices are mock data, but every step matches how the app works today.</p>
+  <nav class="jump" aria-label="Options">
+    <a href="#opt-a">A · Night Market</a>
+    <a href="#opt-b">B · Receipt Bento</a>
+    <a href="#opt-c">C · Fresh Flat</a>
+    <a href="#compare">Side by side</a>
+  </nav>
+  <div class="note"><b>Same in every option:</b> separate tracks for the website and the phone, step numbers, the "kismis = raisins" tip, and a warning that phone access exposes the page (it has no login) on your Wi-Fi. Every option is keyboard-accessible, has text contrast of at least 4.5:1, touch targets of at least 44 px, SVG icons and no emoji, works without horizontal scrolling at 390 px, and respects reduced-motion settings.</div>
+</header>
+
+<!-- ═══════════════════════ OPTION A ═══════════════════════ -->
+<section class="opt" id="opt-a" aria-labelledby="ha">
+  <div class="opt-head">
+    <h2 id="ha">Option A · Night Market</h2><span class="tag">closest to checkpay</span>
+    <span class="insp">Inspired by checkpay's navy and its thin bright card edges, plus CRED NeoPOP's press-down buttons and glowing status colours. A switch toggles between the website and phone steps (try it, no JavaScript needed).</span>
+  </div>
+  <div class="oa">
+    <div class="oa-nav">
+      <span class="oa-logo"><svg class="ico"><use href="#i-basket"/></svg></span><b>compareprice</b><span style="color:var(--muted)">Guide</span>
+      <span class="pill">localhost:7777</span>
+    </div>
+
+    <input class="sr" type="radio" name="oa-track" id="oa-w" checked>
+    <input class="sr" type="radio" name="oa-track" id="oa-p">
+
+    <div class="oa-hero" style="grid-column:1/-1">
+      <div>
+        <div class="oa-eye">How to use</div>
+        <h3 class="big">Your basket, priced on <em>7 sites</em>. Before you tap order.</h3>
+        <p class="oa-lede">Paste a grocery list once. See which site is cheapest for the whole basket and for every item, with the lowest price each site has ever shown.</p>
+        <div class="oa-btns">
+          <button class="neo" type="button">Start on the website <svg class="ico"><use href="#i-arrow"/></svg></button>
+          <button class="neo ghost" type="button">Use it on your phone</button>
+        </div>
+      </div>
+      <div class="oa-stats">
+        <div class="oa-stat"><b>7</b><span>sites, all as a guest</span></div>
+        <div class="oa-stat"><b>0 s</b><span>to answer from saved prices</span></div>
+        <div class="oa-stat"><b>1 row</b><span>for kismis, kishmish and raisins</span></div>
+      </div>
+    </div>
+
+    <div class="oa-switch" role="radiogroup" aria-label="Show steps for">
+      <label for="oa-w"><svg class="ico"><use href="#i-laptop"/></svg>On the website</label>
+      <label for="oa-p"><svg class="ico"><use href="#i-phone"/></svg>On your phone</label>
+    </div>
+
+    <div class="oa-tracks">
+      <!-- website track -->
+      <div class="oa-track oa-web">
+        <ol class="oa-steps">
+          <li><span class="oa-n">01</span><div><h4>Open the app</h4><p>Start the service with <code>docker compose up -d</code> (or <code>basket serve</code>), then open <code>localhost:7777</code>.</p></div></li>
+          <li><span class="oa-n">02</span><div><h4>Paste your list</h4><p>Open <b>Your list</b>. Type one item per line, like <code>2x toor dal 1kg</code>, and tick the sites to check.</p></div></li>
+          <li><span class="oa-n">03</span><div><h4>Find the cheapest</h4><p>Answers straight away from saved prices. Every cell shows its date (<b>as of 22/11/26</b>), and no site is contacted.</p></div></li>
+          <li><span class="oa-n">04</span><div><h4>Get fresh prices</h4><p>Checks the sites live. A chip per site shows progress. If a site needs a pause, a short countdown runs and the check then starts on its own.</p></div></li>
+        </ol>
+        <div>
+          <div class="oa-browser" aria-label="Mock of the compare page">
+            <div class="oa-bar"><span class="oa-dots"><i></i><i></i><i></i></span><span class="oa-url">localhost:7777</span></div>
+            <div class="oa-app">
+              <div class="oa-appbtns"><span class="go">Find the cheapest</span><span>Get fresh prices</span><span>Sign in…</span></div>
+              <div class="oa-verd">
+                <div class="win">Cheapest basket<b>JioMart ₹495</b></div>
+                <div>Runner-up<b>KPN ₹516</b></div>
+                <div>You save<b>₹21</b></div>
+              </div>
+              <table class="oa-tbl">
+                <thead><tr><th>Item</th><th>KPN</th><th>JioMart</th><th>BigBasket</th><th>Blinkit</th></tr></thead>
+                <tbody>
+                  <tr><td class="it">amul butter 100g</td><td class="best"><span class="p">₹61</span><span class="oa-badge">new low</span></td><td class="sec"><span class="p">₹65</span></td><td><span class="p">₹66</span></td><td><span class="p">₹66</span></td></tr>
+                  <tr><td class="it">toor dal 1kg</td><td class="sec"><span class="p">₹168</span></td><td class="best"><span class="p">₹159</span></td><td><span class="p">₹172</span></td><td><span class="p">₹179</span></td></tr>
+                  <tr><td class="it">raisins 500g<small>you typed: kismis</small></td><td class="sec"><span class="p">₹249</span></td><td class="best"><span class="p">₹229</span><span class="oa-asof">as of 22/11/26</span></td><td><span class="p">₹251</span></td><td><span class="p">₹267</span></td></tr>
+                  <tr><td class="it">onion 1kg</td><td class="best"><span class="p">₹38</span></td><td class="sec"><span class="p">₹42</span></td><td><span class="p">₹45</span></td><td><span class="p">₹49</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="oa-call good"><svg class="ico"><use href="#i-tag"/></svg><p><b>One product, many names.</b> Kismis, kishmish, khismis and dry grapes are all searched and saved as <b>raisins</b>. What you typed shows under the row.</p></div>
+        </div>
+      </div>
+
+      <!-- phone track -->
+      <div class="oa-track oa-phone">
+        <ol class="oa-steps">
+          <li><span class="oa-n">01</span><div><h4>Join the same Wi-Fi</h4><p>Run <code>basket serve --host=0.0.0.0</code> on the computer, then open <code>http://&lt;computer-ip&gt;:7777</code> in your phone's browser.</p></div></li>
+          <li><span class="oa-n">02</span><div><h4>Add it to your home screen</h4><p>In Chrome or Safari, tap <b>Share</b> or the menu, then <b>Add to Home screen</b>. It opens with one tap after that.</p></div></li>
+          <li><span class="oa-n">03</span><div><h4>One card per item</h4><p>On a phone the table becomes cards. Sites are sorted by what you'd pay, cheapest at the top.</p></div></li>
+          <li><span class="oa-n">04</span><div><h4>Sign in with an OTP</h4><p>For Zepto, Milkbasket or Amazon, tap <b>Sign in…</b>, enter your mobile number and type the OTP the site sends.</p></div></li>
+        </ol>
+        <div>
+          <div class="oa-phonewrap">
+            <div class="oa-phonef" aria-label="Mock of the compare page on a phone">
+              <div class="oa-screen">
+                <div class="oa-stbar"><span>9:41</span><span>192.168.1.20:7777</span></div>
+                <div class="oa-tabbar" style="margin:0 0 .6rem"><span>Find the cheapest</span><span class="g">Get fresh prices</span></div>
+                <div class="oa-verd" style="grid-template-columns:1fr 1fr"><div class="win">Cheapest<b>JioMart ₹495</b></div><div>You save<b>₹21</b></div></div>
+                <div class="oa-mcard">
+                  <h5>raisins 500g</h5><small>you typed: kismis</small>
+                  <div class="oa-mrow best"><b>JioMart</b><span class="nm">Indian Long Kishmish</span><b>₹229</b></div>
+                  <div class="oa-mrow sec"><b>KPN</b><span class="nm">ProV Indian Raisin</span><b>₹249</b></div>
+                  <div class="oa-mrow"><b>BigBasket</b><span class="nm">bb Popular Raisins</span><b>₹251</b></div>
+                  <div class="oa-mrow"><b>Blinkit</b><span class="nm">Whole Farm Raisins</span><b>₹267</b></div>
+                </div>
+                <div class="oa-mcard">
+                  <h5>onion 1kg</h5><small>as of 22/11/26</small>
+                  <div class="oa-mrow best"><b>KPN</b><span class="nm">Onion</span><b>₹38</b></div>
+                  <div class="oa-mrow sec"><b>JioMart</b><span class="nm">Onion</span><b>₹42</b></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="oa-call warn"><svg class="ico"><use href="#i-alert"/></svg><p><b>Home Wi-Fi only.</b> The page has no login, so anyone on the same network can use it once it listens on <code>0.0.0.0</code>. Never forward the port to the internet.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ OPTION B ═══════════════════════ -->
+<section class="opt" id="opt-b" aria-labelledby="hb">
+  <div class="opt-head">
+    <h2 id="hb">Option B · Receipt Bento</h2><span class="tag">stands out most</span>
+    <span class="insp">An editorial look on warm paper. The opening section shows a torn-off receipt with the answer. The website steps sit in a grid of tiles (the Apple and Linear feature-grid style), and the phone steps are a row of phone screens you swipe through.</span>
+  </div>
+  <div class="ob">
+    <div class="ob-nav">
+      <span class="mark"><svg class="ico"><use href="#i-basket"/></svg></span>compareprice
+      <nav aria-label="Guide sections"><a href="#ob-web">Website</a><a href="#ob-phone">Phone</a><a href="#ob-tips">Tips</a></nav>
+    </div>
+
+    <div class="ob-hero">
+      <div>
+        <h3 class="big">Shop the <mark>list</mark>,<br>not the apps.</h3>
+        <p class="ob-lede">compareprice checks Instamart, BigBasket, Zepto, Blinkit, KPN Fresh, JioMart and Flipkart Minutes at your address. It tells you where the whole basket costs least.</p>
+        <div class="ob-cta">
+          <a class="ob-btn solid" href="#ob-web"><svg class="ico"><use href="#i-laptop"/></svg>On the website</a>
+          <a class="ob-btn" href="#ob-phone"><svg class="ico"><use href="#i-phone"/></svg>On your phone</a>
+        </div>
+      </div>
+      <div class="ob-receipt" aria-label="Example result as a receipt">
+        <h5>YOUR BASKET</h5>
+        <div class="c">600045 · 23/11/26 · 4 items</div>
+        <div class="ob-rl"><span>amul butter 100g</span><span>KPN ₹61</span></div>
+        <div class="ob-rl"><span>toor dal 1kg</span><span>JioMart ₹159</span></div>
+        <div class="ob-rl"><span>raisins 500g<br><small>you typed: kismis</small></span><span>JioMart ₹229</span></div>
+        <div class="ob-rl"><span>onion 1kg</span><span>KPN ₹38</span></div>
+        <div class="ob-dash"></div>
+        <div class="ob-rl ob-tot"><span>ALL ON JIOMART</span><span>₹495</span></div>
+        <div class="ob-rl"><small>Runner-up KPN</small><small>₹516</small></div>
+        <div class="ob-rl"><small>Priciest Blinkit</small><small>₹561</small></div>
+        <div style="text-align:center"><span class="ob-stamp">SAVES ₹66</span></div>
+      </div>
+    </div>
+
+    <div class="ob-sec" id="ob-web"><svg class="ico"><use href="#i-laptop"/></svg><h4>On the website</h4><span class="chip">5 steps · about 2 min</span></div>
+    <div class="ob-bento">
+      <div class="ob-tile big">
+        <span class="num">THE ANSWER</span>
+        <h5>Green is cheapest. Lighter green is second.</h5>
+        <p>A badge compares the price with the lowest one seen so far. Greyed cells are shown but not counted in the total.</p>
+        <div class="ob-win" aria-label="Mock of the compare table">
+          <div class="bar"><i></i><i></i><i></i><span>localhost:7777</span></div>
+          <table>
+            <thead><tr><th>Item</th><th>KPN</th><th>JioMart</th><th>BigBasket</th><th>Blinkit</th></tr></thead>
+            <tbody>
+              <tr><td>amul butter 100g</td><td class="best">₹61</td><td class="sec">₹65</td><td>₹66</td><td>₹66</td></tr>
+              <tr><td>toor dal 1kg</td><td class="sec">₹168</td><td class="best">₹159</td><td>₹172</td><td>₹179</td></tr>
+              <tr><td>raisins 500g<small>you typed: kismis</small></td><td class="sec">₹249</td><td class="best">₹229</td><td>₹251</td><td>₹267</td></tr>
+              <tr><td>onion 1kg</td><td class="best">₹38</td><td class="sec">₹42</td><td>₹45</td><td>₹49</td></tr>
+              <tr><td><b>Total</b></td><td>₹516</td><td class="best">₹495</td><td>₹534</td><td>₹561</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="ob-tile">
+        <span class="num">01</span><h5>Paste your list</h5>
+        <p>One item per line. Add a quantity in front if you need it.</p>
+        <div class="ob-mini">2x toor dal 1kg<br>amul butter 100g<br><span class="hl">kismis 500g</span></div>
+      </div>
+      <div class="ob-tile">
+        <span class="num">02</span><h5>Find the cheapest</h5>
+        <p>Answers instantly from saved prices, each with its date. No site is contacted.</p>
+        <div class="ob-chips"><span>as of 22/11/26</span><span>no saved price</span></div>
+      </div>
+      <div class="ob-tile">
+        <span class="num">03</span><h5>Get fresh prices</h5>
+        <p>Checks the sites live and shows each one's progress.</p>
+        <div class="ob-chips"><span class="ok">JioMart done</span><span class="run">Zepto 2/4</span><span>wait 3s…</span></div>
+      </div>
+      <div class="ob-tile leaf">
+        <span class="num">04</span><h5>Check a saved price</h5>
+        <p>Start typing an item to see what each site charged, per 100 g.</p>
+        <div class="ob-mini"><svg class="ico" style="width:14px;height:14px;vertical-align:-2px"><use href="#i-search"/></svg> kis<br><span class="hl">raisins 500g</span> · 3 sites</div>
+      </div>
+      <div class="ob-tile">
+        <span class="num">05</span><h5>Settings &amp; schedule</h5>
+        <p>Set your delivery location, default sites and list, and when it runs each day.</p>
+        <div class="ob-chips"><span>07:00</span><span>09:00</span><span>12:00</span></div>
+      </div>
+      <div class="ob-tile wide" id="ob-tips">
+        <span class="num">TIP</span><h5>Generic lines match any brand</h5>
+        <p>"moong dal" matches any brand of moong dal, but never moong dal namkeen. "amul butter" only matches Amul.</p>
+      </div>
+    </div>
+
+    <div class="ob-sec" id="ob-phone"><svg class="ico"><use href="#i-phone"/></svg><h4>On your phone</h4><span class="chip">Swipe through the screens</span></div>
+    <div class="ob-phones" tabindex="0" aria-label="Phone steps, scroll sideways">
+      <div class="ob-ph">
+        <div class="ob-phf"><div class="ob-scr">
+          <div class="ob-field"><small>Address bar</small>http://192.168.1.20:7777</div>
+          <div class="ob-mc"><h6>Same Wi-Fi as the computer</h6><span class="aka">The service must run with --host=0.0.0.0</span></div>
+          <div class="ob-mc" style="display:flex;gap:.5rem;align-items:center"><svg class="ico"><use href="#i-home"/></svg><span><b>Add to Home screen</b><br><span class="aka">from the browser's Share / ⋮ menu</span></span></div>
+          <div class="ob-pbtn">Find the cheapest</div>
+          <div class="ob-pbtn o">Get fresh prices</div>
+        </div></div>
+        <div class="ob-cap"><span class="num">01</span><div><h5>Open it on Wi-Fi</h5><p>Type the computer's address once, then keep it on your home screen.</p></div></div>
+      </div>
+      <div class="ob-ph">
+        <div class="ob-phf"><div class="ob-scr">
+          <div class="ob-mc"><h6>raisins 500g</h6><span class="aka">you typed: kismis</span>
+            <div class="ob-mr best"><b>JioMart</b><span class="nm">Indian Long Kishmish</span><b>₹229</b></div>
+            <div class="ob-mr sec"><b>KPN</b><span class="nm">ProV Raisin</span><b>₹249</b></div>
+            <div class="ob-mr"><b>BigBasket</b><span class="nm">bb Popular</span><b>₹251</b></div>
+          </div>
+          <div class="ob-mc"><h6>toor dal 1kg</h6>
+            <div class="ob-mr best"><b>JioMart</b><span class="nm">Toor Dal</span><b>₹159</b></div>
+            <div class="ob-mr sec"><b>KPN</b><span class="nm">Toor Dal</span><b>₹168</b></div>
+          </div>
+        </div></div>
+        <div class="ob-cap"><span class="num">02</span><div><h5>One card per item</h5><p>Sites are sorted by what you'd pay. Scroll for the next item.</p></div></div>
+      </div>
+      <div class="ob-ph">
+        <div class="ob-phf"><div class="ob-scr">
+          <div class="ob-mc"><h6>Sign in to Zepto</h6><span class="aka">Kept in the service's browser, like a phone app</span></div>
+          <div class="ob-field"><small>Mobile number</small>98••••••21</div>
+          <div class="ob-otp" aria-hidden="true"><span class="f">4</span><span class="f">8</span><span class="f">1</span><span>·</span><span>·</span><span>·</span></div>
+          <div class="ob-pbtn">Verify OTP</div>
+        </div></div>
+        <div class="ob-cap"><span class="num">03</span><div><h5>Sign in with an OTP</h5><p>Zepto, Milkbasket and Amazon only. Every other site works as a guest.</p></div></div>
+      </div>
+      <div class="ob-ph">
+        <div class="ob-tile warn" style="height:100%;min-height:470px;justify-content:center">
+          <svg class="ico" style="width:32px;height:32px"><use href="#i-alert"/></svg>
+          <h5>Keep it on home Wi-Fi</h5>
+          <p>The page has no login. Once it listens on <b>0.0.0.0</b>, anyone on your network can open it and start runs. Don't forward port 7777 to the internet.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ OPTION C ═══════════════════════ -->
+<section class="opt" id="opt-c" aria-labelledby="hc">
+  <div class="opt-head">
+    <h2 id="hc">Option C · Fresh Flat</h2><span class="tag">calmest, easiest to scan</span>
+    <span class="insp">Uses the palette the UI/UX design search suggested for grocery and retail: fresh green, food amber and the Rubik / Nunito Sans fonts, with flat surfaces and no shadows. Two big buttons at the top pick the track, and the steps sit side by side so you can see what differs between the website and the phone.</span>
+  </div>
+  <div class="oc">
+    <div class="oc-nav"><span class="mark"><svg class="ico"><use href="#i-basket"/></svg></span>compareprice<span class="lang">Guide · v1.0</span></div>
+    <div class="oc-hero">
+      <h3 class="big">The cheapest basket, <span>in four steps</span>.</h3>
+      <p class="oc-lede">Same app, two screens. Use it on the computer where it runs, or on your phone over home Wi-Fi.</p>
+    </div>
+    <div class="oc-doors">
+      <a class="oc-door" href="#oc-split"><span class="big-ico"><svg class="ico"><use href="#i-laptop"/></svg></span><span><h4>On the website</h4><p>Table view, settings, schedules</p></span><svg class="ico go"><use href="#i-arrow"/></svg></a>
+      <a class="oc-door ph" href="#oc-split"><span class="big-ico"><svg class="ico"><use href="#i-phone"/></svg></span><span><h4>On your phone</h4><p>Card view, home-screen shortcut, OTP sign-in</p></span><svg class="ico go"><use href="#i-arrow"/></svg></a>
+    </div>
+
+    <div class="oc-split" id="oc-split">
+      <div class="oc-col">
+        <div class="oc-colh"><svg class="ico"><use href="#i-laptop"/></svg><h4>Website</h4><span class="badge">computer browser</span></div>
+        <div class="oc-step"><span class="n">1</span><div><h5>Open localhost:7777</h5><p>After <code>docker compose up -d</code> or <code>basket serve</code>.</p></div></div>
+        <div class="oc-step"><span class="n">2</span><div><h5>Paste the list, tick the sites</h5><p>Open <b>Your list</b> and type one item per line. <code>2x</code> in front sets a quantity.</p></div></div>
+        <div class="oc-step"><span class="n">3</span><div><h5>Click Find the cheapest</h5><p>Uses saved prices, each with its date. Click <b>Get fresh prices</b> to check live.</p>
+          <div class="oc-shot"><table><thead><tr><th>Item</th><th>KPN</th><th>JioMart</th><th>Blinkit</th></tr></thead><tbody>
+            <tr><td>raisins 500g</td><td class="sec">₹249</td><td class="best">₹229</td><td>₹267</td></tr>
+            <tr><td>onion 1kg</td><td class="best">₹38</td><td class="sec">₹42</td><td>₹49</td></tr></tbody></table></div></div></div>
+        <div class="oc-step"><span class="n">4</span><div><h5>Set the schedule</h5><p><b>Settings &amp; schedule</b> holds your location, default list and run times (e.g. 07:00, 09:00, 12:00).</p></div></div>
+      </div>
+      <div class="oc-col ph">
+        <div class="oc-colh"><svg class="ico"><use href="#i-phone"/></svg><h4>Phone</h4><span class="badge">same Wi-Fi</span></div>
+        <div class="oc-step"><span class="n">1</span><div><h5>Open http://&lt;computer-ip&gt;:7777</h5><p>The service needs <code>--host=0.0.0.0</code>. Then use <b>Add to Home screen</b>.</p></div></div>
+        <div class="oc-step"><span class="n">2</span><div><h5>Tap Your list</h5><p>Same list, same sites. Your phone keyboard's dictation works for long lists.</p></div></div>
+        <div class="oc-step"><span class="n">3</span><div><h5>Tap Find the cheapest</h5><p>Each item becomes a card, with sites sorted cheapest first.</p>
+          <div class="oc-shot"><b>raisins 500g</b> <span style="color:var(--muted)">· you typed: kismis</span>
+            <div class="row best"><b>JioMart</b><span>Indian Long Kishmish</span><b>₹229</b></div>
+            <div class="row sec"><b>KPN</b><span>ProV Raisin</span><b>₹249</b></div></div></div></div>
+        <div class="oc-step"><span class="n">4</span><div><h5>Sign in with an OTP</h5><p>Only for Zepto, Milkbasket or Amazon: enter your mobile number, then type the OTP the site sends.</p></div></div>
+      </div>
+    </div>
+
+    <div class="oc-good">
+      <div class="oc-gk"><h5><svg class="ico" style="color:var(--green)"><use href="#i-tag"/></svg>Many names, one row</h5><p>Kismis, kishmish, khismis and dry grapes all land on <b>raisins</b>. Gud, gur and vellam all land on <b>jaggery</b>.</p></div>
+      <div class="oc-gk"><h5><svg class="ico" style="color:var(--green)"><use href="#i-clock"/></svg>Saved vs fresh</h5><p>Saved prices answer instantly with their date. Fresh prices contact the sites and update the history.</p></div>
+      <div class="oc-gk warn"><h5><svg class="ico"><use href="#i-alert"/></svg>When a site fails</h5><p>The page says why, never just "offline":</p><div class="oc-kinds"><span>blocked</span><span>session</span><span>unserviceable</span><span>timeout</span><span>parse</span><span>not_found</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ COMPARISON ═══════════════════════ -->
+<section class="sheet" id="compare" aria-labelledby="hcmp">
+  <h2 id="hcmp" style="margin-top:0">Side by side</h2>
+  <table class="cmp">
+    <thead><tr><th scope="col">Option</th><th scope="col">Feel</th><th scope="col">Strongest part</th><th scope="col">Trade-off</th><th scope="col">Pick it if</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">A · Night Market</th><td data-label="Feel">Dark, premium, tactile</td><td data-label="Strongest part">Matches checkpay, so the two products feel like one family. The switch keeps each track short.</td><td data-label="Trade-off">Only one track shows at a time, so it can't be read as one scroll or printed.</td><td data-label="Pick it if">You want the guide to look like checkpay.</td></tr>
+      <tr><th scope="row">B · Receipt Bento</th><td data-label="Feel">Editorial, warm, memorable</td><td data-label="Strongest part">The receipt shows the result before any step is read. The tiles are easy to skim, and the phone screens feel like the real app.</td><td data-label="Trade-off">The most styling work. The swipe row needs care on small screens.</td><td data-label="Pick it if">You want it to stand out the most.</td></tr>
+      <tr><th scope="row">C · Fresh Flat</th><td data-label="Feel">Light, calm, friendly</td><td data-label="Strongest part">The website and phone steps sit side by side, so the differences are obvious. It also prints well.</td><td data-label="Trade-off">The least distinctive of the three.</td><td data-label="Pick it if">You want the clearest instructions for family members.</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:1rem">Tell me A, B or C, or a mix (for example "B's receipt opening with C's side-by-side steps"). I'll then build the full guide: every step for both tracks, settings, schedules, the sweep, sign-ins and troubleshooting.</p>
+</section>
+</body>
+</html>

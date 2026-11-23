@@ -1,0 +1,145 @@
+/*
+ * compareprice · Liquid Glass theme (served at /theme.css)
+ *
+ * Shared by the compare page, settings and the guide. A soft mesh gradient
+ * drifts behind frosted-glass chrome. Data (prices, tables, forms) sits on
+ * near-opaque white so it always reads at full contrast: glass is for
+ * navigation and framing, never for numbers.
+ */
+:root {
+  --ink: #0B1B14;
+  --muted: #3E5148;          /* 8.6:1 on white */
+  --faint: #5C6E65;          /* 5.4:1 on white, for small print */
+  --line: #D9E4DD;
+  --surface: rgba(255, 255, 255, .88);
+  --glass: rgba(255, 255, 255, .55);
+  --rim: rgba(255, 255, 255, .78);
+  --g: #0E7A4B;              /* cheapest: white text 5.6:1 */
+  --g-ink: #06492C;
+  --g2: #D5F2E3;             /* second cheapest */
+  --amber: #9A4A06;
+  --amber-bg: #FFF3E3;
+  --bad: #B42318;
+  --bad-bg: #FDECEA;
+  --blue: #1D4ED8;
+  --radius: 22px;
+  --radius-s: 14px;
+  --shadow: 0 10px 30px rgba(11, 27, 20, .08), inset 0 1px 0 rgba(255, 255, 255, .7);
+  /* The device's own fonts: nothing is fetched, works offline, and reads
+     like the rest of the phone or desktop (SF on Apple, Segoe on Windows,
+     Roboto on Android). */
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', 'Helvetica Neue', Arial, sans-serif;
+  --mono: ui-monospace, 'SF Mono', 'Cascadia Mono', 'Segoe UI Mono', Menlo, Consolas, 'Roboto Mono', monospace;
+  --ease: cubic-bezier(.2, .7, .2, 1);
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; min-height: 100vh; color: var(--ink); font: 15px/1.5 var(--font);
+  background:
+    radial-gradient(60% 50% at 8% 6%, #BFF0D4 0, transparent 60%),
+    radial-gradient(45% 45% at 96% 10%, #FFD9C2 0, transparent 60%),
+    radial-gradient(60% 60% at 75% 100%, #DCD3FF 0, transparent 60%),
+    #F4F7F2;
+  background-attachment: fixed;
+}
+a { color: var(--g-ink); text-underline-offset: 2px; }
+a:hover { color: var(--g); }
+code, kbd { font: 600 .86em var(--mono); background: rgba(255, 255, 255, .8); border: 1px solid var(--line); border-radius: 6px; padding: .05rem .35rem; }
+:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; border-radius: 6px; }
+.sr { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.muted { color: var(--muted); }
+.ico { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* drifting colour, purely decorative */
+.blobs { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+.blobs i { position: absolute; border-radius: 50%; filter: blur(50px); opacity: .5; animation: drift 22s ease-in-out infinite alternate; }
+.blobs i:nth-child(1) { width: 380px; height: 380px; background: #7FE0AE; left: -100px; top: 140px; }
+.blobs i:nth-child(2) { width: 300px; height: 300px; background: #FFB48F; right: -80px; top: 40px; animation-delay: -7s; }
+.blobs i:nth-child(3) { width: 340px; height: 340px; background: #C9BCFF; right: 20%; bottom: -120px; animation-delay: -14s; }
+@keyframes drift { to { transform: translate(60px, 40px) scale(1.15); } }
+
+/* glass + surfaces */
+.glass {
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4); backdrop-filter: blur(18px) saturate(1.4);
+  border: 1px solid var(--rim); box-shadow: var(--shadow);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass { background: rgba(255, 255, 255, .86); }
+}
+.surface { background: var(--surface); border: 1px solid var(--rim); box-shadow: var(--shadow); border-radius: var(--radius); }
+
+/* top navigation */
+.topnav {
+  position: sticky; top: .75rem; z-index: 20; display: flex; align-items: center; gap: .6rem;
+  border-radius: 999px; padding: .4rem .45rem .4rem .55rem; margin: .75rem 0 1.25rem; font-weight: 800;
+}
+.topnav .brand { display: inline-flex; align-items: center; gap: .55rem; color: var(--ink); text-decoration: none; font-size: 1.02rem; letter-spacing: -.01em; }
+.topnav .mark { width: 34px; height: 34px; border-radius: 50%; background: var(--ink); color: #fff; display: grid; place-items: center; }
+.topnav .mark .ico { width: 18px; height: 18px; }
+.topnav nav { margin-left: auto; display: flex; gap: 2px; border-radius: 999px; padding: 4px; background: rgba(255, 255, 255, .45); }
+.topnav nav a {
+  min-height: 40px; padding: 0 .95rem; border-radius: 999px; display: inline-flex; align-items: center; gap: .4rem;
+  font-weight: 700; font-size: .92rem; color: var(--muted); text-decoration: none; transition: background .15s, color .15s;
+}
+.topnav nav a:hover { background: rgba(255, 255, 255, .8); color: var(--ink); }
+.topnav nav a[aria-current=page] { background: var(--ink); color: #fff; }
+@media (max-width: 560px) { .topnav nav a span { display: none; } .topnav nav a { padding: 0 .75rem; } }
+
+/* buttons */
+.btn, button {
+  font: 700 .95rem var(--font); min-height: 44px; padding: 0 1.15rem; border-radius: 999px; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; gap: .45rem;
+  border: 1.5px solid var(--ink); background: var(--ink); color: #fff; text-decoration: none;
+  transition: transform .15s var(--ease), background .15s, color .15s, border-color .15s, opacity .15s;
+}
+.btn:hover, button:hover { transform: translateY(-1px); }
+.btn:active, button:active { transform: translateY(1px); }
+button.secondary, .btn.secondary { background: rgba(255, 255, 255, .75); color: var(--ink); border-color: rgba(11, 27, 20, .22); }
+button.secondary:hover, .btn.secondary:hover { background: #fff; border-color: var(--ink); }
+button.ghost, .btn.ghost { background: transparent; color: var(--ink); border-color: transparent; }
+button.ghost:hover, .btn.ghost:hover { background: rgba(255, 255, 255, .7); }
+button.danger { background: transparent; color: var(--bad); border-color: rgba(180, 35, 24, .4); }
+button.danger:hover { background: var(--bad-bg); border-color: var(--bad); }
+button.green, .btn.green { background: var(--g); border-color: var(--g); }
+button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+/* form controls */
+input[type=text], input[type=tel], input[type=number], input[type=search], select, textarea {
+  width: 100%; min-height: 44px; font: 500 1rem var(--font); color: var(--ink);
+  background: #fff; border: 1.5px solid var(--line); border-radius: 12px; padding: .55rem .8rem;
+  transition: border-color .15s, box-shadow .15s;
+}
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--g); box-shadow: 0 0 0 4px rgba(14, 122, 75, .15); }
+textarea { font: 500 .92rem/1.6 var(--mono); resize: vertical; }
+label { font-weight: 700; }
+.hint { color: var(--faint); font-size: .82rem; margin-top: .25rem; }
+
+/* site toggles: a checkbox inside a pill */
+.toggles { display: flex; flex-wrap: wrap; gap: .45rem; }
+.toggles label {
+  display: inline-flex; align-items: center; gap: .45rem; min-height: 40px; padding: 0 .85rem 0 .6rem;
+  border-radius: 999px; border: 1.5px solid var(--line); background: #fff; font-weight: 600; font-size: .9rem; cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.toggles label:has(input:checked) { border-color: var(--g); background: #EFFAF4; }
+.toggles label:has(input:disabled) { opacity: .6; cursor: not-allowed; }
+.toggles input { width: 18px; height: 18px; accent-color: var(--g); margin: 0; }
+
+/* chips and pills */
+.chip { display: inline-flex; align-items: center; gap: .35rem; min-height: 30px; padding: 0 .7rem; border-radius: 999px; font-size: .82rem; font-weight: 600; background: #fff; border: 1px solid var(--line); }
+.chip.ok { border-color: #8FCBA6; background: #EFFAF4; color: var(--g-ink); }
+.chip.run { border-color: #E7B66B; background: var(--amber-bg); color: var(--amber); }
+.chip.err { border-color: #F3A29A; background: var(--bad-bg); color: var(--bad); white-space: normal; }
+.pill { font-size: .75rem; font-weight: 700; border-radius: 999px; padding: .2rem .6rem; background: rgba(255, 255, 255, .7); color: var(--muted); }
+
+.spin { width: 16px; height: 16px; border-radius: 50%; border: 2.5px solid currentColor; border-right-color: transparent; display: inline-block; animation: spin .8s linear infinite; vertical-align: -3px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

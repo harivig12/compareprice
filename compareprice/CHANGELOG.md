@@ -10,6 +10,20 @@ All notable changes to compareprice. Dates are YYYY-MM-DD.
 - Catalogue sweep (`src/sweep.js`): random 2–4 product batches at random 5–20 minute gaps, missing products first. Configured in `config.json → sweep`.
 - `GET /api/catalog`, `GET /api/sweep`, `POST /api/sweep/run`. CLI commands `basket catalog` and `basket sweep-now`.
 - The web page shows what was typed under the canonical item name.
+- How-to guide at `/guide`, with separate website and phone tracks, a "Try it" box backed by `/api/catalog`, error kinds and troubleshooting.
+
+### Changed
+- New "Liquid Glass" look for the compare, settings and guide pages, from one shared stylesheet (`src/ui/theme.css`, served at `/theme.css`). Frosted-glass navigation sits over a soft gradient, and prices and forms are on near-opaque white so they stay readable.
+- Compare page:
+  - A shared top bar links Compare, Settings and Guide.
+  - An empty state explains the three steps.
+  - Site toggles are pills.
+  - Errors show as messages near the bottom of the screen instead of `alert()` popups.
+  - A site that found nothing shows "—" as its total instead of ₹0.
+  - On phones, Find / Fresh / Stop sit in a bottom bar within thumb reach, and the list folds away after a search.
+- Settings: section shortcuts, a sticky save bar, and catalogue sweep controls with live status and a "Sweep now" button.
+- The pages use the device's system fonts and load nothing from third parties, so they work offline.
+- "Add to Home screen" works as an app: a web app manifest (`/manifest.webmanifest`), an SVG icon, and 180/192/512 px PNG icons (`/apple-touch-icon.png` for iPhone). The server only serves a fixed list of these static files.
 
 ## [1.0.0] - 2026-11-19
 
