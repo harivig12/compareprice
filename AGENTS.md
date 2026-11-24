@@ -1,7 +1,7 @@
 # Working on compareprice
 
 Read these first:
-- `README.md`: what it does and how to run it
+- `README.md`: the project overview, and `docs/USAGE.md`: everything about using it
 - `docs/ENGINE.md`: how sites are searched, the error kinds, how to add or fix a site
 - `docs/API.md`: HTTP and SSE contract
 - `docs/OPERATIONS.md`: the running service, data dir, schedules, troubleshooting

@@ -1,4 +1,6 @@
-# compareprice
+# Using compareprice
+
+[← Back to the project README](../README.md)
 
 You give it a grocery list. It checks **Instamart, BigBasket, Zepto, Blinkit, KPN Fresh, JioMart and Flipkart Minutes** at your delivery location and normalizes pack sizes. It tells you which site is cheapest for the **whole basket** and for **each item**. It remembers the **lowest price each site has ever shown** for every item, with the date.
 
@@ -6,7 +8,7 @@ You give it a grocery list. It checks **Instamart, BigBasket, Zepto, Blinkit, KP
 
 It runs as an always-on service, natively or in Docker. You get a web page for ad-hoc lists, and the configured list is checked on a schedule (once or twice a day per site). That way the time-of-day deals on Instamart and BigBasket are caught, and you can see whether today's price is the best so far.
 
-![Compare page](docs/evidence/2026-11-23-glass-ui/compare-result-1280.png)
+![Compare page](evidence/2026-11-23-glass-ui/compare-result-1280.png)
 
 - **No logins and no pasted tokens.** Every site is used as a guest. One warm headless Chrome keeps a tab per site with your location set. Each search is the site's own API, called from inside that tab. Sessions refresh themselves.
 - **Specific errors, never just "offline".** Each failure is reported per site as one of these kinds: `blocked` (bot wall or rate limit), `session`, `unserviceable`, `timeout`, `parse`, `not_found` or `browser`. The site's own message comes with it.
@@ -86,7 +88,7 @@ The three verdict boxes above the table show the cheapest single site, the runne
 
 **`/settings`:** edit the location, default sites, default list, schedules (HH:MM, any number per day, each with its own sites) and the catalogue sweep. There's also a **Run the list now** button.
 
-**`/guide`:** a step-by-step guide with separate website and phone tracks, a box to try the synonyms, and a table of error kinds. The same page is published as the [public landing page](https://harivig12.github.io/compareprice/) (`npm run build:site`). On a phone, open the service from your home Wi-Fi and use *Add to Home screen* (see [Using it from a phone](docs/OPERATIONS.md#using-it-from-a-phone)).
+**`/guide`:** a step-by-step guide with separate website and phone tracks, a box to try the synonyms, and a table of error kinds. The same page is published as the [public landing page](https://harivig12.github.io/compareprice/) (`npm run build:site`). On a phone, open the service from your home Wi-Fi and use *Add to Home screen* (see [Using it from a phone](OPERATIONS.md#using-it-from-a-phone)).
 
 There is no login: bind to localhost only (see [Security](#security)).
 
@@ -139,7 +141,7 @@ Changing the location in settings re-locates every site on the next run.
 | Amazon Now | in-page `GET /tez/browse/searchByKeyword` | pincode via Amazon's `glow/address-change` | **Doesn't deliver to 600045** (its own `validateLocation` says `isServiceable: false`), so it's reported as `unserviceable`. Opt-in. |
 | Milkbasket | **skipped** | — | Needs a login: guests are fixed to its default city. A web login exists (mobile + OTP at `/login`); supporting it needs one OTP login. |
 
-Details on how the engine works, how errors are classified, and how to add a site: **[docs/ENGINE.md](docs/ENGINE.md)**.
+Details on how the engine works, how errors are classified, and how to add a site: **[docs/ENGINE.md](ENGINE.md)**.
 
 ---
 
@@ -175,7 +177,7 @@ About 230 products are listed as synonym sets in `src/catalog-data.js`: a canoni
 
 ## Catalogue sweep
 
-Every 5–20 minutes at random, the service queues 2–4 catalogue products that have no saved price yet (or an old one), at most once a day each, and never while another job is running. That way a new search often already has an answer. Configure it in `config.json → sweep` or on `/settings`. Run a batch now with `basket sweep-now`. Details: [docs/OPERATIONS.md](docs/OPERATIONS.md#catalogue-sweep).
+Every 5–20 minutes at random, the service queues 2–4 catalogue products that have no saved price yet (or an old one), at most once a day each, and never while another job is running. That way a new search often already has an answer. Configure it in `config.json → sweep` or on `/settings`. Run a batch now with `basket sweep-now`. Details: [docs/OPERATIONS.md](OPERATIONS.md#catalogue-sweep).
 
 ---
 
@@ -185,7 +187,7 @@ Every 5–20 minutes at random, the service queues 2–4 catalogue products that
 - Each job is also written to `<data>/results/<timestamp>-job<id>-<trigger>.json`, and one summary line is appended to `<data>/results/runs.jsonl`.
 - `node scripts/verify-runs.js [dataDir] [--date=YYYY-MM-DD]` checks that each scheduled time produced a run, and prints each site's outcome and new lows.
 
-Operations, monitoring and troubleshooting: **[docs/OPERATIONS.md](docs/OPERATIONS.md)**. HTTP API and SSE events: **[docs/API.md](docs/API.md)**.
+Operations, monitoring and troubleshooting: **[docs/OPERATIONS.md](OPERATIONS.md)**. HTTP API and SSE events: **[docs/API.md](API.md)**.
 
 ---
 

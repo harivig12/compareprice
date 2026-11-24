@@ -28,6 +28,8 @@ A product catalogue so one product has one name, a background sweep that fills i
   - Compare page: a shared top bar (Compare, Settings, Guide), an empty state that explains the three steps, site toggles as pills, and messages near the bottom of the screen instead of `alert()` popups. On phones, Find / Fresh / Stop sit in a bar within thumb reach, and the list folds away after a search.
   - Settings page: section shortcuts, a sticky save bar, and the sweep controls with live status and a "Sweep now" button.
 - The pages use the device's system fonts and load nothing from third parties, so they work offline.
+- **The project now lives at the repository root** instead of in a `compareprice/` subfolder, so the quick start is `git clone` then `cd compareprice`. The long usage guide moved from `compareprice/README.md` to `docs/USAGE.md`, and the root `README.md` is the project overview. Links to files under the old `compareprice/` path no longer resolve.
+- **The project now lives at the repository root** instead of in a `compareprice/` subfolder, so the quick start is `git clone` then `cd compareprice`. The long usage guide moved from `compareprice/README.md` to `docs/USAGE.md`, and the root `README.md` is the project overview. Links to files under the old `compareprice/` path no longer resolve.
 - `package.json` points at this repository (it still named the old `prototype` repo) and gets a description, keywords and a homepage.
 
 ### Fixed

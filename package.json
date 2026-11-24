@@ -8,8 +8,7 @@
   "homepage": "https://harivig12.github.io/compareprice/",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/harivig12/compareprice.git",
-    "directory": "compareprice"
+    "url": "git+https://github.com/harivig12/compareprice.git"
   },
   "bugs": {
     "url": "https://github.com/harivig12/compareprice/issues"

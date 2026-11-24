@@ -8,8 +8,8 @@
 
 ## Checklist
 
-- [ ] `npm test` passes (run from `compareprice/`)
+- [ ] `npm test` passes (run from the repository root)
 - [ ] I added or updated a test for the change
-- [ ] I added a line under `[Unreleased]` in `compareprice/CHANGELOG.md`
+- [ ] I added a line under `[Unreleased]` in `CHANGELOG.md`
 - [ ] No tokens, cookies, phone numbers, databases or browser profiles are included
 - [ ] For page changes: screenshots at 1280 px and 390 px, no sideways scroll

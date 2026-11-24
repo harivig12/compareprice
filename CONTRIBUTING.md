@@ -4,11 +4,11 @@ Thanks for helping. The most useful contribution is usually a **fix to one site 
 
 ## Set up
 
-The project is in the [`compareprice/`](compareprice/) folder. You need Node 22.13 or newer. For anything that touches a live site you also need Google Chrome or Chromium (set `CHROME_PATH` if it isn't on your `PATH`).
+You need Node 22.13 or newer. For anything that touches a live site you also need Google Chrome or Chromium (set `CHROME_PATH` if it isn't on your `PATH`).
 
 ```bash
 git clone https://github.com/harivig12/compareprice.git
-cd compareprice/compareprice
+cd compareprice
 npm ci
 npm test                  # the offline suite: no network, no Chrome
 node src/cli.js serve     # the web page at http://localhost:7777
@@ -16,9 +16,9 @@ node src/cli.js serve     # the web page at http://localhost:7777
 
 Read these first, in this order:
 
-1. [`compareprice/AGENTS.md`](compareprice/AGENTS.md): the rules that exist for a reason.
-2. [`compareprice/docs/ENGINE.md`](compareprice/docs/ENGINE.md): how a site is searched, the error kinds, and how to add or fix a site.
-3. [`compareprice/docs/API.md`](compareprice/docs/API.md): the HTTP and SSE contract, if you touch the server or the pages.
+1. [`AGENTS.md`](AGENTS.md): the rules that exist for a reason.
+2. [`docs/ENGINE.md`](docs/ENGINE.md): how a site is searched, the error kinds, and how to add or fix a site.
+3. [`docs/API.md`](docs/API.md): the HTTP and SSE contract, if you touch the server or the pages.
 
 ## The rules, short version
 
@@ -50,7 +50,7 @@ Read these first, in this order:
 
 - One topic per pull request, branched from `main`.
 - Say what changed and why, how you tested it, and which sites you ran it against (for site changes).
-- Add a line to the `[Unreleased]` section of [`compareprice/CHANGELOG.md`](compareprice/CHANGELOG.md).
+- Add a line to the `[Unreleased]` section of [`CHANGELOG.md`](CHANGELOG.md).
 - Don't commit data: `basket.db`, `config.json`, results, browser profiles, or anything from a signed-in session.
 
 ## Reporting a problem
