@@ -47,11 +47,11 @@ On startup the store:
 
 - A line is rewritten only when it is the product plus brands, pack sizes and plain modifiers. "britannia good day cashew" stays as typed. Brands are never rewritten ("harpic" stays brand-specific). The brand is reported as `product.brand`.
 - On start the store re-keys saved prices, so rows saved under a synonym join the canonical product's history (`store: regrouped N saved price(s)…`).
-- `basket catalog "<item>"` shows what a line resolves to. `basket catalog --category=spices` lists one category. `GET /api/catalog` returns the same information.
+- `jhola catalog "<item>"` shows what a line resolves to. `jhola catalog --category=spices` lists one category. `GET /api/catalog` returns the same information.
 
 ## The public landing page
 
-The guide (`src/ui/guide.html`) is a static page, so it can be published for free on GitHub Pages as the project's landing page: https://harivig12.github.io/compareprice/. The app itself cannot be hosted there, because it needs a headless Chrome and a scheduler running on a machine of yours.
+The guide (`src/ui/guide.html`) is a static page, so it can be published for free on GitHub Pages as the project's landing page: https://harivig12.github.io/jhola/. The app itself cannot be hosted there, because it needs a headless Chrome and a scheduler running on a machine of yours.
 
 - `npm run build:site` writes the static copy to `site/` (git-ignored): the page marked `<html class="static">` so links to app pages hide and GitHub links show, the shared `theme.css`, the icons, and a manifest that starts at the page itself.
 - `.github/workflows/pages.yml` builds and publishes it when `main` changes the pages.
@@ -61,7 +61,7 @@ The guide (`src/ui/guide.html`) is a static page, so it can be published for fre
 
 The user guide at `/guide` covers this step by step. In short:
 
-- **Natively:** run `basket serve --host=0.0.0.0`.
+- **Natively:** run `jhola serve --host=0.0.0.0`.
 - **With Docker:** change the compose port line to `"7777:7777"`.
 - **Then:** open `http://<computer-ip>:7777` on a phone that is on the same Wi-Fi.
 
@@ -71,23 +71,23 @@ The page has no login, so only do this on a trusted home network.
 
 The service also fills in prices for catalogue products that no basket asked for. Each sweep picks a random 2–4 products, queues them as one job (trigger `sweep`), then waits a random 5–20 minutes before the next one (for example 3 products at 00:00, 2 at 00:09, 4 at 00:23). Products with no saved price on some site come first. When none are missing, prices older than `staleHours` are refreshed. A product is swept at most once a day. A sweep never starts while another job is running or queued. It looks again a minute or two later.
 
-Settings are in `config.json → sweep`: `{ enabled, sites: [] (= config sites), minItems, maxItems, minGapMinutes, maxGapMinutes, staleHours }`. Status is at `GET /api/sweep`, and `basket sweep-now` (or `POST /api/sweep/run`) queues a batch at once. Turn it off with `"sweep": { "enabled": false }`.
+Settings are in `config.json → sweep`: `{ enabled, sites: [] (= config sites), minItems, maxItems, minGapMinutes, maxGapMinutes, staleHours }`. Status is at `GET /api/sweep`, and `jhola sweep-now` (or `POST /api/sweep/run`) queues a batch at once. Turn it off with `"sweep": { "enabled": false }`.
 
 ## Waiting, pacing and sign-ins
 
 - **"Wait 3s…" on the page:** a chosen site was searched moments ago, or is resting after the site blocked us. The page retries by itself. Budgets are in `src/limits.js` and can be overridden in `config.json → limits`. Current usage is at `/api/limits`.
-- **Sign-ins:** use the page's *Sign in…* (Milkbasket, Zepto, Amazon). The session lives in `chrome-profile/`, and `sessions.json` notes when. Deleting `chrome-profile/` signs everything out.
+- **Sign-ins:** use the page's *Sign in…* for the few sites that need an account (the dialog lists them). The session lives in `chrome-profile/`, and `sessions.json` notes when. Deleting `chrome-profile/` signs everything out.
 
 ## Checking that it works
 
 ```bash
 curl -s localhost:7777/health                      # {"ok":true,...}
-docker logs --tail 50 basket                       # per-job / per-site log lines
+docker logs --tail 50 jhola                        # per-job / per-site log lines
 node scripts/verify-runs.js ~/basket-data          # today's 07:00 / 09:00 / 12:00 runs
 node scripts/verify-runs.js ~/basket-data --date=2026-11-19 --expect=07:00,09:00,12:00
 tail -n 3 ~/basket-data/results/runs.jsonl
 node src/cli.js history "toor dal 1kg"             # native data dir; for Docker:
-docker exec basket node src/cli.js history "toor dal 1kg"
+docker exec jhola node src/cli.js history "toor dal 1kg"
 ```
 
 `verify-runs.js` exits with code 1 if an expected time already passed with no scheduled run finishing within 30 minutes of it. That makes it usable from cron or a monitor.
@@ -100,7 +100,7 @@ docker exec basket node src/cli.js history "toor dal 1kg"
 | `blocked … rate limited (statusCode 429 in body)` | Instamart throttling. Searches are paced 2.5 s apart. Bursts of manual runs trigger it. Wait a few minutes. |
 | `blocked … network error (Failed to fetch) — the API refused the request without CORS headers` | Zepto's gateway returned an error without CORS headers, usually a WAF or rate limit. Seen right after heavy recon. It clears on its own. |
 | `unserviceable … could not set location` | The address picker changed, or `location.searchText` doesn't match any suggestion. Fix `searchText` in settings, or look at the site's picker (`setLocation` in its module). |
-| `browser … could not start Chrome: Chrome exited early` | Chrome is missing, or its sandbox isn't available. In Docker, `BASKET_CHROME_NO_SANDBOX=1` must be set (the image does this). Natively, set `CHROME_PATH`. |
+| `browser … could not start Chrome: Chrome exited early` | Chrome is missing, or its sandbox isn't available. In Docker, `JHOLA_CHROME_NO_SANDBOX=1` must be set (the image does this). Natively, set `CHROME_PATH`. |
 | `session … page never issued a search request` | The site's search page didn't fire its API, possibly after a site redesign. Check the request URL regex in the site module. |
 | `parse … product cards but no prices parsed` | The payload shape changed. Capture a new fixture and update `parse`. |
 | JioMart / Flipkart Minutes `results never rendered` | Expected. These are beta page scrapes with no working guest location (see docs/ENGINE.md). Leave them out of schedules. |
@@ -109,9 +109,20 @@ docker exec basket node src/cli.js history "toor dal 1kg"
 ## Upgrading
 
 ```bash
-docker build -t compareprice:latest . && docker rm -f basket && \
-docker run -d --name basket --restart unless-stopped -p 127.0.0.1:7777:7777 \
-  -v ~/basket-data:/data -e TZ=Asia/Kolkata --shm-size=1g compareprice:latest
+docker build -t jhola:latest . && docker rm -f jhola && \
+docker run -d --name jhola --restart unless-stopped -p 127.0.0.1:7777:7777 \
+  -v ~/basket-data:/data -e TZ=Asia/Kolkata --shm-size=1g jhola:latest
 ```
 
 The data dir survives upgrades.
+
+### Upgrading from before the rename (1.1 → 1.2)
+
+The project is now called Jhola. The container is now `jhola` instead of `basket`, and the image is `jhola:latest` instead of `compareprice:latest`. Remove the old container once, or the new one can't take port 7777:
+
+```bash
+docker rm -f basket
+docker compose up -d --build
+```
+
+Nothing else moves. `~/basket-data` (Docker) and `~/.basket` (native) keep being used, so saved prices, sessions and settings carry over. The old `basket` command and every `BASKET_*` setting still work next to the new `jhola` command and `JHOLA_*` settings.

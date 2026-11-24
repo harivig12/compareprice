@@ -50,7 +50,7 @@ function run(cmd, args, { timeout = 90_000 } = {}) {
  * Check the environment. Returns true when everything needed is in place.
  */
 export async function doctor({ quiet = false } = {}) {
-  if (!quiet) console.log(`\n${c(C.bold, 'basket doctor')}\n`);
+  if (!quiet) console.log(`\n${c(C.bold, 'jhola doctor')}\n`);
   let healthy = true;
 
   // 1. Node
@@ -77,7 +77,7 @@ export async function doctor({ quiet = false } = {}) {
     if (/already in use|existing browser session/i.test(docOut)) {
       bad(
         'webcmd bridge down — cloak profile is locked by an orphaned browser',
-        'Run: basket setup   (it clears the lock)',
+        'Run: jhola setup   (it clears the lock)',
       );
     } else if (/fetch failed/i.test(docOut)) {
       bad(
@@ -100,7 +100,7 @@ export async function doctor({ quiet = false } = {}) {
     ok(`adapters installed: ${ADAPTER_SITES.join(', ')}`);
   } else {
     healthy = false;
-    bad(`adapters missing: ${missing.join(', ')}`, 'Run: basket setup');
+    bad(`adapters missing: ${missing.join(', ')}`, 'Run: jhola setup');
   }
 
   // 5. writable data dir
@@ -110,7 +110,7 @@ export async function doctor({ quiet = false } = {}) {
     ok(`data directory writable (${DATA_DIR})`);
   } catch {
     healthy = false;
-    bad(`cannot write to ${DATA_DIR}`, 'Set BASKET_HOME to a writable path.');
+    bad(`cannot write to ${DATA_DIR}`, 'Set JHOLA_HOME to a writable path.');
   }
 
   if (!quiet) {
@@ -181,7 +181,7 @@ export async function setup() {
   const ask = async (q) => (await rl.question(q)).trim().toLowerCase();
 
   try {
-    console.log(`\n${c(C.bold, 'basket setup')}\n`);
+    console.log(`\n${c(C.bold, 'jhola setup')}\n`);
     console.log(c(C.dim, '  Gets webcmd talking to a browser, installs the adapters,'));
     console.log(c(C.dim, '  and helps you set a delivery location on each platform.\n'));
 
@@ -189,7 +189,7 @@ export async function setup() {
     const ver = await run('webcmd', ['--version'], { timeout: 20_000 });
     if (ver.err) {
       bad('webcmd is not installed.', 'npm install -g @agentrhq/webcmd');
-      console.log('\n  Install it, then run basket setup again.\n');
+      console.log('\n  Install it, then run jhola setup again.\n');
       return false;
     }
     ok(`webcmd ${ver.stdout.trim()}`);
@@ -269,11 +269,11 @@ export async function setup() {
     if (healthy) {
       console.log(c(C.green + C.bold, '  Setup complete.'));
       console.log(c(C.dim, '\n  Try it:'));
-      console.log('    basket "amul butter 500g" --web');
+      console.log('    jhola "amul butter 500g" --web');
       console.log(c(C.dim, '  or with a file:'));
-      console.log('    basket basket.txt --web\n');
+      console.log('    jhola basket.txt --web\n');
     } else {
-      console.log(c(C.yellow, '  Setup finished with warnings — run basket doctor.\n'));
+      console.log(c(C.yellow, '  Setup finished with warnings — run jhola doctor.\n'));
     }
     return healthy;
   } finally {

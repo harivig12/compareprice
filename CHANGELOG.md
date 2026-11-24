@@ -7,6 +7,21 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 Nothing yet.
 
+## [1.2.0] - 2026-11-24
+
+The project is now called **Jhola**, after the cloth bag you take to the market.
+
+### Changed
+- **New name and logo.** A yellow jhola with a green ₹ price tag, on green. It is used for the favicon, the home-screen icons, the top bar, the guide, the README and the social preview. The master file is `assets/brand/jhola-icon.svg`, with colours and rules in `assets/brand/README.md`. `npm run build:icons` regenerates every PNG from it.
+- **The command is now `jhola`**, and the npm package is `jhola`. `basket` still works as an alias for this release.
+- **Settings use `JHOLA_*` names** (`JHOLA_HOME`, `JHOLA_PORT`, `JHOLA_HOST`, `JHOLA_URL`, `JHOLA_BACKEND`, `JHOLA_CHROME_NO_SANDBOX`, `JHOLA_DATA`). Every `BASKET_*` name still works, and an explicit `BASKET_*` value wins.
+- **Docker:** the image is `jhola:latest`, and the service and container are `jhola`. Remove the old container once with `docker rm -f basket`, or the new one can't take port 7777. See [Upgrading from before the rename](docs/OPERATIONS.md#upgrading-from-before-the-rename-11--12).
+- **Data stays where it was.** A new install uses `~/.jhola`. An existing `~/.basket` keeps being used, and Docker keeps `~/basket-data`, so saved prices, sessions and settings carry over.
+- **Generic wording.** Descriptions, the guide, the README and the social image say "the top quick-commerce sites" instead of listing them, and the guide's example tables use Site A, B and C. Real site names remain only where the app needs them to work: the site checkboxes, the result columns, error messages, `config.json`, and the technical per-site docs.
+- The social preview drops the "kismis = raisins" chip. The synonym feature is still described in the guide and the README.
+- The repository is now `harivig12/jhola`, and the landing page is https://harivig12.github.io/jhola/. GitHub redirects the old repository address.
+- The MCP server registers as `jhola`: `claude mcp add jhola -- node /path/to/jhola/src/mcp-server.js`.
+
 ## [1.1.0] - 2026-11-23
 
 A product catalogue so one product has one name, a background sweep that fills in missing prices, a new look, and a how-to guide you can read in the app or on a public page.

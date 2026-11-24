@@ -1,15 +1,16 @@
 #!/usr/bin/env node
 /**
- * Basket CLI.
+ * Jhola CLI (the command is `jhola`; `basket` still works).
  *
- *   basket <list.txt>            compare
- *   basket <list.txt> --web      compare, then serve the web view
- *   basket serve                 long-running service: web UI, API, scheduler
- *   basket run-now [--sites=a,b] queue the configured basket on the service
- *   basket history "<item>"      lowest price seen per site, with dates
- *   basket setup / doctor        legacy webcmd helpers
+ *   jhola <list.txt>            compare
+ *   jhola <list.txt> --web      compare, then serve the web view
+ *   jhola serve                 long-running service: web UI, API, scheduler
+ *   jhola run-now [--sites=a,b] queue the configured basket on the service
+ *   jhola history "<item>"      lowest price seen per site, with dates
+ *   jhola setup / doctor        legacy webcmd helpers
  */
 
+import './env.js';
 import { readFileSync, existsSync } from 'node:fs';
 import process from 'node:process';
 
@@ -327,17 +328,17 @@ function renderFooter(result) {
       c(C.yellow, '⚠ Goods only — delivery and handling are NOT included') +
         (missing ? c(C.dim, ` (no fees set for ${missing})`) : ''),
     );
-    console.log(c(C.dim, '  Set them once:  basket fees --set blinkit --delivery 25 --handling 9'));
+    console.log(c(C.dim, '  Set them once:  jhola fees --set blinkit --delivery 25 --handling 9'));
   }
 }
 
 function usage() {
   console.log(`
-Basket — grocery price comparison across Indian quick-commerce platforms
+Jhola — the cheapest grocery basket across the top quick-commerce sites
 
-  basket <list.txt> [options]      compare a basket
-  basket "amul butter 500g"        compare a one-line basket
-  cat list.txt | basket            read the basket from stdin
+  jhola <list.txt> [options]      compare a basket
+  jhola "amul butter 500g"        compare a one-line basket
+  cat list.txt | jhola            read the basket from stdin
 
 Commands
   search "<query>"      Price one item across platforms
@@ -357,7 +358,7 @@ and is editable at http://localhost:7777/settings while the service runs.
 
 Fees are NOT read automatically — platforms only reveal them at checkout.
 Totals are goods-only until you set them:
-  basket fees --set blinkit --delivery 25 --handling 9 --free-above 199
+  jhola fees --set blinkit --delivery 25 --handling 9 --free-above 199
 
 Exit codes: 0 ok · 1 runtime error · 2 usage error · 3 nothing found
 
@@ -376,13 +377,13 @@ Options
   -h, --help            This text
 
 Examples
-  basket basket.txt --ui
-  basket basket.txt --web
-  basket search "amul butter 500g" --json
-  basket "tata salt 1kg" --platforms=instamart,bigbasket,zepto
-  basket serve
-  basket run-now --sites=instamart,bigbasket
-  basket history "toor dal 1kg"
+  jhola basket.txt --ui
+  jhola basket.txt --web
+  jhola search "amul butter 500g" --json
+  jhola "tata salt 1kg" --platforms=instamart,bigbasket,zepto
+  jhola serve
+  jhola run-now --sites=instamart,bigbasket
+  jhola history "toor dal 1kg"
 `);
 }
 
@@ -447,7 +448,7 @@ async function main() {
   }
 
   // A positional is a file if it exists on disk, otherwise it's the basket
-  // itself — `basket "tata salt 1kg"` should just work.
+  // itself — `jhola "tata salt 1kg"` should just work.
   let text;
   if (positional.length > 0) {
     text = existsSync(positional[0]) ? readFileSync(positional[0], 'utf8') : positional.join('\n');
@@ -605,8 +606,8 @@ async function feesCommand(args) {
     ].filter(Boolean).join(' · ');
     console.log(`  ${c(C.green, '✔')} ${pad(p, 12)} ${bits}${f.updatedAt ? c(C.dim, `  (${f.updatedAt})`) : ''}`);
   }
-  console.log(c(C.dim, '\n  Set one:  basket fees --set blinkit --delivery 25 --handling 9 --free-above 199'));
-  console.log(c(C.dim, '  Clear:    basket fees --clear blinkit\n'));
+  console.log(c(C.dim, '\n  Set one:  jhola fees --set blinkit --delivery 25 --handling 9 --free-above 199'));
+  console.log(c(C.dim, '  Clear:    jhola fees --clear blinkit\n'));
 }
 
 async function searchCommand(args) {
@@ -615,7 +616,7 @@ async function searchCommand(args) {
   const query = positional.slice(1).join(' ').trim();
 
   if (!query) {
-    const err = 'Usage: basket search "<query>" [--platforms=a,b] [--json]';
+    const err = 'Usage: jhola search "<query>" [--platforms=a,b] [--json]';
     if (asJson) return emitJson({ ok: false, error: err }, EXIT.USAGE);
     console.error(c(C.red, `✖ ${err}`));
     process.exitCode = EXIT.USAGE;
@@ -723,7 +724,7 @@ async function serveOnly(args) {
   const service = await startService({ port, host });
   if (open) openInBrowser(service.server.url);
   console.log('');
-  console.log(`  ${c(C.green, '●')} ${c(C.bold, 'Basket service')}  ${c(C.cyan, service.server.url)}   settings: ${c(C.cyan, service.server.url + '/settings')}`);
+  console.log(`  ${c(C.green, '●')} ${c(C.bold, 'Jhola service')}  ${c(C.cyan, service.server.url)}   settings: ${c(C.cyan, service.server.url + '/settings')}`);
   console.log(c(C.dim, `    Scheduled runs + history in ${DATA_DIR}. Results: ${service.resultsDir}. Ctrl+C to stop.`));
   console.log('');
   await new Promise((resolve) => {
@@ -776,7 +777,7 @@ async function runNowCommand(args) {
 function historyCommand(args) {
   const query = args.filter((a) => !a.startsWith('-')).slice(1).join(' ').trim();
   if (!query) {
-    console.error(c(C.red, '✖ Usage: basket history "<item>" [--json]'));
+    console.error(c(C.red, '✖ Usage: jhola history "<item>" [--json]'));
     process.exitCode = EXIT.USAGE;
     return;
   }
@@ -801,9 +802,9 @@ function historyCommand(args) {
 }
 
 /**
- * basket catalog                   categories and product counts
- * basket catalog "<item>"          what a line resolves to ("kismis" -> raisins)
- * basket catalog --category=spices products in one category, with their tags
+ * jhola catalog                   categories and product counts
+ * jhola catalog "<item>"          what a line resolves to ("kismis" -> raisins)
+ * jhola catalog --category=spices products in one category, with their tags
  */
 function catalogCommand(args) {
   const asJson = args.includes('--json');
@@ -848,7 +849,7 @@ async function sweepNowCommand(args) {
     if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
     console.log(body.jobId != null ? `  queued sweep job ${body.jobId}: ${body.items.join(', ')}` : `  nothing queued (${body.reason})`);
   } catch (err) {
-    console.error(c(C.red, `✖ No service answered at ${base} (${err.message}). Start it with: basket serve`));
+    console.error(c(C.red, `✖ No service answered at ${base} (${err.message}). Start it with: jhola serve`));
     process.exitCode = EXIT.RUNTIME;
   }
 }
@@ -861,8 +862,8 @@ async function dispatch() {
     case 'setup':
       // Interactive by definition — refuse rather than hang in a pipeline.
       if (!process.stdin.isTTY) {
-        console.error(c(C.red, '✖ basket setup needs an interactive terminal.'));
-        console.error(c(C.dim, '  Run basket doctor for a non-interactive check.'));
+        console.error(c(C.red, '✖ jhola setup needs an interactive terminal.'));
+        console.error(c(C.dim, '  Run jhola doctor for a non-interactive check.'));
         process.exitCode = EXIT.USAGE;
         return;
       }

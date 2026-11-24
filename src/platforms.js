@@ -108,7 +108,7 @@ export async function selectBackend(env = process.env) {
   const want = String(env.BASKET_BACKEND || 'engine').toLowerCase();
   if (want === 'webcmd') {
     if (await webcmdReady()) return 'webcmd';
-    throw new Error('BASKET_BACKEND=webcmd but no webcmd adapters are installed (run `basket setup`).');
+    throw new Error('BASKET_BACKEND=webcmd but no webcmd adapters are installed (run `jhola setup`).');
   }
   if (want === 'cdp') {
     if (await browserAvailable()) return 'cdp';

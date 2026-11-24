@@ -19,14 +19,14 @@ you relay results: don't fill gaps with your own estimates.
 Every search runs as a real webcmd command against a browser webcmd owns.
 
 ```bash
-basket doctor
+jhola doctor
 ```
 
 That checks Node, webcmd, the browser bridge, the four adapters, and the data
 directory — and prints a fix under anything that fails. **Run it first whenever
 something looks wrong**; it is faster than reading errors from a failed run.
 
-If it reports problems, `basket setup` fixes most of them non-interactively
+If it reports problems, `jhola setup` fixes most of them non-interactively
 (clears the stale cloak lock, regenerates adapters) and then walks the user
 through setting delivery locations.
 
@@ -35,7 +35,7 @@ don't spell them out:
 
 - *"profile is already in use by another instance of Chromium"* — an orphaned
   cloak browser holds a lock on `~/.webcmd/cloak/profiles/default`.
-  `basket setup` clears it, or kill `*cloakbrowser*` processes and remove
+  `jhola setup` clears it, or kill `*cloakbrowser*` processes and remove
   `Singleton{Lock,Cookie,Socket}` from that directory.
 - *`fetch failed` on first run* — cloak is downloading ~150 MB of Chromium into
   `~/.cloakbrowser/`. Needs network and patience, not debugging.
@@ -62,15 +62,15 @@ Note `--query` is a named option, not positional.
 ## Commands
 
 ```bash
-basket <list.txt>          compare a basket
-basket "tata salt 1kg"     one-line basket, no file needed
-basket <list.txt> --ui     rich boxed terminal view
-basket <list.txt> --web    terminal view + a URL, server stays up
-basket search "<query>"    price ONE product everywhere
-basket fees                show / set delivery + handling
-basket serve               web view only
-basket setup               first-run wizard
-basket doctor              environment check
+jhola <list.txt>          compare a basket
+jhola "tata salt 1kg"     one-line basket, no file needed
+jhola <list.txt> --ui     rich boxed terminal view
+jhola <list.txt> --web    terminal view + a URL, server stays up
+jhola search "<query>"    price ONE product everywhere
+jhola fees                show / set delivery + handling
+jhola serve               web view only
+jhola setup               first-run wizard
+jhola doctor              environment check
 ```
 
 From a source checkout, `node src/cli.js …` works identically.
@@ -115,7 +115,7 @@ the boxed terminal view. Prefer this when you intend to compute on the numbers;
 prefer `--ui` when the user is going to read the output themselves.
 
 ```bash
-basket search "amul butter 500g" --json
+jhola search "amul butter 500g" --json
 ```
 ```json
 { "ok": true, "query": "amul butter 500g",
@@ -143,12 +143,12 @@ code rather than the message text:
 | Exit | Meaning | What to do |
 |---|---|---|
 | `0` | Success | Report the result |
-| `1` | Runtime failure | Run `basket doctor`; the backend or bridge is down |
+| `1` | Runtime failure | Run `jhola doctor`; the backend or bridge is down |
 | `2` | Usage error | Fix the arguments — bad flag, unknown platform, empty query |
 | `3` | Ran fine, found nothing | Say nothing matched; do not retry identically |
 
-`basket setup` is interactive and refuses to run without a TTY — never call it
-from a script. Use `basket doctor` for a non-interactive check.
+`jhola setup` is interactive and refuses to run without a TTY — never call it
+from a script. Use `jhola doctor` for a non-interactive check.
 
 ### Fees: goods-only unless the user set them
 
@@ -166,7 +166,7 @@ The output tells you which you're looking at — `GOODS TOTAL` vs `TOTAL`, plus
 If the user knows their real fees, offer to record them once:
 
 ```bash
-basket fees --set blinkit --delivery 25 --handling 9 --free-above 199
+jhola fees --set blinkit --delivery 25 --handling 9 --free-above 199
 ```
 
 Take those numbers **from the user**. Never fill them in from your own knowledge
@@ -200,7 +200,7 @@ The `basket` MCP server exposes four tools:
 Register with:
 
 ```bash
-claude mcp add basket -- node <abs-path>/src/mcp-server.js
+claude mcp add jhola -- node <abs-path>/src/mcp-server.js
 ```
 
 ## Platforms
@@ -303,8 +303,8 @@ somewhere else." Never report the headline price alone.
 
 | Symptom | Cause |
 |---|---|
-| `No search backend available` | webcmd bridge down and no debug Chrome — run `basket doctor` (exit 1) |
-| Total shows no delivery charge | Expected. Goods-only until the user runs `basket fees --set` |
+| `No search backend available` | webcmd bridge down and no debug Chrome — run `jhola doctor` (exit 1) |
+| Total shows no delivery charge | Expected. Goods-only until the user runs `jhola fees --set` |
 | Every platform returns 0 rows | Delivery location lost from the browser profile |
 | `navigation failed after 3 attempts` | Network dropped; adapters already retry twice |
 | One platform empty, others fine | That site changed its markup — re-run recon for it |

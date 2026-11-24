@@ -1,11 +1,11 @@
-# Basket service. The UI has no login, so it is published on 127.0.0.1 only.
+# Jhola service. The UI has no login, so it is published on 127.0.0.1 only.
 # To reach it from other devices on your home network, change the port line
 # to "7777:7777" — anyone on that network can then run comparisons.
 services:
-  basket:
+  jhola:
     build: .
-    image: compareprice:latest
-    container_name: basket
+    image: jhola:latest
+    container_name: jhola
     restart: unless-stopped
     ports:
       - "127.0.0.1:7777:7777"

@@ -1,6 +1,6 @@
 name: Landing page
 
-# Publishes the in-app guide as a static page at https://harivig12.github.io/compareprice/
+# Publishes the in-app guide as a static page at https://harivig12.github.io/jhola/
 # One-time setup: Settings > Pages > Build and deployment > Source: "GitHub Actions".
 # Only the guide is hosted. The app itself needs Chrome and a scheduler, so it runs on your own machine.
 

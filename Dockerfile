@@ -1,4 +1,4 @@
-# Basket service: Node + Chromium (headless) + web UI + scheduler + history.
+# Jhola service: Node + Chromium (headless) + web UI + scheduler + history.
 # Build:  docker compose build      Run: docker compose up -d
 FROM node:24-slim
 
@@ -10,10 +10,10 @@ RUN apt-get update \
 
 ENV NODE_ENV=production \
     CHROME_PATH=/usr/bin/chromium \
-    BASKET_CHROME_NO_SANDBOX=1 \
-    BASKET_HOME=/data \
-    BASKET_HOST=0.0.0.0 \
-    BASKET_PORT=7777 \
+    JHOLA_CHROME_NO_SANDBOX=1 \
+    JHOLA_HOME=/data \
+    JHOLA_HOST=0.0.0.0 \
+    JHOLA_PORT=7777 \
     TZ=Asia/Kolkata
 
 WORKDIR /app

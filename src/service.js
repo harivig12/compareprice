@@ -1,5 +1,5 @@
 /**
- * The long-running basket service: `basket serve` and the Docker container.
+ * The long-running Jhola service: `jhola serve` and the Docker container.
  *
  *   config.json  ->  scheduler  ->  JobQueue  ->  compareBasket (engine)
  *                                     |  ^
@@ -144,7 +144,7 @@ export async function startService({
   sweep.ref = startSweep({ queue, getConfig, store, log, ...(now ? { now } : {}), ...(sweepTimers ?? {}) });
   const sw = getConfig().sweep ?? {};
   const sched = getConfig().schedules.filter((s) => s.enabled !== false).map((s) => `${s.name} ${s.times.join('/')} [${s.sites.join(',')}]`);
-  log(`basket service on ${server.url} (bind ${server.host}); data ${dataDir}; tz ${cfg.timezone}`);
+  log(`Jhola service on ${server.url} (bind ${server.host}); data ${dataDir}; tz ${cfg.timezone}`);
   log(`schedules: ${sched.join('; ') || 'none'}`);
   log(
     sw.enabled === false

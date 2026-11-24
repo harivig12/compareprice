@@ -10,6 +10,8 @@
  *   claude mcp add basket -- node <abs path>/src/mcp-server.js
  */
 
+import './env.js';
+
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
@@ -137,7 +139,7 @@ function toMarkdown(r) {
       `> ⚠️ **Totals are goods only — delivery and handling are NOT included.** ` +
         `Platforms only reveal fees at checkout, so they can't be read here. ` +
         (r.feesMissing?.length ? `No fees set for: ${r.feesMissing.join(', ')}. ` : '') +
-        'Set them with `basket fees --set <platform> --delivery N --handling N`.',
+        'Set them with `jhola fees --set <platform> --delivery N --handling N`.',
     );
     lines.push('');
   }
@@ -148,7 +150,7 @@ function toMarkdown(r) {
 }
 
 const server = new Server(
-  { name: 'basket', version: '1.0.0' },
+  { name: 'jhola', version: '1.2.0' },
   { capabilities: { tools: {} } },
 );
 
@@ -157,13 +159,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     {
       name: 'compare_basket',
       description:
-        'Compare a grocery basket across Indian quick-commerce platforms (Blinkit, Zepto, ' +
-        'BigBasket, Amazon Now) at a Delhi pincode. Normalizes pack sizes to price-per-unit, ' +
+        'Compare a grocery basket across the top Indian quick-commerce sites at the configured delivery address. ' +
+        'Normalizes pack sizes to price-per-unit, ' +
         'refuses to compare products it is not confident are the same item, and names the ' +
         'cheapest platform with the rupee saving. Call this when the user gives a shopping ' +
         'list or asks where groceries are cheapest. ' +
         'Totals are GOODS ONLY unless the user has configured delivery/handling via ' +
-        '`basket fees --set` — the response says which, and you must repeat that caveat ' +
+        '`jhola fees --set` — the response says which, and you must repeat that caveat ' +
         'rather than presenting a goods-only total as a final bill. ' +
         'A full basket takes 30s–5min because it drives a real browser; do not call it ' +
         'for a single product — use search_product for that.',
@@ -434,4 +436,4 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
 
 const transport = new StdioServerTransport();
 await server.connect(transport);
-console.error('basket MCP server ready (stdio)');
+console.error('Jhola MCP server ready (stdio)');

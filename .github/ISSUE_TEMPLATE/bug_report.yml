@@ -6,7 +6,7 @@ body:
     attributes:
       value: |
         Thanks for reporting. For a site that stopped working, the **error kind and message** shown on the page are the most useful detail.
-        For anything security-related, please don't file it here: see [SECURITY.md](https://github.com/harivig12/compareprice/blob/main/SECURITY.md).
+        For anything security-related, please don't file it here: see [SECURITY.md](https://github.com/harivig12/jhola/blob/main/SECURITY.md).
   - type: dropdown
     id: area
     attributes:
@@ -64,5 +64,5 @@ body:
     id: logs
     attributes:
       label: Logs
-      description: Anything from the terminal or `docker compose logs basket`. Remove phone numbers and addresses first.
+      description: Anything from the terminal or `docker compose logs jhola`. Remove phone numbers and addresses first.
       render: shell

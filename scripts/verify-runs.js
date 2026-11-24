@@ -15,7 +15,7 @@ import { homedir } from 'node:os';
 
 const args = process.argv.slice(2);
 const flag = (n) => args.find((a) => a.startsWith(`--${n}=`))?.split('=')[1];
-const dir = args.find((a) => !a.startsWith('--')) || process.env.BASKET_DATA || join(homedir(), 'basket-data');
+const dir = args.find((a) => !a.startsWith('--')) || process.env.JHOLA_DATA || process.env.BASKET_DATA || join(homedir(), 'basket-data');
 const tz = 'Asia/Kolkata';
 const today = new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(new Date());
 const date = flag('date') || today;

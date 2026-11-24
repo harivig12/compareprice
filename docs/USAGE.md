@@ -1,14 +1,14 @@
-# Using compareprice
+# Using Jhola
 
 [← Back to the project README](../README.md)
 
-You give it a grocery list. It checks **Instamart, BigBasket, Zepto, Blinkit, KPN Fresh, JioMart and Flipkart Minutes** at your delivery location and normalizes pack sizes. It tells you which site is cheapest for the **whole basket** and for **each item**. It remembers the **lowest price each site has ever shown** for every item, with the date.
+You give it a grocery list. It checks **the top quick-commerce sites** at your delivery location and normalizes pack sizes. It tells you which site is cheapest for the **whole basket** and for **each item**. It remembers the **lowest price each site has ever shown** for every item, with the date.
 
 **Searching a list is history-first.** It shows the last saved price for each item and site, tagged `as of dd/mm/yy`, without contacting any site. Press **Get fresh prices** to check them live. The scheduled runs keep the saved prices current.
 
-It runs as an always-on service, natively or in Docker. You get a web page for ad-hoc lists, and the configured list is checked on a schedule (once or twice a day per site). That way the time-of-day deals on Instamart and BigBasket are caught, and you can see whether today's price is the best so far.
+It runs as an always-on service, natively or in Docker. You get a web page for ad-hoc lists, and the configured list is checked on a schedule (once or twice a day per site). That way deals that some sites run at set times of day are caught, and you can see whether today's price is the best so far.
 
-![Compare page](evidence/2026-11-23-glass-ui/compare-result-1280.png)
+![Compare page](evidence/2026-11-24-jhola-ui/compare-result-1280.png)
 
 - **No logins and no pasted tokens.** Every site is used as a guest. One warm headless Chrome keeps a tab per site with your location set. Each search is the site's own API, called from inside that tab. Sessions refresh themselves.
 - **Specific errors, never just "offline".** Each failure is reported per site as one of these kinds: `blocked` (bot wall or rate limit), `session`, `unserviceable`, `timeout`, `parse`, `not_found` or `browser`. The site's own message comes with it.
@@ -31,9 +31,9 @@ node scripts/verify-runs.js       # did today's scheduled runs happen?
 `docker compose` needs the compose plugin. With plain `docker` the equivalent is:
 
 ```bash
-docker build -t compareprice:latest .
-docker run -d --name basket --restart unless-stopped -p 127.0.0.1:7777:7777 \
-  -v ~/basket-data:/data -e TZ=Asia/Kolkata --shm-size=1g compareprice:latest
+docker build -t jhola:latest .
+docker run -d --name jhola --restart unless-stopped -p 127.0.0.1:7777:7777 \
+  -v ~/basket-data:/data -e TZ=Asia/Kolkata --shm-size=1g jhola:latest
 ```
 
 ### Native
@@ -52,17 +52,17 @@ node src/cli.js basket.txt --ui   # one-shot comparison in the terminal
 
 | Command | What it does |
 |---|---|
-| `basket serve [--port=7777] [--host=127.0.0.1] [--open]` | The service: web UI, JSON API, scheduler, history |
-| `basket run-now [--sites=a,b]` | Queue the configured list on the running service. It runs locally if no service answers. |
-| `basket history "<item>"` | Lowest price per kg / L / pc seen on each site, with date and product |
-| `basket catalog ["<item>"] [--category=spices]` | What a word resolves to (`kismis` → `raisins`), or the products in a category |
-| `basket sweep-now` | Queue one catalogue sweep batch on the running service |
-| `basket <file\|"items"> [--ui\|--json\|--web]` | One-shot live comparison |
-| `basket <file\|"items"> --cached` | Same view built from saved prices only, dated; no site contacted |
-| `basket search "<item>" [--json]` | One item across sites |
-| `basket fees --set <site> --delivery 25 --handling 9 --free-above 199` | Optional delivery fees. Totals are goods-only otherwise. |
+| `jhola serve [--port=7777] [--host=127.0.0.1] [--open]` | The service: web UI, JSON API, scheduler, history |
+| `jhola run-now [--sites=a,b]` | Queue the configured list on the running service. It runs locally if no service answers. |
+| `jhola history "<item>"` | Lowest price per kg / L / pc seen on each site, with date and product |
+| `jhola catalog ["<item>"] [--category=spices]` | What a word resolves to (`kismis` → `raisins`), or the products in a category |
+| `jhola sweep-now` | Queue one catalogue sweep batch on the running service |
+| `jhola <file\|"items"> [--ui\|--json\|--web]` | One-shot live comparison |
+| `jhola <file\|"items"> --cached` | Same view built from saved prices only, dated; no site contacted |
+| `jhola search "<item>" [--json]` | One item across sites |
+| `jhola fees --set <site> --delivery 25 --handling 9 --free-above 199` | Optional delivery fees. Totals are goods-only otherwise. |
 
-`basket` is `node src/cli.js` (or `npm i -g .`). Common flags:
+`jhola` is `node src/cli.js` (or `npm i -g .`). The old command name `basket` still works. Common flags:
 - `--platforms=instamart,bigbasket,zepto,blinkit,kpn`
 - `--json` (machine-readable output)
 - `--ui` (boxed terminal view)
@@ -76,7 +76,7 @@ node src/cli.js basket.txt --ui   # one-shot comparison in the terminal
 2. Press **Find the cheapest**. This answers at once from **saved prices**: each cell is tagged `as of dd/mm/yy`, items with nothing saved say *no saved price*, and a banner says no site was contacted.
 3. Type in **Check a saved price** (e.g. `onion`) for suggestions, then see what each site charged, per 100 g, with dates and the lowest rate seen.
 4. Press **Get fresh prices** to check the sites live. If a site was searched moments ago (or is resting after a block), a countdown ("wait 3s…") appears and the run starts by itself.
-5. Press **Sign in…** for Milkbasket, Zepto or Amazon: enter the mobile number, then the OTP. The session is kept in the service's browser profile. Each site shows a progress chip, e.g. `BigBasket · 3/5 · moong dal`. When it finishes the chip shows ✓, or ✖ with the exact reason.
+5. Press **Sign in…** for a site that needs an account (the dialog lists them): enter the mobile number, then the OTP. The session is kept in the service's browser profile. Each site shows a progress chip, e.g. `BigBasket · 3/5 · moong dal`. When it finishes the chip shows ✓, or ✖ with the exact reason.
 
 The comparison table:
 - Items are rows and sites are columns. Text wraps, so all columns fit with no horizontal scroll at 1280 px with 6+ sites.
@@ -88,7 +88,7 @@ The three verdict boxes above the table show the cheapest single site, the runne
 
 **`/settings`:** edit the location, default sites, default list, schedules (HH:MM, any number per day, each with its own sites) and the catalogue sweep. There's also a **Run the list now** button.
 
-**`/guide`:** a step-by-step guide with separate website and phone tracks, a box to try the synonyms, and a table of error kinds. The same page is published as the [public landing page](https://harivig12.github.io/compareprice/) (`npm run build:site`). On a phone, open the service from your home Wi-Fi and use *Add to Home screen* (see [Using it from a phone](OPERATIONS.md#using-it-from-a-phone)).
+**`/guide`:** a step-by-step guide with separate website and phone tracks, a box to try the synonyms, and a table of error kinds. The same page is published as the [public landing page](https://harivig12.github.io/jhola/) (`npm run build:site`). On a phone, open the service from your home Wi-Fi and use *Add to Home screen* (see [Using it from a phone](OPERATIONS.md#using-it-from-a-phone)).
 
 There is no login: bind to localhost only (see [Security](#security)).
 
@@ -158,7 +158,7 @@ Details on how the engine works, how errors are classified, and how to add a sit
   - Complete baskets win.
   - If none is complete, the comparison uses only the items every site stocked, and says so.
   - A site that failed still appears in the table with its error, so it is never mistaken for an expensive one.
-- **Totals are goods only** until you set fees (`basket fees`). The output always says which.
+- **Totals are goods only** until you set fees (`jhola fees`). The output always says which.
 
 ---
 
@@ -171,13 +171,13 @@ About 230 products are listed as synonym sets in `src/catalog-data.js`: a canoni
 - A listing called "Kishmish" or "Dry Grapes" matches a search for raisins.
 - Saved prices under an old spelling are regrouped under the canonical name when the service starts.
 
-`basket catalog "kismis"` or `GET /api/catalog?q=kismis` shows what a word resolves to. To add a product, see [CONTRIBUTING.md](../CONTRIBUTING.md#common-changes).
+`jhola catalog "kismis"` or `GET /api/catalog?q=kismis` shows what a word resolves to. To add a product, see [CONTRIBUTING.md](../CONTRIBUTING.md#common-changes).
 
 ---
 
 ## Catalogue sweep
 
-Every 5–20 minutes at random, the service queues 2–4 catalogue products that have no saved price yet (or an old one), at most once a day each, and never while another job is running. That way a new search often already has an answer. Configure it in `config.json → sweep` or on `/settings`. Run a batch now with `basket sweep-now`. Details: [docs/OPERATIONS.md](OPERATIONS.md#catalogue-sweep).
+Every 5–20 minutes at random, the service queues 2–4 catalogue products that have no saved price yet (or an old one), at most once a day each, and never while another job is running. That way a new search often already has an answer. Configure it in `config.json → sweep` or on `/settings`. Run a batch now with `jhola sweep-now`. Details: [docs/OPERATIONS.md](OPERATIONS.md#catalogue-sweep).
 
 ---
 
@@ -197,7 +197,7 @@ Operations, monitoring and troubleshooting: **[docs/OPERATIONS.md](OPERATIONS.md
   - Natively the server binds `127.0.0.1`.
   - In Docker it listens on `0.0.0.0` inside the container, but compose publishes it on `127.0.0.1:7777` only.
   - Opening it to your LAN (`"7777:7777"`) lets anyone on that network run jobs and change the config.
-- In Docker, Chrome runs with `--no-sandbox` (`BASKET_CHROME_NO_SANDBOX=1`), because Docker blocks the user namespaces its sandbox needs. The container runs as the unprivileged `node` user with no added capabilities, and that is the isolation boundary.
+- In Docker, Chrome runs with `--no-sandbox` (`JHOLA_CHROME_NO_SANDBOX=1`), because Docker blocks the user namespaces its sandbox needs. The container runs as the unprivileged `node` user with no added capabilities, and that is the isolation boundary.
 - No cookies or tokens are stored in source. Sessions live only in the browser profile under the data directory.
 
 ---
@@ -205,7 +205,7 @@ Operations, monitoring and troubleshooting: **[docs/OPERATIONS.md](OPERATIONS.md
 ## MCP
 
 ```bash
-claude mcp add basket -- node /path/to/compareprice/src/mcp-server.js
+claude mcp add jhola -- node /path/to/jhola/src/mcp-server.js
 ```
 
 The tools are `compare_basket`, `search_product`, `open_basket_view` and `open_platform`. They call the same `compareBasket()`, so they get the same engine, errors and numbers.
@@ -235,7 +235,7 @@ node scripts/mcp-smoke.js
 | `src/extract/` | Legacy DOM extractors, used as page fallbacks and by the webcmd backend |
 | `docs/` | Design, plan, diagnosis, engine/API/ops guides, UI evidence |
 
-The legacy backends are still selectable: `BASKET_BACKEND=webcmd` (webcmd adapters, `basket setup` / `doctor`) and `BASKET_BACKEND=cdp` (a Chrome you started on port 9222).
+The legacy backends are still selectable: `JHOLA_BACKEND=webcmd` (webcmd adapters, `jhola setup` / `doctor`) and `JHOLA_BACKEND=cdp` (a Chrome you started on port 9222).
 
 ## License
 

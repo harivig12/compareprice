@@ -1,6 +1,6 @@
 # HTTP API
 
-Served by `src/server.js` (started by `basket serve` / the Docker image). The base URL is `http://localhost:7777`. There is no authentication, so keep it on localhost.
+Served by `src/server.js` (started by `jhola serve` / the Docker image). The base URL is `http://localhost:7777`. There is no authentication, so keep it on localhost.
 
 ## Routes
 
@@ -20,7 +20,7 @@ Served by `src/server.js` (started by `basket serve` / the Docker image). The ba
 | GET | `/api/lookup` | `?q=<item>` | What each site last charged: `{ query, per: '100 g'\|'100 ml'\|'piece', sites: [{ site, rate, lastPrice, pack, product, seenAt, lowRate, lowSeenAt, url }], options }`, cheapest rate first. `q` may be partial ("onion"). 404 if nothing is saved. |
 | GET | `/guide` | | The how-to guide (HTML). `/` is the compare page and `/settings` the settings page. All three load `/theme.css`. |
 | GET | `/api/catalog` | `?q=<item>` and/or `?category=` | With `q`: `{ query, canonical, product: { id, name, canonical, category, matchedBy, phrase, brand } \| null, suggestions }` ("kismis 500g" → `canonical: "raisins 500g"`). Without: `{ categories, count, products: [{ id, name, category, canonical, tags, sub, brands }] }`. |
-| GET | `/api/sweep` | | Catalogue sweep status: `{ enabled, settings, nextAt, runs, lastRun: { at, jobId, items, reasons } }`. 404 outside `basket serve`. |
+| GET | `/api/sweep` | | Catalogue sweep status: `{ enabled, settings, nextAt, runs, lastRun: { at, jobId, items, reasons } }`. 404 outside `jhola serve`. |
 | POST | `/api/sweep/run` | | Queue one sweep batch now (even if disabled): `202 { jobId, items }`, or `200 { jobId: null, reason }` when nothing is missing. |
 | GET | `/api/limits` | | Per-site request budget: `{ [site]: { ok, waitMs, reason, lastMinute, lastHour, limits, cooldownMs, cooldownReason } }` |
 | GET | `/api/login` | | Sign-in status per site: `[{ id, label, why, loggedIn, since, phoneHint, pending }]` |

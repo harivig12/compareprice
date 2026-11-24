@@ -1,4 +1,4 @@
-# Working on compareprice
+# Working on Jhola
 
 Read these first:
 - `README.md`: the project overview, and `docs/USAGE.md`: everything about using it

@@ -305,7 +305,7 @@ export function renderTui(r) {
     out.push(
       c(A.dim, '    Platforms only reveal fees at checkout, so they cannot be read here.'),
     );
-    out.push(c(A.dim, '    Set them once:  basket fees --set blinkit --delivery 25 --handling 9'));
+    out.push(c(A.dim, '    Set them once:  jhola fees --set blinkit --delivery 25 --handling 9'));
   }
   out.push('');
 

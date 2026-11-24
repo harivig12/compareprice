@@ -2,7 +2,7 @@
 
 ## What to know before you run it
 
-compareprice is meant to run on your own computer or home server.
+Jhola is meant to run on your own computer or home server.
 
 - **The web page and API have no login.** `POST /api/compare` makes the service browse sites on your behalf, and `/settings` can change your configuration. Anyone who can reach the port can use both.
 - **It listens on `127.0.0.1` by default**, and the Docker compose file publishes it on `127.0.0.1:7777` only.

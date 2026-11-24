@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#F4F7F2">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="compareprice">
-<title>Basket · compareprice — cheapest groceries near you</title>
+<meta name="apple-mobile-web-app-title" content="Jhola">
+<title>Jhola — the cheapest grocery basket near you</title>
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.webmanifest">
@@ -63,8 +63,8 @@
 
   /* empty state */
   .empty { border-radius: var(--radius); padding: clamp(1.25rem, 4vw, 2.5rem); display: grid; grid-template-columns: auto 1fr; gap: 1.25rem; align-items: center; margin-bottom: 1rem; }
-  .empty .big { width: 64px; height: 64px; border-radius: 20px; background: var(--ink); color: #7FE0AE; display: grid; place-items: center; }
-  .empty .big .ico { width: 30px; height: 30px; }
+  .empty .big { width: 64px; height: 64px; border-radius: 18px; overflow: hidden; box-shadow: 0 6px 16px rgba(11, 27, 20, .18); }
+  .empty .big img { display: block; width: 100%; height: 100%; }
   .empty h2 { margin: 0 0 .25rem; font-size: 1.35rem; letter-spacing: -.02em; }
   .empty p { margin: 0; color: var(--muted); }
   .empty ol { margin: .6rem 0 0; padding-left: 1.2rem; color: var(--muted); }
@@ -197,7 +197,7 @@
 
 <div class="wrap">
   <header class="topnav glass">
-    <a class="brand" href="/"><span class="mark"><svg class="ico"><use href="#i-basket"/></svg></span>compareprice</a>
+    <a class="brand" href="/"><span class="mark"><img src="/icon.svg" alt="" width="34" height="34"></span>Jhola</a>
     <nav aria-label="Main">
       <a href="/" aria-current="page"><svg class="ico"><use href="#i-scale"/></svg><span>Compare</span></a>
       <a href="/settings"><svg class="ico"><use href="#i-gear"/></svg><span>Settings</span></a>
@@ -217,7 +217,7 @@
         <input id="q" type="search" placeholder="Check a saved price: onion…" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="sug">
         <div class="sug" id="sug" role="listbox" hidden></div>
       </div>
-      <button type="button" id="signin" class="secondary" title="Sign in to Zepto, Milkbasket or Amazon" aria-label="Sign in to a site"><svg class="ico"><use href="#i-key"/></svg><span class="lbl">Sign in</span></button>
+      <button type="button" id="signin" class="secondary" title="Sign in to a site that needs it" aria-label="Sign in to a site"><svg class="ico"><use href="#i-key"/></svg><span class="lbl">Sign in</span></button>
     </div>
   </section>
 
@@ -248,7 +248,7 @@
   <div class="progress" id="chips" aria-live="polite"></div>
 
   <section class="empty glass" id="empty">
-    <span class="big"><svg class="ico"><use href="#i-basket"/></svg></span>
+    <span class="big"><img src="/icon.svg" alt="" width="64" height="64"></span>
     <div>
       <h2>Your cheapest basket shows up here</h2>
       <p>Three steps:</p>

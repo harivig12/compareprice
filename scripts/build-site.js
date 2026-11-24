@@ -33,7 +33,7 @@ for (const [from, to] of [
   ['icon-512.png', 'icon-512.png'],
 ]) cpSync(join(ui, from), join(out, to));
 
-// Manifest: relative start so it works under /compareprice/
+// Manifest: relative start so it works under /jhola/
 const manifest = JSON.parse(readFileSync(join(ui, 'manifest.webmanifest'), 'utf8'));
 manifest.start_url = './';
 manifest.scope = './';

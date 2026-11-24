@@ -1,7 +1,7 @@
 {
-  "name": "compareprice",
-  "short_name": "Basket",
-  "description": "Find the cheapest grocery basket across quick-commerce sites near you.",
+  "name": "Jhola",
+  "short_name": "Jhola",
+  "description": "Find the cheapest grocery basket across the top quick-commerce sites near you.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

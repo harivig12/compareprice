@@ -81,7 +81,7 @@ test('GET / serves the page', async () => {
     assert.equal(res.status, 200);
     assert.match(res.headers.get('content-type'), /text\/html/);
     const html = await res.text();
-    assert.match(html, /<title>Basket/);
+    assert.match(html, /<title>Jhola/);
   });
 });
 

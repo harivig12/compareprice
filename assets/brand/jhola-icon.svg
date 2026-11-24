@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Jhola">
+  <!-- Jhola app icon: a yellow jhola (cloth shopping bag) with a green ₹ price tag, on green.
+       Master file: assets/brand/jhola-icon.svg. src/ui/icon.svg must be an exact copy (a test checks),
+       and every PNG is generated from it with `npm run build:icons`. Full-bleed square, so
+       Android round/squircle masks and iOS corner rounding can crop it safely. -->
+  <defs>
+    <linearGradient id="jhola-g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#12925A"/>
+      <stop offset="1" stop-color="#0A5C37"/>
+    </linearGradient>
+    <linearGradient id="jhola-y" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFD54A"/>
+      <stop offset="1" stop-color="#F5B70F"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#jhola-g)"/>
+  <!-- loop handles -->
+  <path d="M188 196c0-60 28-94 64-94s64 34 64 94" fill="none" stroke="#FFD54A" stroke-width="24" stroke-linecap="round"/>
+  <!-- bag body and folded hem -->
+  <path d="M132 188h240l-15 204a28 28 0 0 1-28 26H175a28 28 0 0 1-28-26z" fill="url(#jhola-y)"/>
+  <path d="M132 188h240l-2.4 34H134.4z" fill="#E0A100"/>
+  <!-- price tag: big enough to read as a tag at 32 px, still a shape at 16 px -->
+  <g transform="rotate(-12 316 318)">
+    <path d="M226 262h126l44 56-44 56H226a20 20 0 0 1-20-20v-72a20 20 0 0 1 20-20z" fill="#0A5C37" stroke="#FFD54A" stroke-width="10" stroke-linejoin="round"/>
+    <circle cx="358" cy="318" r="11" fill="#FFD54A"/>
+    <!-- ₹, drawn as strokes (no font needed) -->
+    <path d="M246 286h66M246 309h66M262 286c40 0 40 50 0 50l46 42" fill="none" stroke="#FFD54A" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

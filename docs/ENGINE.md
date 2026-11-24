@@ -40,7 +40,7 @@ Every tab also gets `Emulation.setFocusEmulationEnabled`, for the same reason.
 Other launch rules:
 - `CDP_ENDPOINT` makes it attach to an existing Chrome instead of launching one.
 - `CHROME_PATH` picks the binary.
-- `BASKET_CHROME_NO_SANDBOX=1` (set in the Docker image) adds `--no-sandbox`.
+- `JHOLA_CHROME_NO_SANDBOX=1` (set in the Docker image) adds `--no-sandbox`.
 
 **Lifecycle:**
 - One-shot CLI commands close the pool when they finish (`closeEngine()` in `src/cli.js`).

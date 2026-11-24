@@ -1,4 +1,4 @@
-# Contributing to compareprice
+# Contributing to Jhola
 
 Thanks for helping. The most useful contribution is usually a **fix to one site module**: sites change their pages and APIs often, and each change breaks a parser. New sites, new catalogue products, and clearer docs are all welcome too.
 
@@ -7,8 +7,8 @@ Thanks for helping. The most useful contribution is usually a **fix to one site 
 You need Node 22.13 or newer. For anything that touches a live site you also need Google Chrome or Chromium (set `CHROME_PATH` if it isn't on your `PATH`).
 
 ```bash
-git clone https://github.com/harivig12/compareprice.git
-cd compareprice
+git clone https://github.com/harivig12/jhola.git
+cd jhola
 npm ci
 npm test                  # the offline suite: no network, no Chrome
 node src/cli.js serve     # the web page at http://localhost:7777
