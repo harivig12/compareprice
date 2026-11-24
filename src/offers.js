@@ -3,18 +3,20 @@
  *
  *   Milkbasket: every signed-in account (main and extra) -> its flash deal.
  *   Instamart:  every signed-in account (or the guest main) -> its home feed.
+ *   BigBasket:  the main profile (guest or signed in) -> its deal storefronts,
+ *               at any discount (`offersMinPct: 0`), one group per storefront.
  *
  * Accounts run one after another, each through the site's shared request
  * budget. Only rows at the deal threshold are kept (src/deals.js); they go to
  * the store as `feed` deals, replacing that account's previous ones. Runs
- * after each scheduled job and from "Check offers" (as a queued job, so it
- * never shares a tab with a search).
+ * at the deal times (src/offer-schedule.js) and from "Check offers" (as a
+ * queued job, so it never shares a tab with a search).
  */
 import { isDeal, toDeal, DEFAULT_MIN_DISCOUNT_PCT } from './deals.js';
 import { MAIN } from './engine/accounts.js';
 
 // Zepto has no deal feed; it is checked for its free-delivery minimum only.
-export const OFFER_SITES = ['instamart', 'milkbasket', 'zepto'];
+export const OFFER_SITES = ['instamart', 'milkbasket', 'zepto', 'bigbasket'];
 
 /**
  * @param {object} opts
@@ -51,8 +53,11 @@ export async function checkOffers({ poolSet, accounts, sitesImpl, store, limiter
       const checkedAt = now();
       try {
         await limiter?.acquire(site, { signal });
-        const out = await poolSet.with(site, acc, async (pool) => impl.offers(await pool.tab(site)));
-        const deals = (out.rows ?? []).filter((r) => r.inStock !== false && isDeal(r, minPct))
+        // A site that reads many pages (BigBasket's storefronts) paces each one.
+        const ctx = { signal, acquire: () => limiter?.acquire(site, { signal }) };
+        const out = await poolSet.with(site, acc, async (pool) => impl.offers(await pool.tab(site), ctx));
+        const sitePct = impl.offersMinPct ?? minPct;
+        const deals = (out.rows ?? []).filter((r) => r.inStock !== false && isDeal(r, sitePct))
           .map((r) => toDeal(r, { site, account: acc.id, source: 'feed', seenAt: checkedAt, conditions: out.conditions }));
         // Smarter, free: deals in the catalogue the site already gave us today
         // (Milkbasket: ~6,200 products), no extra call. Main account only.

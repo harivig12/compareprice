@@ -135,6 +135,9 @@
   .dealhead h3 { margin:0; font-size:15px; }
   .dealsite { display:flex; gap:10px; align-items:baseline; flex-wrap:wrap; margin:10px 0 2px; font-weight:700; font-size:13px; border-bottom:1px solid var(--line); padding-bottom:4px; }
   .dealsite .cond { color:var(--warn); font-weight:600; font-size:12px; }
+  .dealsite .pcttag, .dealsite .dealcount { color:var(--dim); font-weight:600; font-size:12px; }
+  .dealsite .anytag { color:var(--accent-strong); border:1px solid currentColor; border-radius:999px; padding:0 7px; font-weight:700; font-size:11px; }
+  .dealsep { border:0; border-top:1px dashed var(--line); margin:12px 0 2px; }
   .dealrow { display:grid; grid-template-columns:minmax(0,1fr) auto auto auto; gap:4px 10px; align-items:center; font-size:13px; padding:4px 0; border-bottom:1px solid var(--line); }
   .dealrow .dn { overflow-wrap:anywhere; }
   .dealrow .dp { font-weight:700; color:var(--dn); }
@@ -255,7 +258,7 @@
 
   <section class="panel deals" id="deals" aria-labelledby="dealsh" hidden>
     <div class="dealhead">
-      <h3 id="dealsh">Deals · 80%+ off <span class="muted" id="dealsub"></span></h3>
+      <h3 id="dealsh">Deals <span class="muted" id="dealsub"></span></h3>
       <button type="button" class="secondary" id="checkoffers">Check offers</button>
     </div>
     <div id="dealbody"></div>
@@ -938,21 +941,28 @@ addEventListener('resize', hideTip);
 const DEAL_ROWS = 5;
 const dealOpen = new Set();
 const hhmm = (iso) => (iso ? new Date(iso).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Kolkata' }) : '—');
-const condText = (c) => [c?.maxQty ? `max ${c.maxQty} item${c.maxQty > 1 ? 's' : ''}` : '', c?.minBasket ? `basket ₹${c.minBasket}+` : ''].filter(Boolean).join(' · ');
-function dealRow(d, showSite) {
+const DEAL_TYPES = { price_drop: 'price drop' };
+const condText = (c) => [c?.maxQty ? `max ${c.maxQty} item${c.maxQty > 1 ? 's' : ''}` : '', c?.minBasket ? `basket ₹${c.minBasket}+` : '', c?.dealType ? DEAL_TYPES[c.dealType] ?? String(c.dealType).replace(/_/g, ' ') : ''].filter(Boolean).join(' · ');
+// showOwn: the row's own conditions (a storefront's rows differ: "max 3", "price drop").
+function dealRow(d, showSite, showOwn = showSite) {
   const who = d.seenBy.map((s) => `${s.name}${s.hint ? ` (${s.hint})` : ''} · ${hhmm(s.seenAt)}`).join('\n');
   const own = condText(d.conditions);
+  // BigBasket names already end with the pack ("… 200 g"): don't say it twice.
+  const packTxt = d.pack ? fmtPack(...packParts(d.pack)) : '';
+  const flat = (s) => String(s).toLowerCase().replace(/\s+/g, '');
+  const showPack = packTxt && !flat(d.product).includes(flat(packTxt));
   return `<div class="dealrow" tabindex="0" title="${esc(`Seen by:\n${who}${d.source === 'feed' ? '\nfrom the site\'s deal list' : '\nfound while searching'}`)}">
-    <span class="dn">${showSite ? `<b>${esc(label(d.site))}</b> · ` : ''}${esc(d.product)}${d.pack ? ` · ${esc(fmtPack(...packParts(d.pack)))}` : ''}${own && showSite ? ` <span class="muted">· ${esc(own)}</span>` : ''}</span>
+    <span class="dn">${showSite ? `<b>${esc(label(d.site))}</b> · ` : ''}${esc(d.product)}${showPack ? ` · ${esc(packTxt)}` : ''}${own && showOwn ? ` <span class="muted">· ${esc(own)}</span>` : ''}</span>
     <span class="dp">${rs(d.price)}</span><span class="dm">${rs(d.mrp)}</span><span class="pill">${Math.round(d.pct)}% off</span></div>`;
 }
 const packParts = (p) => { const m = /^([\d.]+)\s*([a-z]+)$/i.exec(String(p || '')); return m ? [Number(m[1]), m[2]] : [null, null]; };
-function dealGroup(key, title, cond, deals, empty, showSite) {
+// tag: "80%+ off" or "any discount" next to the group's name (words, not only colour).
+function dealGroup(key, title, cond, deals, empty, showSite, { tag = '', any = false, count = false } = {}) {
   const open = dealOpen.has(key);
   const shown = open ? deals : deals.slice(0, DEAL_ROWS);
   const more = deals.length - shown.length;
-  return `<div class="dealsite"><span>${title}</span>${cond ? `<span class="cond">${esc(cond)}</span>` : ''}</div>
-    ${deals.length ? shown.map((d) => dealRow(d, showSite)).join('') : `<div class="dealnote">${esc(empty)}</div>`}
+  return `<div class="dealsite${any ? ' anyoff' : ''}"><span>${title}</span>${tag ? `<span class="${any ? 'anytag' : 'pcttag'}">${esc(tag)}</span>` : ''}${cond ? `<span class="cond">${esc(cond)}</span>` : ''}${count && deals.length ? `<span class="dealcount">${deals.length} item${deals.length > 1 ? 's' : ''}</span>` : ''}</div>
+    ${deals.length ? shown.map((d) => dealRow(d, showSite, showSite || any)).join('') : `<div class="dealnote">${esc(empty)}</div>`}
     ${more > 0 ? `<button type="button" class="dealmore" data-more="${esc(key)}">+ ${more} more</button>` : open && deals.length > DEAL_ROWS ? `<button type="button" class="dealmore" data-more="${esc(key)}">show fewer</button>` : ''}`;
 }
 async function loadDeals() {
@@ -961,11 +971,16 @@ async function loadDeals() {
   const pct = d.minDiscountPct ?? 80;
   const any = d.groups.length || d.fromSearches.length || d.errors.length;
   $('deals').hidden = false;
-  $('dealsh').firstChild.textContent = `Deals · ${pct}%+ off `;
+  // Option A (2026-11-24): the 80%+ groups first, then a group per BigBasket storefront at any discount.
+  $('dealsh').firstChild.textContent = 'Deals ';
   const last = Object.values(d.checkedAt || {}).sort().at(-1);
   $('dealsub').textContent = `· not in totals${last ? ` · checked ${hhmm(last)}` : ''}`;
-  const html = d.groups.map((g) => dealGroup(g.site, esc(label(g.site)), condText(g.conditions), g.deals, `No ${pct}%+ deals in the last check (${hhmm(g.checkedAt)}).`, false)).join('')
-    + (d.fromSearches.length ? dealGroup('search', 'From searches', '', d.fromSearches, '', true) : '')
+  const plain = d.groups.filter((g) => !g.storefront);
+  const fronts = d.groups.filter((g) => g.storefront);
+  const html = plain.map((g) => dealGroup(g.site, esc(label(g.site)), condText(g.conditions), g.deals, `No ${pct}%+ deals in the last check (${hhmm(g.checkedAt)}).`, false, { tag: `${pct}%+ off` })).join('')
+    + (d.fromSearches.length ? dealGroup('search', 'From searches', '', d.fromSearches, '', true, { tag: `${pct}%+ off` }) : '')
+    + (fronts.length && (plain.length || d.fromSearches.length) ? '<hr class="dealsep">' : '')
+    + fronts.map((g) => dealGroup(`${g.site}|${g.storefront}`, `${esc(label(g.site))} · ${esc(g.storefront)}`, condText(g.conditions), g.deals, '', false, { tag: 'any discount', any: true, count: true })).join('')
     + d.errors.map((e) => `<div class="dealerr">${esc(label(e.site))} · ${esc(e.name)}: ${esc(e.error)}</div>`).join('');
   $('dealbody').innerHTML = any ? html : `<div class="dealnote">No offer check yet. It runs at 07:00 and 18:00 (unless changed in config), or press Check offers.</div>`;
   $('dealbody').querySelectorAll('[data-more]').forEach((b) => b.addEventListener('click', () => {

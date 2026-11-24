@@ -20,6 +20,8 @@
 | `last-result.json` | The latest result (the page loads it on open) |
 | `chrome-profile/` | Headless Chrome profile: guest sessions and the chosen delivery location. Deleting it means the sites are re-located on the next run. |
 | `profiles/<site>-<id>/` | One Chrome profile per extra account (Instamart, Milkbasket). Removing the account in the popup deletes it. Launched only while that account is in use. |
+| `profiles/bigbasket/` | BigBasket's own Chrome profile (since 1.3): its guest session, delivery location and sign-in. Its bot wall never touches the other sites. Debug port 9350; closed by the idle closer like the main Chrome. The first run after upgrading sets the location again with the site's picker. |
+| `browser-mode.json` | Written when BigBasket hits its bot wall on two page loads in a row: from then on its Chrome runs **headed** (in Docker, inside a virtual Xvfb screen). Set `"mode": "headless"` in it, or delete the file, to go back. |
 | `accounts.json` | Accounts per site: name, masked hint, signed-in time, profile. Replaces `sessions.json`, which is read once and left untouched. |
 | `basket.db` › `prices.hidden` | Rows set aside instead of deleted (since 2026-11-20): `rejected` (✕), `no-match` / `outlier` (clean-ups), `removed` (an entered price taken out). `SELECT hidden, COUNT(*) FROM prices GROUP BY 1` shows them. |
 | `master/` | The master price list run (`scripts/master-list.js`, run on the host): `state.json` (progress, so it can resume), `run.log`, `run.lock`, `master-<date>.csv` / `.md` (the reports). |

@@ -7,9 +7,13 @@ LABEL org.opencontainers.image.title="jhola" org.opencontainers.image.source="ht
 
 # Chromium for the engine's warm headless browser, fonts so pages lay out,
 # tini as PID 1 so Chrome child processes are reaped, tzdata for schedules.
+# Xvfb is a virtual screen: BigBasket's Chrome switches to headed after
+# repeated bot walls (src/engine/browser-mode.js), and a headed Chrome on a
+# server needs one. It is started only then (src/engine/display.js).
 RUN apt-get update \
- && apt-get install -y --no-install-recommends chromium fonts-noto-core fonts-noto-color-emoji tini tzdata ca-certificates \
- && rm -rf /var/lib/apt/lists/*
+ && apt-get install -y --no-install-recommends chromium fonts-noto-core fonts-noto-color-emoji tini tzdata ca-certificates xvfb \
+ && rm -rf /var/lib/apt/lists/* \
+ && mkdir -p /tmp/.X11-unix && chmod 1777 /tmp/.X11-unix
 
 ENV NODE_ENV=production \
     CHROME_PATH=/usr/bin/chromium \

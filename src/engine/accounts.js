@@ -2,7 +2,8 @@
  * Accounts per site (accounts.json in the data dir).
  *
  * The main account of every site lives in the shared browser profile
- * (`chrome-profile`). Sites that allow it (`LOGIN_SITES[site].multiAccount`:
+ * (`chrome-profile`), except BigBasket's, which has a profile of its own
+ * (`profiles/bigbasket`, OWN_PROFILES; src/engine/pool.js). Sites that allow it (`LOGIN_SITES[site].multiAccount`:
  * Instamart, Milkbasket) can have up to MAX_ACCOUNTS, each extra one in its
  * own profile under `profiles/<site>-<id>`, so cookies, site storage and
  * device ids never mix between accounts.
@@ -18,7 +19,10 @@ import { SiteError } from './errors.js';
 export const MAX_ACCOUNTS = 3;
 export const MAIN = 'main';
 
-const profileOf = (site, id) => (id === MAIN ? 'chrome-profile' : `profiles/${site}-${id}`);
+/** Sites whose main account runs in a Chrome and profile of its own (user decision 2026-11-24). */
+export const OWN_PROFILES = Object.freeze({ bigbasket: 'profiles/bigbasket' });
+
+const profileOf = (site, id) => (id === MAIN ? OWN_PROFILES[site] ?? 'chrome-profile' : `profiles/${site}-${id}`);
 
 /** A display name: trimmed, printable, at most 24 characters. */
 export function cleanName(name) {

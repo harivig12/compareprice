@@ -99,3 +99,22 @@ On this page the discounts ranged from 0% to 40% off MRP. Examples: LuvLap diape
 - Saved locally (not committed): the home page's API calls and storefront links, the storefront's network calls, and the full page-1 listing response.
 - Endpoints seen on the home page: `ui-svc/v2/header`, `ui-svc/v1/category-tree`, `ui-svc/v1/app-data`, `ui-svc/v1/door-data`, `basketService/get`, `order/v1/order/progress-bar?progress_bars=supersaver,delivery-charge` (204 for a guest).
 - Endpoint for a storefront: `listing-svc/v2/products?type=sis&slug=<storefront-slug>&page=<n>`.
+
+## Follow-up: first live storefront pull (2026-11-24, 23:15 IST)
+
+Built as `bigbasket.offers` (see docs/ENGINE.md). One pull from the development PC, through the real engine: a fresh BigBasket profile, headless, location 600045 set with the site's picker, then the storefront API only.
+
+- **No bot wall.** One home-page load plus about 26 storefront API calls (20 products a page) over 154 s; the Chrome stayed headless.
+- **What came back:** 515 products, 347 with a discount and in stock. 94 of those came from the ended storefront below, leaving 253 on the five real ones.
+
+| Storefront (title from the site) | Discounted items |
+|---|---|
+| Deals of the Week | 41 |
+| Buy More Save More | 72 |
+| Combos (both ids under one title) | 67 |
+| Big Pack Big Discount | 38 |
+| Rs. 30 Corner | 32 |
+
+- **One storefront id has ended.** It answered with a general listing of 60 pages titled just "bigbasket" (festival items). The engine now skips a storefront with that title after one call and notes its slug.
+- Discounts on the real storefronts ran from 1.1% to 85%; one item was above 80%.
+- `camp_detail.narq` (the most at the offer price) was set on 96 of the 253 items, from 1 to 10 (shown as "max 3 items" and so on); `deal_type` was set on 21.

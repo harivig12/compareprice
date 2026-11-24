@@ -178,14 +178,19 @@ export function lookupMarkdown(l) {
 }
 
 const hhmm = (iso) => (iso ? new Date(iso).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Kolkata' }) : '—');
-const condText = (c) => [c?.maxQty ? `max ${c.maxQty} item${c.maxQty > 1 ? 's' : ''}` : null, c?.minBasket ? `basket ₹${c.minBasket}+` : null].filter(Boolean).join(' · ');
+const condText = (c) => [c?.maxQty ? `max ${c.maxQty} item${c.maxQty > 1 ? 's' : ''}` : null, c?.minBasket ? `basket ₹${c.minBasket}+` : null, c?.dealType ? String(c.dealType).replace(/_/g, ' ') : null].filter(Boolean).join(' · ');
+// MCP answers stay short: a storefront can list 200 items.
+const STOREFRONT_ROWS = 10;
 
 export function dealsMarkdown(d) {
-  const out = [`**Deals · ${d.minDiscountPct ?? 80}%+ off** (not in totals)`, ''];
+  const out = [`**Deals** (not in totals): ${d.minDiscountPct ?? 80}%+ off, and BigBasket's deal storefronts at any discount`, ''];
   const row = (x) => `- ${x.product}${x.pack ? ` · ${x.pack}` : ''}: ${rupees(x.price)} (MRP ${rupees(x.mrp)}, ${Math.round(x.pct)}% off)${condText(x.conditions) ? ` · ${condText(x.conditions)}` : ''} · seen by ${x.seenBy.map((s) => s.name).join(', ')}`;
   for (const g of d.groups ?? []) {
-    out.push(`**${g.site}** (checked ${hhmm(g.checkedAt)})${condText(g.conditions) ? ` · ${condText(g.conditions)}` : ''}`);
-    out.push(...(g.deals.length ? g.deals.map(row) : [`- No ${d.minDiscountPct ?? 80}%+ deals in the last check (${hhmm(g.checkedAt)}).`]));
+    const name = g.storefront ? `${g.site} · ${g.storefront}** (any discount, ${g.deals.length} items` : `${g.site}** (${d.minDiscountPct ?? 80}%+ off`;
+    out.push(`**${name}, checked ${hhmm(g.checkedAt)})${condText(g.conditions) ? ` · ${condText(g.conditions)}` : ''}`);
+    const list = g.storefront ? g.deals.slice(0, STOREFRONT_ROWS) : g.deals;
+    out.push(...(list.length ? list.map(row) : [`- No ${d.minDiscountPct ?? 80}%+ deals in the last check (${hhmm(g.checkedAt)}).`]));
+    if (g.deals.length > list.length) out.push(`- … and ${g.deals.length - list.length} more (see the page)`);
     out.push('');
   }
   if (d.fromSearches?.length) out.push('**From searches** (last 24 h)', ...d.fromSearches.map((x) => `- ${x.site}: ${row(x).slice(2)}`), '');

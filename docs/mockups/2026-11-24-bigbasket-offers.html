@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup · BigBasket offers in the Deals section (2026-11-24)</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#E9EDF5;color:#1f2937;font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.sheet{max-width:1360px;margin:0 auto;padding:1.6rem 1.25rem 3rem}
+h1{margin:0 0 .3rem;font-size:1.6rem} h2{margin:2rem 0 .4rem;font-size:1.25rem;border-top:2px solid #cbd5e1;padding-top:1.1rem}
+p{margin:.2rem 0 .8rem;max-width:980px}
+.note{background:#fff;border-left:4px solid #2563EB;padding:.7rem 1rem;border-radius:.4rem;max-width:980px}
+.note ul{margin:.3rem 0 0;padding-left:1.2rem}
+.ask{background:#FFFBEB;border-left:4px solid #B45309;padding:.8rem 1rem;border-radius:.4rem;max-width:980px;margin-top:1.4rem}
+.row{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:1.2rem;align-items:start}
+@media (max-width:1100px){.row{grid-template-columns:1fr}}
+.cap{font-size:.82rem;color:#475569;margin:.35rem 0 0}
+
+/* app tokens (src/ui/theme.css) */
+.app{--text:#0B1B14;--dim:#3E5148;--faint:#5C6E65;--line:#D9E4DD;--cell:#F4F8F5;--surface:rgba(255,255,255,.9);--glass:rgba(255,255,255,.55);--rim:rgba(255,255,255,.8);
+  --best:#0E7A4B;--warn:#9A4A06;--bw:#FFF3E3;--dn:#0E7A4B;--blue:#1D4ED8;--bluebg:#EAF0FF;--shadow:0 10px 30px rgba(11,27,20,.08),inset 0 1px 0 rgba(255,255,255,.7);
+  --mesh:radial-gradient(60% 50% at 8% 6%,#BFF0D4 0,transparent 60%),radial-gradient(45% 45% at 96% 10%,#FFD9C2 0,transparent 60%),radial-gradient(60% 60% at 75% 100%,#DCD3FF 0,transparent 60%),#F4F7F2;
+  color:var(--text);background:var(--mesh);font:13px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:14px;border-radius:22px;box-shadow:0 18px 40px #0b1b1426}
+.app.dark{--text:#E8F1EC;--dim:#A9BDB2;--faint:#8FA69A;--line:#24362D;--cell:#16241E;--surface:rgba(19,30,25,.92);--glass:rgba(22,36,30,.55);--rim:rgba(255,255,255,.09);
+  --best:#137A4A;--warn:#F6C25B;--bw:#2A2210;--dn:#5FD08F;--blue:#8AB4FF;--bluebg:#141C30;--shadow:0 10px 30px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.05);
+  --mesh:radial-gradient(60% 50% at 8% 6%,#0F3B27 0,transparent 60%),radial-gradient(45% 45% at 96% 10%,#3A2A0B 0,transparent 60%),radial-gradient(60% 60% at 75% 100%,#211A3D 0,transparent 60%),#08110D}
+.panel{background:var(--glass);backdrop-filter:blur(18px) saturate(1.4);border:1px solid var(--rim);box-shadow:var(--shadow);border-radius:18px;padding:10px 14px}
+.head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.head h3{margin:0;font-size:15px} .head h3 small{color:var(--dim);font-weight:600}
+.btn{display:inline-flex;align-items:center;min-height:34px;padding:0 14px;border-radius:999px;border:1.5px solid rgba(127,127,127,.35);font-weight:700;font-size:13px;color:var(--text);background:transparent}
+.site{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;margin:12px 0 4px;font-weight:800;font-size:13px}
+.cond{color:var(--warn);background:var(--bw);border-radius:999px;padding:1px 8px;font-weight:800;font-size:11px}
+.any{color:var(--blue);background:var(--bluebg);border-radius:999px;padding:1px 8px;font-weight:800;font-size:11px}
+.sub{color:var(--faint);font-weight:600;font-size:11.5px}
+.dr{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:4px 10px;align-items:center;font-size:12.5px;padding:5px 9px;border-radius:10px;background:var(--cell);margin-bottom:3px}
+.dr .n{overflow-wrap:anywhere} .dr .n small{color:var(--faint);font-weight:600}
+.dp{font-weight:800;color:var(--dn)} .dm{color:var(--dim);text-decoration:line-through;font-size:11.5px}
+.pill{background:var(--best);color:#fff;border-radius:999px;padding:1px 8px;font-size:11px;font-weight:800;white-space:nowrap}
+.more{color:var(--dn);font-weight:700;font-size:12px;padding:3px 0;display:inline-block}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;margin:10px 0 6px}
+.tabs span{border:1.5px solid var(--line);border-radius:999px;padding:3px 10px;font-weight:700;font-size:12px;color:var(--dim);background:var(--surface)}
+.tabs span.on{background:var(--best);border-color:var(--best);color:#fff}
+.tabs span b{font-weight:800;opacity:.8;margin-left:3px}
+.sep{border:0;border-top:1px dashed var(--line);margin:12px 0 4px}
+.phone{border-radius:34px;padding:8px;background:#0b0f0d}
+.phone .app{border-radius:27px;padding:10px;min-height:600px}
+.phone .dr{grid-template-columns:minmax(0,1fr) auto auto}.phone .dr .n{grid-column:1/-1}
+</style>
+</head>
+<body>
+<div class="sheet">
+<h1>BigBasket offers in the Deals section</h1>
+<p>Your answers: BigBasket's deal storefronts get their own group whatever the discount (1.a); all six storefronts (2); headed Chrome via Xvfb is in the image by default (3.a); you'll sign in from the Sign in box (4). The engine side is built and tested. This mockup is only about <b>how the page shows them</b>.</p>
+<div class="note"><b>Design-library references:</b> <code>guides/dashboards.md</code> (grouped lists, progressive disclosure, "show 5, then + more"), <code>guides/mobile-app-flows.md</code> (lists on phones: one column, the name on its own line), <code>tokens/tokens.css</code>. Same tokens, rows and pills as the Deals section today.
+<ul><li>Both options keep the 80%+ groups exactly as they are, and BigBasket rows never count in a total.</li>
+<li>The blue <span style="color:#1D4ED8;font-weight:800">any discount</span> tag, with words, tells these groups apart from the 80%+ ones (not colour alone).</li>
+<li>"max 3" is BigBasket's own per-order limit at the offer price; "price drop" is its deal type.</li></ul></div>
+
+<h2>Option A · one group per storefront, under the 80%+ deals</h2>
+<p>Each storefront is a group like Milkbasket's today: 5 rows, then "+ N more". The section title loses "80%+" because the BigBasket groups go lower; the 80% rule moves to each 80%+ group's heading.</p>
+<div class="row">
+  <div>
+    <div class="app"><div class="panel">
+      <div class="head"><h3>Deals <small>· not in totals · checked 07:04</small></h3><span class="btn">Check offers</span></div>
+      <div class="site"><span>Milkbasket</span><span class="sub">80%+ off</span><span class="cond">max 1 item · basket ₹9+</span></div>
+      <div class="dr"><span class="n">Tomato Desi · 500 g</span><span class="dp">₹1</span><span class="dm">₹39</span><span class="pill">97% off</span></div>
+      <div class="dr"><span class="n">Onion · 1 kg</span><span class="dp">₹5</span><span class="dm">₹49</span><span class="pill">90% off</span></div>
+      <hr class="sep">
+      <div class="site"><span>BigBasket · Deals of the Week</span><span class="any">any discount</span><span class="sub">63 items</span></div>
+      <div class="dr"><span class="n">LuvLap Diaper Pants · 30 pcs <small>· max 3</small></span><span class="dp">₹299</span><span class="dm">₹499</span><span class="pill">40% off</span></div>
+      <div class="dr"><span class="n">Johnson's Baby Oil · 500 ml <small>· price drop</small></span><span class="dp">₹389</span><span class="dm">₹580</span><span class="pill">33% off</span></div>
+      <div class="dr"><span class="n">Fortune Sunflower Oil · 1 l</span><span class="dp">₹139</span><span class="dm">₹195</span><span class="pill">29% off</span></div>
+      <span class="more">+ 60 more</span>
+      <div class="site"><span>BigBasket · Big Pack Discount</span><span class="any">any discount</span><span class="sub">24 items</span></div>
+      <div class="dr"><span class="n">India Gate Basmati Rice · 5 kg</span><span class="dp">₹649</span><span class="dm">₹899</span><span class="pill">28% off</span></div>
+      <span class="more">+ 23 more</span>
+      <div class="site"><span>BigBasket · The ₹30 Corner</span><span class="any">any discount</span><span class="sub">40 items</span></div>
+      <div class="dr"><span class="n">Good Day Cashew Cookies · 100 g</span><span class="dp">₹30</span><span class="dm">₹40</span><span class="pill">25% off</span></div>
+      <span class="more">+ 39 more · and Buy More Save More, Combos</span>
+    </div></div>
+    <p class="cap">A · light, 1280 px. Simple; long when every storefront is full (6 headings).</p>
+  </div>
+  <div>
+    <div class="phone"><div class="app dark"><div class="panel">
+      <div class="head"><h3>Deals <small>· not in totals</small></h3><span class="btn">Check offers</span></div>
+      <div class="site"><span>Milkbasket</span><span class="sub">80%+ off</span><span class="cond">max 1 item</span></div>
+      <div class="dr"><span class="n">Tomato Desi · 500 g</span><span class="dp">₹1</span><span class="dm">₹39</span><span class="pill">97% off</span></div>
+      <hr class="sep">
+      <div class="site"><span>BigBasket · Deals of the Week</span><span class="any">any discount</span></div>
+      <div class="dr"><span class="n">LuvLap Diaper Pants · 30 pcs <small>· max 3</small></span><span class="dp">₹299</span><span class="dm">₹499</span><span class="pill">40% off</span></div>
+      <div class="dr"><span class="n">Johnson's Baby Oil · 500 ml <small>· price drop</small></span><span class="dp">₹389</span><span class="dm">₹580</span><span class="pill">33% off</span></div>
+      <span class="more">+ 61 more</span>
+      <div class="site"><span>BigBasket · Big Pack Discount</span><span class="any">any discount</span></div>
+      <div class="dr"><span class="n">India Gate Basmati Rice · 5 kg</span><span class="dp">₹649</span><span class="dm">₹899</span><span class="pill">28% off</span></div>
+      <span class="more">+ 23 more</span>
+    </div></div></div>
+    <p class="cap">A · dark, phone (Deals tab).</p>
+  </div>
+</div>
+
+<h2>Option B · one BigBasket offers block with storefront chips</h2>
+<p>All storefronts sit behind one heading; chips switch between them (counts on each chip). Shorter, one tap more to see another storefront.</p>
+<div class="row">
+  <div>
+    <div class="app"><div class="panel">
+      <div class="head"><h3>Deals <small>· not in totals · checked 07:04</small></h3><span class="btn">Check offers</span></div>
+      <div class="site"><span>Milkbasket</span><span class="sub">80%+ off</span><span class="cond">max 1 item · basket ₹9+</span></div>
+      <div class="dr"><span class="n">Tomato Desi · 500 g</span><span class="dp">₹1</span><span class="dm">₹39</span><span class="pill">97% off</span></div>
+      <hr class="sep">
+      <div class="site"><span>BigBasket offers</span><span class="any">any discount</span><span class="sub">its own deal pages, 6 storefronts</span></div>
+      <div class="tabs" role="tablist"><span class="on">Deals of the Week <b>63</b></span><span>Buy More Save More <b>18</b></span><span>Combos <b>52</b></span><span>Big Pack Discount <b>24</b></span><span>The ₹30 Corner <b>40</b></span></div>
+      <div class="dr"><span class="n">LuvLap Diaper Pants · 30 pcs <small>· max 3</small></span><span class="dp">₹299</span><span class="dm">₹499</span><span class="pill">40% off</span></div>
+      <div class="dr"><span class="n">Johnson's Baby Oil · 500 ml <small>· price drop</small></span><span class="dp">₹389</span><span class="dm">₹580</span><span class="pill">33% off</span></div>
+      <div class="dr"><span class="n">Fortune Sunflower Oil · 1 l</span><span class="dp">₹139</span><span class="dm">₹195</span><span class="pill">29% off</span></div>
+      <div class="dr"><span class="n">Surf Excel Matic · 2 kg</span><span class="dp">₹449</span><span class="dm">₹620</span><span class="pill">28% off</span></div>
+      <div class="dr"><span class="n">Dettol Handwash Refill · 750 ml</span><span class="dp">₹99</span><span class="dm">₹135</span><span class="pill">27% off</span></div>
+      <span class="more">+ 58 more</span>
+    </div></div>
+    <p class="cap">B · light, 1280 px. The chips wrap to two lines on narrow screens.</p>
+  </div>
+  <div>
+    <div class="phone"><div class="app dark"><div class="panel">
+      <div class="head"><h3>Deals <small>· not in totals</small></h3><span class="btn">Check offers</span></div>
+      <div class="site"><span>Milkbasket</span><span class="sub">80%+ off</span></div>
+      <div class="dr"><span class="n">Tomato Desi · 500 g</span><span class="dp">₹1</span><span class="dm">₹39</span><span class="pill">97% off</span></div>
+      <hr class="sep">
+      <div class="site"><span>BigBasket offers</span><span class="any">any discount</span></div>
+      <div class="tabs"><span class="on">Deals of the Week <b>63</b></span><span>Combos <b>52</b></span><span>₹30 Corner <b>40</b></span><span>Big Pack <b>24</b></span><span>Buy More <b>18</b></span></div>
+      <div class="dr"><span class="n">LuvLap Diaper Pants · 30 pcs <small>· max 3</small></span><span class="dp">₹299</span><span class="dm">₹499</span><span class="pill">40% off</span></div>
+      <div class="dr"><span class="n">Johnson's Baby Oil · 500 ml <small>· price drop</small></span><span class="dp">₹389</span><span class="dm">₹580</span><span class="pill">33% off</span></div>
+      <span class="more">+ 61 more</span>
+    </div></div></div>
+    <p class="cap">B · dark, phone.</p>
+  </div>
+</div>
+
+<div class="ask"><b>To pick:</b>
+<ol><li>A (a group per storefront) or B (one block with storefront chips)?</li>
+</ol>
+<p style="margin:.4rem 0 0">The products and prices above are only examples. Real rows come from the 07:00 / 18:00 check.</p></div>
+</div>
+</body>
+</html>

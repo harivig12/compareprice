@@ -28,7 +28,8 @@ const packOf = (row) => row.pack ?? (row.packSize ? `${row.packSize}${row.packUn
  * @returns {{ site, account, product, pack, price, mrp, pct, conditions, url, seenAt, source }}
  */
 export function toDeal(row, { site, account = 'main', source = 'search', seenAt = new Date().toISOString(), conditions = null } = {}) {
-  const cond = { ...(conditions ?? {}), ...(row.maxQty ? { maxQty: row.maxQty } : {}) };
+  // The check's own conditions, then the row's (BigBasket: its storefront), then its buy limit.
+  const cond = { ...(conditions ?? {}), ...(row.conditions ?? {}), ...(row.maxQty ? { maxQty: row.maxQty } : {}) };
   return {
     site,
     account,

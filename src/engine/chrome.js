@@ -9,6 +9,7 @@ import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, readlinkSync, rmSync, writeFileSync } from 'node:fs';
 import { hostname as osHostname } from 'node:os';
 import { delimiter, dirname, isAbsolute, join } from 'node:path';
+import { headedEnv } from './display.js';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -177,9 +178,13 @@ export async function launchChrome({ port = 9333, profileDir, headless = true, c
   const lock = clearStaleProfileLock(profileDir);
   disablePasswordSaving(profileDir);
   const bin = resolveChromePath(chromePath);
+  // A headed Chrome (BigBasket after repeated bot walls) needs a screen: on a
+  // Linux server that is a virtual one (src/engine/display.js).
+  const env = headless ? process.env : await headedEnv();
   const proc = spawn(bin, [...chromeArgs({ port, profileDir, headless }), 'about:blank'], {
     stdio: 'ignore',
     detached: false,
+    env,
   });
   const spawnErr = new Promise((_, reject) => proc.once('error', reject));
   const endpoint = `http://127.0.0.1:${port}`;

@@ -249,6 +249,8 @@ body:where(.app) { font-size: 14px; line-height: 1.45; }
 :where(.app) .look tr.cheap td:last-child { border-radius: 0 10px 10px 0; }
 :where(.app) .dealsite { border-bottom: 0; }
 :where(.app) .dealsite .cond { background: var(--banner-warn); border-radius: 999px; padding: 1px 8px; font-weight: 800; }
+:where(.app) .dealsite .anytag { color: var(--focus); background: var(--banner-info); border-color: transparent; font-weight: 800; }
+:where(.app) .dealsep { border-top-color: var(--line); }
 :where(.app) .dealrow { border-bottom: 0; background: var(--cell); border-radius: 10px; padding: 5px 9px; margin-bottom: 3px; }
 :where(.app) .arow { background: var(--field); border-radius: 10px; }
 :where(.app) .sched { background: var(--cell); border-color: var(--line); border-radius: 14px; }

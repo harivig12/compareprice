@@ -557,11 +557,31 @@ export function openStore(file = join(DATA_DIR, 'basket.db'), { timeZone = 'Asia
         if (c.error) errors.push({ site: c.site, account: c.account, name: names[c.account] ?? c.account, error: c.error, checkedAt: c.checked_at });
       }
       const sites = [...new Set([...feed.map((r) => r.site), ...Object.keys(checkedAt)])].sort();
-      const groups = sites.map((site) => {
-        const deals = merge(feed.filter((r) => r.site === site));
-        // Conditions shared by every deal of the site go on its heading line.
+      // Deals from a storefront (BigBasket's "Deals of the Week" …) are any
+      // discount: they get a group per storefront, after the site's 80%+ group.
+      const storefrontOf = (r) => { try { return JSON.parse(r.conditions ?? 'null')?.storefront ?? null; } catch { return null; } };
+      const groupOf = (site, rows, storefront) => {
+        const deals = merge(rows).map((d) => {
+          if (!storefront || !d.conditions) return d;
+          const { storefront: _s, ...rest } = d.conditions;
+          return { ...d, conditions: Object.keys(rest).length ? rest : null };
+        });
+        // Conditions shared by every deal of the group go on its heading line.
         const shared = deals.length && deals.every((d) => JSON.stringify(d.conditions) === JSON.stringify(deals[0].conditions)) ? deals[0].conditions : null;
-        return { site, checkedAt: checkedAt[site] ?? null, conditions: shared, deals };
+        return { site, ...(storefront ? { storefront, anyDiscount: true } : {}), checkedAt: checkedAt[site] ?? null, conditions: shared, deals };
+      };
+      const groups = sites.flatMap((site) => {
+        const rows = feed.filter((r) => r.site === site);
+        const byFront = new Map();
+        const plain = [];
+        for (const r of rows) {
+          const sf = storefrontOf(r);
+          if (sf) byFront.set(sf, [...(byFront.get(sf) ?? []), r]);
+          else plain.push(r);
+        }
+        const out = [...byFront].map(([sf, list]) => groupOf(site, list, sf));
+        // The plain group is kept when it has deals, or when nothing else says the site was checked.
+        return plain.length || !out.length ? [groupOf(site, plain, null), ...out] : out;
       });
       const since = new Date(now - 24 * 3_600_000).toISOString();
       const fromSearches = merge(db.prepare("SELECT * FROM deals WHERE source = 'search' AND seen_at >= ?").all(since));

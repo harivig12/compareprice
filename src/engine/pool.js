@@ -11,6 +11,8 @@ import { DATA_DIR } from '../paths.js';
 import { CdpTab } from './cdp.js';
 import { launchChrome } from './chrome.js';
 import { SiteError } from './errors.js';
+import { BrowserMode } from './browser-mode.js';
+import { OWN_PROFILES } from './accounts.js';
 
 async function defaultSites() {
   return (await import('./sites/index.js')).SITES;
@@ -37,10 +39,16 @@ export async function assertNotWalled(tab, siteId) {
 export class BrowserPool {
   /**
    * @param {{ launch?: Function, profileDir?: string, location?: object,
-   *           sites?: Record<string, object>, openTab?: Function }} [opts]
+   *           sites?: Record<string, object>, openTab?: Function,
+   *           headless?: () => boolean, wallWatch?: { walled(site: string, msg: string): boolean, clear(site: string): void } }} [opts]
    *   `sites` and `openTab` are injection points for tests.
+   *   `headless` is asked at each launch; `wallWatch` hears every bot-wall check
+   *   and returns true from walled() when the browser must relaunch (BigBasket: headed).
    */
-  constructor({ launch = launchChrome, profileDir, location, sites, openTab = CdpTab.open, blockMedia = false, ownLocation = () => false } = {}) {
+  constructor({ launch = launchChrome, profileDir, location, sites, openTab = CdpTab.open, blockMedia = false, ownLocation = () => false, headless, wallWatch } = {}) {
+    this.headless = headless;
+    this.wallWatch = wallWatch;
+    this._relaunch = false;
     // (siteId) => true when the profile is signed in there: keep the site's own address.
     this.ownLocation = ownLocation;
     this.launch = launch;
@@ -123,7 +131,7 @@ export class BrowserPool {
 
   _browserP() {
     if (!this._browser) {
-      const p = Promise.resolve().then(() => this.launch({ profileDir: this.profileDir }));
+      const p = Promise.resolve().then(() => this.launch({ profileDir: this.profileDir, ...(this.headless ? { headless: this.headless() } : {}) }));
       p.catch(() => { if (this._browser === p) this._browser = null; });
       this._browser = p;
     }
@@ -154,7 +162,7 @@ export class BrowserPool {
       }
       if (cookies.length) await tab.setCookies(cookies);
       if (site.origin) await tab.goto(site.origin, { waitMs: 15000 });
-      await assertNotWalled(tab, siteId);
+      await this._wallCheck(tab, siteId);
       // Pickers would move a signed-in account to the config address; passive
       // hooks (header watchers) still run.
       if (site.setLocation && (!keep || site.locationPassive)) await site.setLocation(tab, this.location);
@@ -183,6 +191,11 @@ export class BrowserPool {
   /** Warm tab for a site (opened on first use). */
   async tab(siteId) {
     if (this._closed) throw new SiteError('browser', 'browser pool is closed', { site: siteId });
+    if (this._relaunch) {
+      // The launch mode changed (headless -> headed): start a new Chrome.
+      this._relaunch = false;
+      await this.restart();
+    }
     if (this._stale) {
       this._stale = false;
       await this._closeTabs();
@@ -213,7 +226,18 @@ export class BrowserPool {
     } catch (e) {
       throw new SiteError('browser', `${siteId}: refresh failed: ${e.message}`, { site: siteId, cause: e });
     }
-    await assertNotWalled(tab, siteId);
+    await this._wallCheck(tab, siteId);
+  }
+
+  /** The bot-wall check, reported to `wallWatch` (which may ask for a relaunch). */
+  async _wallCheck(tab, siteId) {
+    try {
+      await assertNotWalled(tab, siteId);
+    } catch (e) {
+      if (e?.kind === 'blocked' && this.wallWatch?.walled(siteId, e.message)) this._relaunch = true;
+      throw e;
+    }
+    this.wallWatch?.clear(siteId);
   }
 
   async _closeTabs() {
@@ -239,19 +263,84 @@ export class BrowserPool {
 /** Resource patterns skipped on search tabs when `blockMedia` is on. */
 export const MEDIA_PATTERNS = ['*.png', '*.jpg', '*.jpeg', '*.webp', '*.avif', '*.gif', '*.svg', '*.ico', '*.woff', '*.woff2', '*.ttf', '*.otf', '*.mp4', '*.webm', '*.m3u8'];
 
-let shared = null;
+/**
+ * The main pool plus the sites that run in a Chrome of their own.
+ *
+ * BigBasket gets its own profile (<data>/profiles/bigbasket) and debug port
+ * (user decision 2026-11-24): its bot wall then never touches the other
+ * sites' sessions, and it can switch to a headed Chrome on its own
+ * (src/engine/browser-mode.js). Everything else shares the main Chrome.
+ * Callers see one pool: each call goes to the site's own Chrome.
+ */
+export class SitePools {
+  /** @param {{ main: BrowserPool, own?: Record<string, BrowserPool> }} pools */
+  constructor({ main, own = {} }) {
+    this.main = main;
+    this.own = own;
+  }
 
-/** The shared pool if one was created, without creating it. */
+  /** The pool that serves this site. */
+  for(siteId) {
+    return this.own[siteId] ?? this.main;
+  }
+
+  #all() {
+    return [this.main, ...Object.values(this.own)];
+  }
+
+  isOpen() { return this.#all().some((p) => p.isOpen()); }
+  tab(siteId) { return this.for(siteId).tab(siteId); }
+  refresh(siteId) { return this.for(siteId).refresh(siteId); }
+  closeTab(siteId) { return this.for(siteId).closeTab(siteId); }
+  loginTab(siteId) { return this.for(siteId).loginTab(siteId); }
+  releaseLoginTab(siteId, opts) { return this.for(siteId).releaseLoginTab(siteId, opts); }
+  clearSiteData(siteId, origins) { return this.for(siteId).clearSiteData(siteId, origins); }
+  setLocation(location) { for (const p of this.#all()) p.setLocation(location); }
+  async restart() { await Promise.all(this.#all().map((p) => p.restart())); }
+  async close() { await Promise.all(this.#all().map((p) => p.close())); }
+
+  get location() { return this.main.location; }
+  get profileDir() { return this.main.profileDir; }
+  get blockMedia() { return this.main.blockMedia; }
+  set blockMedia(v) { for (const p of this.#all()) p.blockMedia = v; }
+  get ownLocation() { return this.main.ownLocation; }
+  set ownLocation(fn) { for (const p of this.#all()) p.ownLocation = fn; }
+}
+
+/** Debug ports of the sites with a Chrome of their own (main: 9333, extra accounts: 9400+). */
+export const OWN_PORTS = Object.freeze({ bigbasket: 9350 });
+
+let shared = null;
+let mode = null;
+
+/** Headless/headed choice per own-profile site (one per process). */
+export function browserMode() {
+  mode ??= new BrowserMode({ file: join(DATA_DIR, 'browser-mode.json') });
+  return mode;
+}
+
+/** The shared pools if they were created, without creating them. */
 export function peekPool() {
   return shared;
 }
 
-/** Process-wide pool, created on first use and closed on exit. */
+/** Process-wide pools, created on first use and closed on exit. */
 export function getPool(opts = {}) {
   if (!shared) {
-    shared = new BrowserPool({
-      profileDir: join(DATA_DIR, 'chrome-profile'),
-      ...opts,
+    const m = browserMode();
+    const own = {};
+    for (const [site, profile] of Object.entries(OWN_PROFILES)) {
+      own[site] = new BrowserPool({
+        ...opts,
+        profileDir: join(DATA_DIR, profile),
+        launch: (o) => launchChrome({ ...o, port: OWN_PORTS[site] }),
+        headless: () => m.headless(site),
+        wallWatch: { walled: (s, msg) => m.walled(s, msg), clear: (s) => m.clear(s) },
+      });
+    }
+    shared = new SitePools({
+      main: new BrowserPool({ profileDir: join(DATA_DIR, 'chrome-profile'), ...opts }),
+      own,
     });
     const closeShared = () => shared?.close().catch(() => {});
     // Chrome is a child process; on Linux it outlives a parent that exits

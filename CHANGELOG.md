@@ -5,7 +5,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+- **BigBasket offers in Deals.** The offer check (07:00 and 18:00) reads BigBasket's deal storefronts: Deals of the Week, Buy More Save More, Combos, Big Pack Discount and the ₹30 Corner, every page up to 10 each, one call at a time. Each storefront is its own group under the 80%+ deals, marked "any discount", with BigBasket's "max 3 items" limit and "price drop" where it gives them. They never count in a total. The MCP `deals` tool lists them too (10 rows per storefront).
+- **BigBasket runs in a Chrome of its own** (`<data>/profiles/bigbasket`), headless. After its bot wall shows on two page loads in a row it switches to a headed Chrome and stays so (`<data>/browser-mode.json`). On a server that Chrome runs inside a virtual screen: the Docker image now ships Xvfb.
+
+### Changed
+- The Deals heading no longer says "80%+ off"; each group says which rule it follows.
+- A deal's pack is not repeated when the product name already ends with it.
 
 ## [1.3.0] - 2026-11-24
 

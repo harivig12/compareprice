@@ -207,14 +207,21 @@ test('deals tool lists groups with conditions and accounts, and the not-in-total
   const svc = await fakeService({
     'GET /api/deals': () => [200, {
       minDiscountPct: 80, checkedAt: { milkbasket: '2026-11-19T04:30:00.000Z' }, errors: [{ site: 'milkbasket', name: 'Amma', error: 'milkbasket: session expired' }],
-      groups: [{ site: 'milkbasket', checkedAt: '2026-11-19T04:30:00.000Z', conditions: { maxQty: 1, minBasket: 9 }, deals: [{ product: 'Tomato Desi', pack: '1050g', price: 1, mrp: 78, pct: 98.7, conditions: { maxQty: 1, minBasket: 9 }, seenBy: [{ name: 'Main' }, { name: 'Amma' }] }] }],
+      groups: [
+        { site: 'milkbasket', checkedAt: '2026-11-19T04:30:00.000Z', conditions: { maxQty: 1, minBasket: 9 }, deals: [{ product: 'Tomato Desi', pack: '1050g', price: 1, mrp: 78, pct: 98.7, conditions: { maxQty: 1, minBasket: 9 }, seenBy: [{ name: 'Main' }, { name: 'Amma' }] }] },
+        { site: 'bigbasket', storefront: 'Deals of the Week', anyDiscount: true, checkedAt: '2026-11-19T04:30:00.000Z', conditions: null,
+          deals: Array.from({ length: 12 }, (_, i) => ({ product: `Item ${i}`, pack: null, price: 60, mrp: 100, pct: 40, conditions: i === 0 ? { maxQty: 3, dealType: 'price_drop' } : null, seenBy: [{ name: 'Main' }] })) },
+      ],
       fromSearches: [],
     }],
   });
   try {
     const t = textOf(await callTool('deals', {}, { client: svc.client }));
-    assert.match(t, /Deals · 80%\+ off\*\* \(not in totals\)/);
-    assert.match(t, /\*\*milkbasket\*\* \(checked 10:00\) · max 1 item · basket ₹9\+/);
+    assert.match(t, /\*\*Deals\*\* \(not in totals\): 80%\+ off, and BigBasket's deal storefronts at any discount/);
+    assert.match(t, /\*\*milkbasket\*\* \(80%\+ off, checked 10:00\) · max 1 item · basket ₹9\+/);
+    assert.match(t, /\*\*bigbasket · Deals of the Week\*\* \(any discount, 12 items, checked 10:00\)/);
+    assert.match(t, /Item 0: ₹60\.00 \(MRP ₹100\.00, 40% off\) · max 3 items · price drop/);
+    assert.match(t, /… and 2 more \(see the page\)/);
     assert.match(t, /Tomato Desi · 1050g: ₹1\.00 \(MRP ₹78\.00, 99% off\).*seen by Main, Amma/);
     assert.match(t, /milkbasket · Amma: milkbasket: session expired/);
   } finally {
