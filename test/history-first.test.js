@@ -39,7 +39,7 @@ test('latestFor returns the most recent record (not the lowest) as a product row
     store.recordResult(liveResult('2026-11-17T01:30:00.000Z', 'zepto', 'toor dal 1kg', { name: 'BestValue Toor Dal 1 kg', price: 150, packSize: 1000, packUnit: 'g', mrp: 200, url: 'https://z/1' }));
     store.recordResult(liveResult('2026-11-18T01:30:00.000Z', 'zepto', 'toor dal 1kg', { name: 'BestValue Toor Dal 1 kg', price: 156, packSize: 1000, packUnit: 'g', mrp: 200, url: 'https://z/1' }));
     const row = store.latestFor('Toor Dal 1 kg', 'zepto');
-    assert.deepEqual(row, { name: 'BestValue Toor Dal 1 kg', packSize: 1000, packUnit: 'g', price: 156, mrp: 200, inStock: true, url: 'https://z/1', seenAt: '2026-11-18T01:30:00.000Z' });
+    assert.deepEqual(row, { name: 'BestValue Toor Dal 1 kg', packSize: 1000, packUnit: 'g', price: 156, mrp: 200, inStock: true, url: 'https://z/1', seenAt: '2026-11-18T01:30:00.000Z', category: null });
     assert.equal(store.latestFor('toor dal 1kg', 'kpn'), null);
   } finally {
     store.close();
@@ -180,5 +180,110 @@ test('the startup clean-up runs once per CLEANUP_VERSION, not on every open', as
     assert.equal(store.latestFor('amul butter 500g', 'jiomart').price, 79, 'already at this version: not re-scanned');
     const v = store.db.prepare("SELECT value FROM meta WHERE key = 'cleanup_version'").get().value;
     assert.equal(v, String(CLEANUP_VERSION));
+  } finally { store.close(); rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('a matcher-only change (MATCH_VERSION) sets aside rows it now refuses, without re-running the outlier pass', async () => {
+  const { MATCH_VERSION } = await import('../src/store.js');
+  const dir = mkdtempSync(join(tmpdir(), 'basket-match-'));
+  const file = join(dir, 'basket.db');
+  let store = openStore(file);
+  const rec = (site, name, price, packSize, packUnit) => store.recordResult(liveResult('2026-11-18T01:00:00.000Z', site, 'ghee', { name, price, packSize, packUnit, url: 'u' }));
+  rec('zepto', 'Desi Farms Cow Ghee 1 L', 664, 1000, 'ml');
+  rec('jiomart', 'Aavin Ghee 1 L', 690, 1000, 'ml');
+  rec('instamart', 'Supreme Harvest Cow Ghee 1 ltr', 720, 1000, 'ml');
+  rec('blinkit', 'Some Ghee 1 L', 200, 1000, 'ml'); // far below the others: an outlier, but not a wrong match
+  store.close();
+  // Rows saved by the older matcher that took KPN's laddu for ghee.
+  const raw = new DatabaseSync(file);
+  raw.prepare(`INSERT INTO prices (query, site, family, unit, unit_price, price, product, pack, seen_at, trigger)
+    VALUES ('ghee', 'kpn', 'mass', 'g', 0.375, 75, 'Sweet Sanskriti Ghee Besan Laddu Pack 200 g', '200g', '2026-11-18T01:00:00.000Z', 'manual')`).run();
+  raw.prepare("UPDATE meta SET value = '1' WHERE key = 'match_version'").run();
+  raw.close();
+  store = openStore(file);
+  try {
+    assert.equal(store.latestFor('ghee', 'kpn'), null, 'the laddu row is set aside');
+    const kept = store.db.prepare("SELECT hidden FROM prices WHERE site = 'kpn' AND query = 'ghee'").get();
+    assert.equal(kept.hidden, 'no-match', 'kept, marked, never deleted');
+    assert.equal(store.latestFor('ghee', 'blinkit').price, 200, 'the outlier pass did not run');
+    assert.equal(store.db.prepare("SELECT value FROM meta WHERE key = 'match_version'").get().value, String(MATCH_VERSION));
+  } finally { store.close(); rmSync(dir, { recursive: true, force: true }); }
+});
+
+// ── Saved-item fallback and categories (2026-11-20) ─────────────────────────
+const tata = (site, price) => liveResult('2026-11-20T06:00:00.000Z', site, 'tata salt 1kg', { name: 'Tata Iodised Crystal Salt 1 kg', price, packSize: 1000, packUnit: 'g', url: 'https://k/salt' });
+
+test('"salt" and "tata salt" are answered from the saved "tata salt 1kg" (seen 2026-11-20: basket showed nothing)', async () => {
+  const { dir, store } = tmpStore();
+  try {
+    store.recordResult(tata('kpn', 19));
+    for (const items of ['salt', 'tata salt']) {
+      const res = await compareBasket({ items, config: { ...config, sites: ['kpn'] }, cached: true, store });
+      const line = res.platforms.find((p) => p.platform === 'kpn').lines[0];
+      assert.equal(line.status, 'ok', items);
+      assert.equal(line.lineTotal, 19, items);
+      assert.equal(line.savedFrom, 'tata salt 1kg', items);
+      assert.equal(line.cachedAt, '2026-11-20T06:00:00.000Z');
+    }
+  } finally { store.close(); rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('the fallback never borrows a different kind, a different pack or a more generic line', () => {
+  const { dir, store } = tmpStore();
+  try {
+    store.recordResult(liveResult('2026-11-20T06:00:00.000Z', 'kpn', 'black salt', { name: 'Kala Namak Black Salt 100 g', price: 30, packSize: 100, packUnit: 'g', url: 'u' }));
+    assert.equal(store.savedFor('salt', 'kpn'), null, 'black salt is not salt');
+    store.recordResult(tata('kpn', 19));
+    assert.equal(store.savedFor('salt', 'kpn').name, 'Tata Iodised Crystal Salt 1 kg', 'the plain one, not black salt');
+    assert.equal(store.savedFor('salt 2kg', 'kpn'), null, 'a different pack');
+    store.recordResult(liveResult('2026-11-20T06:00:00.000Z', 'zepto', 'ghee', { name: 'Aavin Ghee 1 L', price: 690, packSize: 1000, packUnit: 'ml', url: 'u' }));
+    assert.equal(store.savedFor('cow ghee 1l', 'zepto'), null, 'a more specific line gets a fresh search');
+    assert.equal(store.savedFor('salt', 'zepto'), null, 'only the same site');
+  } finally { store.close(); rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('the site category is saved with the price and read back', () => {
+  const { dir, store } = tmpStore();
+  try {
+    store.recordResult(liveResult('2026-11-20T06:00:00.000Z', 'bigbasket', 'toor dal 1kg', { name: 'bb Toor Dal 1 kg', price: 160, packSize: 1000, packUnit: 'g', url: 'u', category: 'Foodgrains, Oil & Masala › Dals & Pulses' }));
+    assert.equal(store.latestFor('toor dal 1kg', 'bigbasket').category, 'Foodgrains, Oil & Masala › Dals & Pulses');
+  } finally { store.close(); rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('prefsFor learns the usual staple category from 2+ saved rows, never a sweets one', () => {
+  const { dir, store } = tmpStore();
+  try {
+    const rec = (at, cat, name = 'bb Toor Dal 1 kg') => store.recordResult(liveResult(at, 'bigbasket', 'toor dal 1kg', { name, price: 160, packSize: 1000, packUnit: 'g', url: 'u', category: cat }));
+    rec('2026-11-18T06:00:00.000Z', 'F › Dals & Pulses');
+    assert.deepEqual(store.prefsFor(['toor dal 1kg'], ['bigbasket']), { bigbasket: {} }, 'one row is not enough');
+    rec('2026-11-19T06:00:00.000Z', 'F › Dals & Pulses');
+    rec('2026-11-20T06:00:00.000Z', 'F › Organic Staples');
+    assert.deepEqual(store.prefsFor(['toor dal 1kg'], ['bigbasket']), { bigbasket: { 'toor dal 1kg': { category: 'F › Dals & Pulses' } } });
+    // What the line itself is, from the AI labels of its saved products (2+).
+    store.recordResult(liveResult('2026-11-20T06:00:00.000Z', 'blinkit', 'honey', { name: 'Saffola Honey 1 kg', price: 299, packSize: 1000, packUnit: 'g', url: 'u' }));
+    store.recordResult(liveResult('2026-11-20T06:00:00.000Z', 'zepto', 'honey', { name: 'Dabur Honey 1 kg', price: 320, packSize: 1000, packUnit: 'g', url: 'u' }));
+    store.setGroups([{ product: 'Saffola Honey 1 kg', group: 'packaged' }]);
+    assert.deepEqual(store.prefsFor(['honey'], ['blinkit']), { blinkit: {} }, 'one labelled product is not enough');
+    store.setGroups([{ product: 'Dabur Honey 1 kg', group: 'packaged' }]);
+    assert.deepEqual(store.prefsFor(['honey'], ['blinkit']), { blinkit: { honey: { lineGroup: 'packaged' } } });
+  } finally { store.close(); rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('a saved row its site files under sweets is set aside for a generic line, kept, never deleted', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'basket-cat-'));
+  const file = join(dir, 'basket.db');
+  let store = openStore(file);
+  store.recordResult(liveResult('2026-11-19T06:00:00.000Z', 'bigbasket', 'ghee', { name: 'Ghee Mysore Delight 200 g', price: 120, packSize: 200, packUnit: 'g', url: 'u', category: 'Snacks & Branded Foods › Indian Mithai' }));
+  store.recordResult(liveResult('2026-11-19T06:00:00.000Z', 'bigbasket', 'ghee', { name: 'Aavin Ghee 500 ml', price: 368, packSize: 500, packUnit: 'ml', url: 'u', category: 'Foodgrains › Edible Oils & Ghee' }));
+  const before = store.db.prepare('SELECT COUNT(*) AS n FROM prices').get().n;
+  store.close();
+  const raw = new DatabaseSync(file);
+  raw.prepare("UPDATE meta SET value = '2' WHERE key = 'match_version'").run();
+  raw.close();
+  store = openStore(file);
+  try {
+    assert.equal(store.db.prepare("SELECT hidden FROM prices WHERE product LIKE 'Ghee Mysore%'").get().hidden, 'no-match');
+    assert.equal(store.db.prepare("SELECT hidden FROM prices WHERE product LIKE 'Aavin%'").get().hidden, null);
+    assert.equal(store.db.prepare('SELECT COUNT(*) AS n FROM prices').get().n, before, 'row count unchanged');
   } finally { store.close(); rmSync(dir, { recursive: true, force: true }); }
 });

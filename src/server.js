@@ -33,7 +33,19 @@ const PORT_ATTEMPTS = 10;
 const MAX_BODY = 256 * 1024;
 const KEEP_RESULTS = 20;
 const SETTINGS_FILE = join(PKG_ROOT, 'src', 'ui', 'settings.html');
-const UI_ASSETS = { '/ui/theme.css': ['theme.css', 'text/css'], '/ui/theme.js': ['theme.js', 'text/javascript'] };
+const UI_ASSETS = {
+  '/ui/theme.css': ['theme.css', 'text/css'],
+  '/ui/theme.js': ['theme.js', 'text/javascript'],
+  // Jhola icon and "Add to home screen" manifest (2026-11-20).
+  '/ui/icon.svg': ['icon.svg', 'image/svg+xml'],
+  '/ui/icon-maskable.svg': ['icon-maskable.svg', 'image/svg+xml'],
+  '/ui/icon-192.png': ['icon-192.png', 'image/png'],
+  '/ui/icon-512.png': ['icon-512.png', 'image/png'],
+  '/ui/icon-maskable-512.png': ['icon-maskable-512.png', 'image/png'],
+  '/ui/apple-touch-icon.png': ['apple-touch-icon.png', 'image/png'],
+  '/ui/manifest.webmanifest': ['manifest.webmanifest', 'application/manifest+json'],
+  '/favicon.ico': ['icon.svg', 'image/svg+xml'],
+};
 
 function json(res, status, payload) {
   const body = JSON.stringify(payload);
@@ -140,14 +152,15 @@ export function startServer({
     const j = jobs.get(jobId);
     if (j) Object.assign(j, { status: ok ? 'done' : outcome.message === 'cancelled' ? 'cancelled' : 'failed', finishedAt: new Date().toISOString(), error: ok ? null : outcome.message });
     // An offer check is not a basket result: it must not replace the table.
-    const offers = ok && outcome?.kind === 'offers';
+    // (Nor are the AI labels.)
+    const offers = ok && (outcome?.kind === 'offers' || outcome?.kind === 'ai-labels');
     if (ok && outcome) results.set(jobId, outcome);
     if (ok && outcome && !offers) {
       latestJobId = jobId;
       saveLatest(outcome);
     }
     while (results.size > KEEP_RESULTS) results.delete(results.keys().next().value);
-    broadcast('done', { jobId, ok, error: ok ? undefined : outcome.message, ...(offers ? { kind: 'offers' } : {}) });
+    broadcast('done', { jobId, ok, error: ok ? undefined : outcome.message, ...(offers ? { kind: outcome.kind } : {}) });
     broadcast('job', jobInfo(jobId));
   };
   q.on('progress', onProgress);
@@ -170,8 +183,9 @@ export function startServer({
       // Shared theme assets. A fixed whitelist: nothing else under src/ui is served.
       if (req.method === 'GET' && UI_ASSETS[path]) {
         const [file, type] = UI_ASSETS[path];
-        res.writeHead(200, { 'content-type': `${type}; charset=utf-8`, 'cache-control': 'no-cache' });
-        res.end(readFileSync(join(PKG_ROOT, 'src', 'ui', file), 'utf8'));
+        const binary = type === 'image/png';
+        res.writeHead(200, { 'content-type': binary ? type : `${type}; charset=utf-8`, 'cache-control': 'no-cache' });
+        res.end(readFileSync(join(PKG_ROOT, 'src', 'ui', file)));
         return;
       }
 
@@ -350,6 +364,47 @@ export function startServer({
         const ahead = (cur ? 1 : 0) + q.pending().length;
         const jobId = enqueue({ items: '', sites: Array.isArray(b.sites) && b.sites.length ? b.sites : undefined, trigger: 'offers' });
         return json(res, 202, { jobId, queued: ahead });
+      }
+
+      // Optional AI labels (src/ai/). The key is write-only: answers carry only a hint.
+      if (path === '/api/ai' || path.startsWith('/api/ai/')) {
+        const ai = await import('./ai/settings.js');
+        const view = () => {
+          const key = ai.readKey(dataDir);
+          return { settings: ai.readAiSettings(dataDir), providers: ai.PROVIDERS, hasKey: Boolean(key), keyHint: ai.keyHint(key), file: ai.aiFile(dataDir), counts: store?.labelCounts?.() ?? null };
+        };
+        if (req.method === 'GET' && path === '/api/ai') return json(res, 200, view());
+        if (req.method === 'PUT' && path === '/api/ai') {
+          const b = await readJson(req);
+          const patch = {};
+          if ('enabled' in b) patch.enabled = Boolean(b.enabled);
+          if (b.provider != null) {
+            if (!ai.PROVIDERS[b.provider]) return json(res, 400, { error: `Provider must be one of: ${Object.keys(ai.PROVIDERS).join(', ')}`, field: 'provider' });
+            patch.provider = b.provider;
+          }
+          if (b.baseUrl != null) {
+            const u = String(b.baseUrl).trim();
+            if (u && !/^https?:\/\/[^\s]+$/.test(u)) return json(res, 400, { error: 'The base URL must start with https:// (or http:// for a server on this network)', field: 'baseUrl' });
+            patch.baseUrl = u;
+          }
+          if (b.model != null) patch.model = String(b.model).trim().slice(0, 200);
+          ai.writeAiSettings(dataDir, patch);
+          if (b.clearKey === true) ai.saveKey(dataDir, '');
+          else if (typeof b.key === 'string' && b.key.trim()) ai.saveKey(dataDir, b.key);
+          return json(res, 200, view());
+        }
+        if (req.method === 'POST' && path === '/api/ai/check') {
+          const { checkConnection } = await import('./ai/label.js');
+          return json(res, 200, await checkConnection({ settings: ai.readAiSettings(dataDir), key: ai.readKey(dataDir) }));
+        }
+        if (req.method === 'POST' && path === '/api/ai/run') {
+          if (!ai.readAiSettings(dataDir).enabled) return json(res, 400, { error: 'Turn AI labels on first.' });
+          const cur = q.current();
+          const queued = q.pending().find((j) => j.trigger === 'ai-labels') ?? (cur?.trigger === 'ai-labels' ? cur : null);
+          if (queued) return json(res, 202, { jobId: queued.id, queued: true });
+          return json(res, 202, { jobId: enqueue({ items: '', sites: null, trigger: 'ai-labels' }), queued: Boolean(cur) });
+        }
+        return json(res, 404, { error: 'Unknown AI route' });
       }
 
       if (req.method === 'GET' && path === '/api/config') return json(res, 200, getConfig());

@@ -6,6 +6,8 @@
  * theme.js sets <html data-theme="light|dark"> before first paint.
  */
 :root, :root[data-theme="dark"] {
+  /* Jhola wordmark: amber on dark (8.3:1 on #0d1117), bag green on light. */
+  --brand: #f59e0b;
   color-scheme: dark;
   --bg: #0d1117; --panel: #161b22; --panel2: #1c2230; --line: #30363d;
   --text: #e6edf3; --dim: #8b949e; --faint: #6e7681; --n-ink: #c9d1d9;
@@ -22,6 +24,7 @@
 }
 
 :root[data-theme="light"] {
+  --brand: #14532d;
   color-scheme: light;
   --bg: #ffffff; --panel: #f6f8fa; --panel2: #eef1f4; --line: #d0d7de;
   --text: #1f2328; --dim: #57606a; --faint: #6e7781; --n-ink: #1f2328;

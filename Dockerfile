@@ -1,6 +1,9 @@
 # Basket service: Node + Chromium (headless) + web UI + scheduler + history.
 # Build:  docker compose build      Run: docker compose up -d
 FROM node:24-slim
+# Marks every layer of this build (intermediates included), so scripts/deploy.sh
+# can remove this project's leftover builds and never another project's images.
+LABEL org.opencontainers.image.title="jhola" org.opencontainers.image.source="compareprice"
 
 # Chromium for the engine's warm headless browser, fonts so pages lay out,
 # tini as PID 1 so Chrome child processes are reaped, tzdata for schedules.

@@ -395,3 +395,23 @@ describe('captured headers', () => {
     assert.equal(b.headers.sig, 's2');
   });
 });
+
+describe('site category on every row (2026-11-20)', () => {
+  const first = (site, name) => SITES[site].parse(fixture(name))[0].category ?? null;
+  it('keeps the site\'s own category path, levels joined by " › "', async () => {
+    assert.equal(first('bigbasket', 'bigbasket-ok'), 'Foodgrains, Oil & Masala › Dals & Pulses › Toor, Channa & Moong Dal');
+    assert.equal(first('instamart', 'instamart-ok'), 'Atta, Rice and Dals › Dal and Pulses › Toor Dal');
+    assert.equal(first('zepto', 'zepto-ok'), 'Atta, Rice, Oil & Dals');
+    assert.equal(first('jiomart', 'jiomart-ok'), 'Toor Dal');
+    // KPN levels carry an id suffix ("(1_13)"), which is dropped.
+    assert.match(first('kpn', 'kpn-ok'), /^Rice, Atta & Dal › (Loose Provisions|Pulses & Dals)$/);
+    const { parseList } = await import('../src/engine/sites/milkbasket.js');
+    const mb = parseList(fixture('milkbasket-catalog').data.getCatalogProductList).rows;
+    assert.ok(mb.every((r) => /^Rice & Pulses › Arhar & Chana dal › /.test(r.category)), 'milkbasket: category › subcategory › type');
+  });
+  it('sites that send no category give null', () => {
+    assert.equal(first('blinkit', 'blinkit-ok'), null);
+    assert.equal(first('flipkart_minutes', 'flipkart_minutes-ok'), null);
+    assert.equal(first('amazon', 'amazon-ok'), null);
+  });
+});

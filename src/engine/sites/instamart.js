@@ -12,6 +12,7 @@ import { expectJson } from '../page-fetch.js';
 import { apiFetch } from '../direct.js';
 import { SiteError } from '../errors.js';
 import { bestPack } from './_util.js';
+import { categoryPath } from '../../categories.js';
 import { watchRequest, ensureCaptured, collectResponses, freeDeliveryFrom } from './_capture.js';
 
 const ID = 'instamart';
@@ -70,6 +71,7 @@ export function parse(json) {
         mrp: mrp != null && mrp > price ? mrp : null,
         inStock: v.inventory?.inStock ?? item.inStock ?? true,
         url: item.productId ? `https://www.swiggy.com/instamart/item/${item.productId}` : 'https://www.swiggy.com/instamart',
+        category: categoryPath(v.superCategory, v.category, v.subCategoryType),
       });
     }
   }

@@ -3,6 +3,26 @@
 All notable changes to compareprice. Dates are YYYY-MM-DD.
 
 ## [Unreleased]
+### Added (2026-11-20, categories)
+- **Run panel and freshness (mockup A)**:
+  - Get fresh prices shows a panel with one chip per site (done / searching / waiting / failed; tap for the last step), a bar of searches done, a time estimate and Stop. Saved prices show dimmed meanwhile.
+  - Saved-price views show how old each site's prices are (green under 6 h, amber under 2 days, red older), with an age dot in every cell and **Refresh only the old ones** (missing and old pairs only).
+  - Phones get bottom tabs: Compare / Prices / Deals / Settings.
+- **Jhola**: new name, icon and wordmark (option A). Tab icon, "Add to home screen" manifest with 192/512/maskable/Apple icons (`src/ui/icon*.svg`, PNGs from `node scripts/build-icons.js`). The repo, Docker service and container names are unchanged.
+- **Category preference**:
+  - Sites' own categories are saved with each price.
+  - A generic line ("ghee") gets the raw product first. Sweets and pooja items are refused unless named, and packaged foods sort after staples.
+  - Each line learns its usual category per site.
+- **"Find the cheapest" reuses a more specific saved line**: "salt" and "tata salt" are answered from "tata salt 1kg", marked "saved for …". A more specific new line ("cow ghee 1l") still needs a fresh search.
+- **Tap tips**: every hover text opens on tap on a phone. Prices in the saved-price lookup, basket cells and phone cards have an (i) button.
+- **Optional AI labels** (Settings → AI labels, off by default):
+  - Uses a Groq, OpenRouter or custom OpenAI-compatible API, with a key and a **Check connection** button.
+  - Only titles are sent, many per call. Batch size, pause and daily cap are in `<data>/ai.md`.
+  - Labels only demote. `/api/ai*` routes; `scripts/ai-groups-eval.js`.
+### Fixed (2026-11-20)
+- Editing basket.txt did not change the default list once Settings had been saved: the list is now only kept in `<data>/basket.txt` (the old copy is saved as `basket.previous.txt`).
+- "ghee" no longer picks Ghee Besan Laddu (KPN) or Puja Ghee (Milkbasket), and "hing" no longer picks Hing Peda. The 4 saved rows are kept, marked `no-match`.
+- "salt" / "tata salt" showed no saved price on the basket screen while the lookup found them.
 
 ### Added
 - Sign-in popup has a real OTP step: after **Send OTP**, an OTP box appears and the button becomes **Verify**; *Change number* and *Resend OTP* (30 s gap). `POST /api/login/start` answers 202 and the popup polls `GET /api/login` for `state`.

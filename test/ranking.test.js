@@ -135,3 +135,79 @@ test('no coverage warning when the winner also has the best coverage', () => {
   assert.equal(r.winner.platform, 'a');
   assert.equal(r.coverageWarning, null);
 });
+
+// ── Category preference (2026-11-20): a generic line gets the raw product first ──
+const withCat = (name, packSize, packUnit, price, category) => ({ ...product(name, packSize, packUnit, price), category });
+
+test('"ghee" never picks a laddu filed under mithai, however cheap per 100 g', () => {
+  const laddu = withCat('Sweet Sanskriti Ghee Delight 200 g', 200, 'g', 75, 'Snacks & Branded Foods › Indian Mithai');
+  const aavin = withCat('Aavin Ghee 1 L (Carton)', 1000, 'ml', 690, 'Foodgrains, Oil & Masala › Edible Oils & Ghee › Ghee & Vanaspati');
+  assert.equal(pickBest('ghee', [laddu, aavin]).chosen.name, 'Aavin Ghee 1 L (Carton)');
+  // …but asking for the sweet gets it.
+  const pak = withCat('Sri Krishna Ghee Mysore Pak 250 g', 250, 'g', 160, 'Snacks & Branded Foods › Indian Mithai');
+  assert.equal(pickBest('ghee', [pak, aavin]).chosen.name, aavin.name);
+  assert.equal(pickBest('ghee mysore pak', [pak, aavin]).chosen.name, pak.name);
+});
+
+test('a site with no category still refuses puja ghee for "ghee", by its name', () => {
+  const puja = product('Shubhkart Darshana Puja Ghee Jar 500 ml', 500, 'ml', 179);
+  const r = pickBest('ghee', [puja]);
+  assert.equal(r.chosen, null);
+  assert.equal(r.status, 'no-match');
+  assert.equal(pickBest('pooja ghee', [puja]).chosen.name, puja.name);
+});
+
+test('packaged sorts after the staple, but is still returned when it is all there is', () => {
+  const frozen = withCat('Daily Good Frozen Sweet Corn 500 g', 500, 'g', 60, 'Frozen Veg');
+  const loose = withCat('Sweet Corn 2 pc', 700, 'g', 120, 'Fruits & Vegetables › Exotic Vegetables');
+  assert.equal(pickBest('sweet corn', [frozen, loose]).chosen.name, 'Sweet Corn 2 pc');
+  const only = pickBest('sweet corn', [frozen]);
+  assert.equal(only.chosen.name, frozen.name);
+  assert.equal(only.status, 'ok');
+  // A line that names it ranks it with the staples, by price.
+  assert.equal(pickBest('frozen sweet corn', [frozen, loose]).chosen.name, frozen.name);
+});
+
+test('the category this line usually lands in wins over a cheaper one elsewhere', () => {
+  const organic = withCat('Organic Toor Dal 1 kg', 1000, 'g', 150, 'Foodgrains, Oil & Masala › Organic Staples › Organic Dals & Pulses');
+  const usual = withCat('Tata Sampann Toor Dal 1 kg', 1000, 'g', 170, 'Foodgrains, Oil & Masala › Dals & Pulses › Toor, Channa & Moong Dal');
+  assert.equal(pickBest('toor dal', [organic, usual]).chosen.name, organic.name, 'no preference: cheapest');
+  assert.equal(pickBest('toor dal', [organic, usual], 1, { category: usual.category }).chosen.name, usual.name);
+});
+
+test('an AI label only demotes: the staple wins, and the demoted one stays when alone', () => {
+  const masala = product('Ghee Roast Masala Mix 100 g', 100, 'g', 30);
+  const ghee = product('Milky Mist Cow Ghee 1 ltr', 1000, 'ml', 724);
+  const aiGroups = new Map([[masala.name, 'packaged']]);
+  assert.equal(pickBest('ghee', [masala, ghee], 1, { aiGroups, lineGroup: 'staple' }).chosen.name, ghee.name);
+  assert.equal(pickBest('ghee', [masala, ghee], 1, { aiGroups }).chosen.name, masala.name, 'line not known to be a staple: the AI label is ignored');
+  // A product already saved for this line keeps its place, whatever the label says (brown bread, 2026-11-20).
+  const britannia = product('Britannia Brown Bread 400 g', 400, 'g', 50);
+  const modern = product('Modern Hi-Fiber Brown Bread 400 g', 400, 'g', 55);
+  const breadAi = new Map([[britannia.name, 'packaged'], [modern.name, 'staple']]);
+  assert.equal(pickBest('brown bread 400g', [britannia, modern], 1, { aiGroups: breadAi, lineGroup: 'staple', saved: new Set([britannia.name, modern.name]) }).chosen.name, britannia.name);
+  assert.equal(pickBest('brown bread 400g', [britannia, modern], 1, { aiGroups: breadAi, lineGroup: 'staple', saved: new Set([modern.name]) }).chosen.name, modern.name, 'a new one is demoted');
+  const sweetLime = product('Sweet Lime (Mosambi) 1 kg', 1000, 'g', 90);
+  const r = pickBest('mosambi', [sweetLime], 1, { aiGroups: new Map([[sweetLime.name, 'sweets']]) });
+  assert.equal(r.chosen?.name, sweetLime.name, 'a wrong AI label never refuses');
+});
+
+test('a kind that is normal for the line is not demoted: the cheaper labelled honey still wins (seen 2026-11-20)', () => {
+  const saffola = product('Saffola Honey 1 kg', 1000, 'g', 299);
+  const other = product('Brand X Honey 1 kg', 1000, 'g', 350);
+  const aiGroups = new Map([[saffola.name, 'packaged']]);
+  assert.equal(pickBest('honey', [saffola, other], 1, { aiGroups, lineGroup: 'staple' }).chosen.name, other.name, 'on a line known to be a staple: demoted');
+  assert.equal(pickBest('honey', [saffola, other], 1, { aiGroups, lineGroup: 'packaged' }).chosen.name, saffola.name);
+  assert.equal(pickBest('honey', [saffola, other], 1, { aiGroups }).chosen.name, saffola.name, 'line kind unknown: ignored');
+  // It never lets a sweet through: refusal is by words and site category only.
+  const laddu = product('Ghee Besan Laddu 200 g', 200, 'g', 75);
+  assert.equal(pickBest('ghee', [laddu], 1, { lineGroup: 'sweets' }).chosen, null);
+});
+
+test('scorePlatform passes the learned category and keeps the product category', () => {
+  const organic = withCat('Organic Toor Dal 1 kg', 1000, 'g', 150, 'X › Organic');
+  const usual = withCat('Tata Toor Dal 1 kg', 1000, 'g', 170, 'X › Dals');
+  const s = scorePlatform('bigbasket', [item('toor dal')], { 'toor dal': [organic, usual] }, {}, { prefs: { 'toor dal': { category: 'X › Dals' } } });
+  assert.equal(s.lines[0].product.name, usual.name);
+  assert.equal(s.lines[0].product.category, 'X › Dals');
+});

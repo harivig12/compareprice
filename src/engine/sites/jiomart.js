@@ -18,6 +18,7 @@
 import { pageFetch, expectJson } from '../page-fetch.js';
 import { SiteError } from '../errors.js';
 import { bestPack } from './_util.js';
+import { categoryPath } from '../../categories.js';
 
 const ID = 'jiomart';
 const ORIGIN = 'https://www.jiomart.com/';
@@ -65,6 +66,7 @@ export function parse(json) {
       inStock: it.sellable !== false,
       url: it.slug ? `${ORIGIN}product/${it.slug}` : ORIGIN,
       journey: it.journey || null,
+      category: categoryPath(it.attributes?.['l3-category']?.[0]),
     });
   }
   return rows;

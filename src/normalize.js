@@ -241,7 +241,10 @@ const CATEGORY_TOKENS = [
   'chocolate', 'candy', 'wafer',
   // Snack forms of staples: "moong dal" must not buy Moong Dal Namkeen.
   'chips', 'namkeen', 'mixture', 'bhujia', 'snack', 'fried', 'crispy', 'papad',
-  'halwa', 'ladoo',
+  // Sweets made from a staple: "ghee" must not buy Ghee Besan Laddu.
+  'halwa', 'ladoo', 'barfi', 'peda',
+  // Not food: lamp ghee and pooja oil are sold next to the real thing.
+  'pooja',
   'oil', 'vanaspati',
   'atta', 'flour', 'maida', 'rice', 'dal', 'pulses', 'sugar', 'salt',
   'noodles', 'pasta', 'vermicelli', 'poha',
@@ -261,6 +264,9 @@ const PROCESSED_FORMS = new Set([
   'powder', 'paste', 'puree', 'chutney', 'soup', 'flakes', 'dried', 'dehydrated', 'granules',
   'ketchup', 'sauce', 'pickle', 'pickles', 'jam', 'chips', 'juice', 'squash', 'syrup', 'seeds',
   'spring', 'leaves',
+  // Sweets: "besan" is not Besan Laddu, "hing" is not Hing Peda. (Not halwa:
+  // JioMart rava names say "ideal for halwa".)
+  'ladoo', 'barfi', 'peda',
 ]);
 function tokens_forms(tokens) {
   return tokens.filter((t) => PROCESSED_FORMS.has(t));
@@ -332,6 +338,11 @@ const SYNONYMS = Object.fromEntries(
     tomato: ['thakkali', 'tamatar'],
     atta: ['aata'],
     jaggery: ['gur', 'vellam', 'bella'],
+    // Sites spell sweets every way; KPN's "Laddu" slipped past "ladoo".
+    ladoo: ['laddu', 'laddoo', 'ladu', 'laadu', 'ladoos', 'laddus', 'laddoos'],
+    barfi: ['burfi', 'barfis', 'burfis'],
+    peda: ['pedha', 'pedas', 'pedhas'],
+    pooja: ['puja', 'poojai', 'pujai'],
   }).flatMap(([canon, alts]) => [[canon, canon], ...alts.map((a) => [a, canon])]),
 );
 
@@ -343,6 +354,11 @@ function canonical(t) {
 
 function tokenize(text) {
   return tokenizeRaw(text).map(canonical);
+}
+
+/** A line's words without pack sizes, spellings folded ("Tata Salt 1 kg" -> ["tata", "salt"]). */
+export function queryWords(text) {
+  return tokenize(text);
 }
 
 function tokenizeRaw(text) {

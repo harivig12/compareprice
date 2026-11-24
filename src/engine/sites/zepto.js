@@ -14,6 +14,7 @@ import { pageFetch, expectJson } from '../page-fetch.js';
 import { SiteError } from '../errors.js';
 import { ensureCaptured, collectResponses } from './_capture.js';
 import { bestPack, cdpClick, typeText, addressSearchText } from './_util.js';
+import { categoryPath } from '../../categories.js';
 
 const ID = 'zepto';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -86,6 +87,7 @@ export function parse(json) {
       mrp: mrp > price ? mrp : null,
       inStock: it.outOfStock !== true && (it.availableQuantity ?? 1) > 0,
       url: `https://www.zepto.com/pn/x/pvid/${id}`,
+      category: categoryPath(it.primaryCategoryName, it.primarySubcategoryName),
     });
   }
   // Serviceability is checked once in setLocation (serviceability cookie);

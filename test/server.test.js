@@ -81,7 +81,26 @@ test('GET / serves the page', async () => {
     assert.equal(res.status, 200);
     assert.match(res.headers.get('content-type'), /text\/html/);
     const html = await res.text();
-    assert.match(html, /<title>Basket/);
+    assert.match(html, /<title>Jhola/);
+    assert.match(html, /rel="manifest" href="\/ui\/manifest.webmanifest"/);
+  });
+});
+
+test('the Jhola icons and manifest are served with the right types (Add to home screen)', async () => {
+  await withServer(async (s) => {
+    const man = await fetch(`${s.url}/ui/manifest.webmanifest`);
+    assert.match(man.headers.get('content-type'), /application\/manifest\+json/);
+    const m = await man.json();
+    assert.equal(m.short_name, 'Jhola');
+    for (const icon of m.icons) {
+      const r = await fetch(`${s.url}${icon.src}`);
+      assert.equal(r.status, 200, icon.src);
+      assert.equal(r.headers.get('content-type').split(';')[0], icon.type, icon.src);
+      const buf = Buffer.from(await r.arrayBuffer());
+      if (icon.type === 'image/png') assert.equal(buf.subarray(1, 4).toString(), 'PNG', `${icon.src} is a real PNG, not text`);
+    }
+    assert.equal((await fetch(`${s.url}/ui/apple-touch-icon.png`)).status, 200);
+    assert.equal((await fetch(`${s.url}/ui/../server.js`)).status, 404, 'still a whitelist');
   });
 });
 

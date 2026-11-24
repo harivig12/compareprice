@@ -9,7 +9,8 @@ import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { DATA_DIR } from './paths.js';
-import { parsePack, matchConfidence, CONFIDENCE_THRESHOLD } from './normalize.js';
+import { parsePack, matchConfidence, CONFIDENCE_THRESHOLD, queryWords, addsKind } from './normalize.js';
+import { categoryGroup, namedGroups } from './categories.js';
 
 // Canonical pack unit (normalize.js) -> [base unit, divisor, family].
 const BASE_UNITS = {
@@ -23,6 +24,13 @@ const round2 = (n) => Math.round(n * 100) / 100;
 
 /** Bump when matching/pack/price-check rules change, so saved rows are re-checked once. */
 export const CLEANUP_VERSION = 3;
+/**
+ * Bump when only the matcher (normalize.js) changes: saved rows are re-checked
+ * against it once, without re-running the outlier pass over all newer data.
+ * 2: sweets (laddu/barfi/peda) and pooja items aren't the staple (2026-11-20).
+ * 3: a saved site category of sweets / pooja isn't the staple either.
+ */
+export const MATCH_VERSION = 3;
 const EPSILON = 0.005; // half a paisa: equal after rounding to 2 dp
 
 // Pack spellings folded into one form so "1 kg", "1kg" and "1 KG" share a history.
@@ -62,6 +70,33 @@ const JOB_FIELDS = {
   error: 'error',
   summary: 'summary',
 };
+
+function setMeta(db, key, value) {
+  db.prepare('INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value').run(key, String(value));
+}
+
+/**
+ * Hide rows an older, looser matcher accepted but the current one refuses
+ * (e.g. "toor dal" saved as Moong Dal, "ghee" saved as Ghee Besan Laddu): they
+ * would show as false lows and as the "previous record" in history-first search.
+ * Never deleted: marked hidden with the reason, kept for reference and recovery.
+ */
+function hideRefused(db) {
+  const hide = db.prepare("UPDATE prices SET hidden = 'no-match' WHERE hidden IS NULL AND query = ? AND product = ?");
+  let pruned = 0;
+  for (const { query, product } of db.prepare("SELECT DISTINCT query, product FROM prices WHERE hidden IS NULL AND product IS NOT NULL AND site != 'others'").all()) {
+    const m = matchConfidence(query, { name: product });
+    if (m.refused || m.score < CONFIDENCE_THRESHOLD) pruned += Number(hide.run(query, product).changes);
+  }
+  // A site that files the product under sweets or pooja (its own category) says
+  // it isn't the staple a generic line asked for. AI labels never hide anything.
+  const hideCat = db.prepare("UPDATE prices SET hidden = 'no-match' WHERE hidden IS NULL AND query = ? AND category = ?");
+  for (const { query, category } of db.prepare("SELECT DISTINCT query, category FROM prices WHERE hidden IS NULL AND category IS NOT NULL AND site != 'others'").all()) {
+    const g = categoryGroup(category);
+    if ((g === 'sweets' || g === 'pooja') && !namedGroups(query).has(g)) pruned += Number(hideCat.run(query, category).changes);
+  }
+  if (pruned) console.warn(`store: set aside ${pruned} saved price(s) that no longer match their item`);
+}
 
 export function openStore(file = join(DATA_DIR, 'basket.db'), { timeZone = 'Asia/Kolkata' } = {}) {
   if (file !== ':memory:') mkdirSync(dirname(file), { recursive: true });
@@ -143,6 +178,15 @@ export function openStore(file = join(DATA_DIR, 'basket.db'), { timeZone = 'Asia
       info TEXT NOT NULL,
       seen_at TEXT NOT NULL
     );
+    -- What kind of product a title is (staple / packaged / sweets / pooja / nonfood),
+    -- labelled by the optional AI labeller (src/ai/). Only ever demotes; never deleted.
+    CREATE TABLE IF NOT EXISTS product_groups (
+      product TEXT PRIMARY KEY,
+      grp TEXT NOT NULL,
+      source TEXT NOT NULL,
+      model TEXT,
+      labelled_at TEXT NOT NULL
+    );
     -- Last offer check per site+account (also when it found nothing).
     CREATE TABLE IF NOT EXISTS deal_checks (
       site TEXT NOT NULL,
@@ -158,7 +202,7 @@ export function openStore(file = join(DATA_DIR, 'basket.db'), { timeZone = 'Asia
   // `hidden`: null = in use; otherwise why it is set aside ('rejected' by ✕,
   // 'no-match' / 'outlier' by a clean-up). Rows are never deleted (2026-11-20).
   // `source`: where an "Others" price was bought (entered by the user).
-  for (const [name, type] of [['pack_size', 'REAL'], ['pack_unit', 'TEXT'], ['mrp', 'REAL'], ['url', 'TEXT'], ['hidden', 'TEXT'], ['source', 'TEXT']]) {
+  for (const [name, type] of [['pack_size', 'REAL'], ['pack_unit', 'TEXT'], ['mrp', 'REAL'], ['url', 'TEXT'], ['hidden', 'TEXT'], ['source', 'TEXT'], ['category', 'TEXT']]) {
     if (!cols.has(name)) db.exec(`ALTER TABLE prices ADD COLUMN ${name} ${type}`);
   }
   // The clean-ups below scan every row. They only need to run when the
@@ -173,17 +217,7 @@ export function openStore(file = join(DATA_DIR, 'basket.db'), { timeZone = 'Asia
       const key = normalizeQuery(query);
       if (key !== query) db.prepare('UPDATE prices SET query = ? WHERE query = ?').run(key, query);
     }
-    // Drop rows an older, looser matcher accepted but the current one refuses
-    // (e.g. "toor dal" saved as Moong Dal): they would show as false lows and
-    // as the "previous record" in history-first search.
-    // Never deleted: marked hidden with the reason, kept for reference and recovery.
-    const del = db.prepare("UPDATE prices SET hidden = 'no-match' WHERE hidden IS NULL AND query = ? AND product = ?");
-    let pruned = 0;
-    for (const { query, product } of db.prepare('SELECT DISTINCT query, product FROM prices WHERE hidden IS NULL AND product IS NOT NULL').all()) {
-      const m = matchConfidence(query, { name: product });
-      if (m.refused || m.score < CONFIDENCE_THRESHOLD) pruned += Number(del.run(query, product).changes);
-    }
-    if (pruned) console.warn(`store: removed ${pruned} saved price(s) that no longer match their item`);
+    hideRefused(db);
     // Rows saved before the price check existed can carry wrong packs (₹79 for a
     // "500 g" butter that was 100 g). Compare each site's latest unit price with
     // the median across sites for the same item and drop what is far off, so a
@@ -207,12 +241,18 @@ export function openStore(file = join(DATA_DIR, 'basket.db'), { timeZone = 'Asia
     }
     if (outliers) console.warn(`store: removed ${outliers} saved price(s) far from what other sites charge`);
     db.prepare("INSERT INTO meta (key, value) VALUES ('cleanup_version', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(String(CLEANUP_VERSION));
+    setMeta(db, 'match_version', MATCH_VERSION);
+  }
+  // A matcher-only change: re-check saved rows once, nothing else.
+  if (db.prepare("SELECT value FROM meta WHERE key = 'match_version'").get()?.value !== String(MATCH_VERSION)) {
+    hideRefused(db);
+    setMeta(db, 'match_version', MATCH_VERSION);
   }
 
   const q = {
     insertPrice: db.prepare(`INSERT INTO prices
-      (query, site, family, unit, unit_price, price, product, pack, seen_at, job_id, trigger, pack_size, pack_unit, mrp, url)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`),
+      (query, site, family, unit, unit_price, price, product, pack, seen_at, job_id, trigger, pack_size, pack_unit, mrp, url, category)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`),
     sites: db.prepare('SELECT DISTINCT site FROM prices WHERE hidden IS NULL AND query = ?'),
     firstFamily: db.prepare('SELECT family FROM prices WHERE hidden IS NULL AND query = ? AND site = ? ORDER BY id LIMIT 1'),
     low: db.prepare(`SELECT * FROM prices WHERE hidden IS NULL AND query = ? AND site = ? AND family = ?
@@ -323,6 +363,7 @@ export function openStore(file = join(DATA_DIR, 'basket.db'), { timeZone = 'Asia
               jobId == null ? null : Number(jobId), trigger,
               Number(line.product.packSize) || null, line.product.packUnit ?? null,
               Number.isFinite(line.product.mrp) ? line.product.mrp : null, line.product.url ?? null,
+              line.product.category ?? null,
             );
           }
         }
@@ -406,7 +447,7 @@ export function openStore(file = join(DATA_DIR, 'basket.db'), { timeZone = 'Asia
       if (!up) throw new Error('Give the pack size (e.g. 1 kg, 500 g, 6 pcs), so a rate per 100 g can be worked out');
       const r = q.insertPrice.run(
         key, 'others', up.family, up.unit, up.unitPrice, p, row.name, `${size}${unit}`, when.toISOString(),
-        null, 'entry', size, unit, null, null,
+        null, 'entry', size, unit, null, null, null,
       );
       const id = Number(r.lastInsertRowid);
       db.prepare('UPDATE prices SET source = ? WHERE id = ?').run(String(source ?? '').trim().slice(0, 120) || null, id);
@@ -537,7 +578,125 @@ export function openStore(file = join(DATA_DIR, 'basket.db'), { timeZone = 'Asia
         inStock: true,
         url: row.url ?? '',
         seenAt: row.seen_at,
+        category: row.category ?? null,
         ...(row.source ? { source: row.source } : {}),
+      };
+    },
+
+    /**
+     * A saved price for a line that has none of its own, from a more specific
+     * saved line: "salt" and "tata salt" from "tata salt 1kg". The saved line
+     * must hold every word of this one, add no kind word ("black salt" is not
+     * salt), have the same pack when this line names one, and its product must
+     * still match this line. A more specific line ("cow ghee 1l") never borrows
+     * from a generic one ("ghee"): it has a word the saved line lacks.
+     * Fewest extra words wins, then the newest. Only for "Find the cheapest".
+     * @returns {object|null} a latestFor() row plus `savedFrom`
+     */
+    savedFor(query, site) {
+      const key = normalizeQuery(query);
+      const words = queryWords(key);
+      if (!words.length) return null;
+      const pack = parsePack(key);
+      const picks = [];
+      for (const { query: saved } of db.prepare('SELECT DISTINCT query FROM prices WHERE hidden IS NULL AND site = ? AND query != ?').all(site, key)) {
+        const have = new Set(queryWords(saved));
+        if (!words.every((w) => have.has(w))) continue;
+        if (addsKind(key, key, saved)) continue;
+        const sp = parsePack(saved);
+        if (pack && !(sp && sp.family === pack.family && Math.abs(sp.size - pack.size) < 1e-9)) continue;
+        const row = this.latestFor(saved, site);
+        if (!row) continue;
+        const m = matchConfidence(key, row);
+        if (m.refused || m.score < CONFIDENCE_THRESHOLD) continue;
+        picks.push({ row: { ...row, savedFrom: saved }, extra: have.size - words.length });
+      }
+      picks.sort((a, b) => a.extra - b.extra || String(b.row.seenAt).localeCompare(String(a.row.seenAt)));
+      return picks[0]?.row ?? null;
+    },
+
+    /**
+     * Per site and line, the site category its saved staple prices usually sit
+     * in (at least 2 visible rows; ties go to the newest). pickBest prefers it.
+     * Rows a ✕ hid don't count, so the learning follows the user's corrections.
+     * @returns {Record<string, Record<string, { category: string }>>}
+     */
+    prefsFor(queries, sites) {
+      const stmt = db.prepare(`SELECT category, COUNT(*) AS n, MAX(id) AS last FROM prices
+        WHERE hidden IS NULL AND query = ? AND site = ? AND category IS NOT NULL GROUP BY category ORDER BY n DESC, last DESC`);
+      // What kind of thing the line itself is, from the AI labels of its saved
+      // products on every site (2+ products, most common wins). Seen 2026-11-20:
+      // the AI calls every honey, garam masala and bread "packaged"; without this,
+      // a labelled cheaper honey would lose to an unlabelled dearer one.
+      const lineStmt = db.prepare(`SELECT g.grp, COUNT(DISTINCT p.product) AS n FROM prices p JOIN product_groups g ON g.product = p.product
+        WHERE p.hidden IS NULL AND p.query = ? GROUP BY g.grp ORDER BY n DESC`);
+      const namesStmt = db.prepare("SELECT DISTINCT product FROM prices WHERE hidden IS NULL AND query = ? AND product IS NOT NULL AND site != 'others'");
+      const savedCache = new Map();
+      const savedNames = (query) => {
+        if (!savedCache.has(query)) savedCache.set(query, new Set(namesStmt.all(normalizeQuery(query)).map((r) => r.product)));
+        return savedCache.get(query);
+      };
+      const lineGroups = Object.fromEntries(queries.map((query) => {
+        const top = lineStmt.all(normalizeQuery(query))[0];
+        const g = top && Number(top.n) >= 2 ? (top.grp === 'nonfood' ? 'packaged' : top.grp) : null;
+        return [query, g];
+      }));
+      const out = {};
+      for (const site of sites) {
+        out[site] = {};
+        for (const query of queries) {
+          const named = namedGroups(query);
+          const best = stmt.all(normalizeQuery(query), site).find((r) => {
+            const g = categoryGroup(r.category);
+            return g == null || named.has(g);
+          });
+          const pref = {
+            ...(best && Number(best.n) >= 2 ? { category: best.category } : {}),
+            ...(lineGroups[query] ? { lineGroup: lineGroups[query] } : {}),
+            // Products already saved for this line were picked before and not ✕'d:
+            // that beats an AI label (seen: one brown bread "packaged", the others "staple").
+            ...(lineGroups[query] === 'staple' ? { saved: savedNames(query) } : {}),
+          };
+          if (Object.keys(pref).length) out[site][query] = pref;
+        }
+      }
+      return out;
+    },
+
+    /** AI labels by product title (src/ai/). Only ever used to demote. */
+    aiGroups() {
+      return new Map(db.prepare('SELECT product, grp FROM product_groups').all().map((r) => [r.product, r.grp]));
+    },
+
+    /** Saved titles with no site category and no label yet, newest first. */
+    unlabelled(limit = 100) {
+      return db.prepare(`SELECT product FROM prices WHERE hidden IS NULL AND product IS NOT NULL AND site != 'others' AND category IS NULL
+        AND product NOT IN (SELECT product FROM product_groups) GROUP BY product ORDER BY MAX(id) DESC LIMIT ?`).all(Number(limit) || 100).map((r) => r.product);
+    },
+
+    /** Add or re-tag labels. Never deletes. */
+    setGroups(list, { model = null, source = 'ai', at = new Date().toISOString() } = {}) {
+      const ins = db.prepare(`INSERT INTO product_groups (product, grp, source, model, labelled_at) VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(product) DO UPDATE SET grp = excluded.grp, source = excluded.source, model = excluded.model, labelled_at = excluded.labelled_at`);
+      let n = 0;
+      for (const { product, group } of list) if (product && group) { ins.run(product, group, source, model, at); n++; }
+      return n;
+    },
+
+    /** Small counters and markers (e.g. AI calls per day). */
+    getMeta(key) {
+      return db.prepare('SELECT value FROM meta WHERE key = ?').get(String(key))?.value ?? null;
+    },
+    setMeta(key, value) {
+      setMeta(db, String(key), value);
+    },
+
+    /** How many saved titles have an AI label, and how many could get one. */
+    labelCounts() {
+      return {
+        labelled: Number(db.prepare('SELECT COUNT(*) AS n FROM product_groups').get().n),
+        waiting: Number(db.prepare(`SELECT COUNT(DISTINCT product) AS n FROM prices WHERE hidden IS NULL AND product IS NOT NULL AND site != 'others'
+          AND category IS NULL AND product NOT IN (SELECT product FROM product_groups)`).get().n),
       };
     },
 

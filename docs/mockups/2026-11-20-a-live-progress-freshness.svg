@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="900" height="980" viewBox="0 0 900 980" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+  <defs>
+    <symbol id="bag" viewBox="0 0 512 512"><rect width="512" height="512" rx="116" fill="#14532d"/><path d="M188 192 q0-80 68-80 q68 0 68 80" fill="none" stroke="#fde68a" stroke-width="26" stroke-linecap="round"/><path d="M128 196 h256 l-26 224 q-3 26-29 26 H183 q-26 0-29-26 z" fill="#f59e0b"/><rect x="190" y="298" width="32" height="96" rx="9" fill="#14532d"/><rect x="240" y="258" width="32" height="136" rx="9" fill="#14532d" opacity=".55"/><rect x="290" y="330" width="32" height="64" rx="9" fill="#fde68a"/></symbol>
+    <symbol id="tabs" viewBox="0 0 390 64">
+      <rect width="390" height="64" fill="#ffffff"/><rect width="390" height="1" fill="#e5e7eb"/>
+      <g font-size="11" text-anchor="middle" fill="#6b7280">
+        <rect x="14" y="8" width="70" height="30" rx="15" fill="#dcfce7"/>
+        <path d="M38 18 h22 l-3 14 h-16 z" fill="none" stroke="#14532d" stroke-width="2.2"/><text x="49" y="54" fill="#14532d" font-weight="700">Compare</text>
+        <circle cx="146" cy="23" r="9" fill="none" stroke="#6b7280" stroke-width="2.2"/><path d="M152 29 l6 6" stroke="#6b7280" stroke-width="2.2"/><text x="146" y="54">Prices</text>
+        <path d="M238 15 h14 l8 8 l-11 12 l-11 -11 z" fill="none" stroke="#6b7280" stroke-width="2.2"/><text x="244" y="54">Deals</text>
+        <circle cx="341" cy="23" r="8" fill="none" stroke="#6b7280" stroke-width="2.2"/><circle cx="341" cy="23" r="3" fill="#6b7280"/><text x="341" y="54">Settings</text>
+      </g>
+    </symbol>
+  </defs>
+  <rect width="900" height="980" fill="#eef0f3"/>
+  <text x="40" y="44" font-size="22" font-weight="800" fill="#111827">A · Live search progress, freshness, phone tabs</text>
+  <text x="40" y="70" font-size="13.5" fill="#4b5563">Left: during "Get fresh prices". Right: the same list afterwards, read from saved prices. Light theme, 390 px wide.</text>
+
+  <!-- ============ Phone 1: during a live run ============ -->
+  <g transform="translate(40,96)">
+    <rect width="390" height="844" rx="34" fill="#f9fafb" stroke="#d1d5db" stroke-width="2"/>
+    <use href="#bag" x="16" y="18" width="28" height="28"/>
+    <text x="52" y="40" font-size="22" font-weight="800" fill="#14532d">jhola</text>
+    <text x="374" y="38" font-size="12" fill="#6b7280" text-anchor="end">Marutham Prestige · 600045</text>
+
+    <!-- progress panel -->
+    <rect x="12" y="62" width="366" height="196" rx="14" fill="#ffffff" stroke="#e5e7eb"/>
+    <text x="26" y="88" font-size="14" font-weight="700" fill="#111827">Getting fresh prices · 4 of 7 sites</text>
+    <text x="364" y="88" font-size="12" fill="#6b7280" text-anchor="end">~40 s left</text>
+    <rect x="26" y="100" width="338" height="8" rx="4" fill="#e5e7eb"/><rect x="26" y="100" width="194" height="8" rx="4" fill="#16a34a"/>
+    <g font-size="12.5">
+      <!-- done -->
+      <rect x="26" y="122" width="104" height="34" rx="17" fill="#dcfce7"/><text x="40" y="144" fill="#14532d">✓ Zepto 2/2</text>
+      <rect x="138" y="122" width="96" height="34" rx="17" fill="#dcfce7"/><text x="152" y="144" fill="#14532d">✓ KPN 2/2</text>
+      <rect x="242" y="122" width="122" height="34" rx="17" fill="#dcfce7"/><text x="256" y="144" fill="#14532d">✓ JioMart 2/2</text>
+      <rect x="26" y="164" width="112" height="34" rx="17" fill="#dcfce7"/><text x="40" y="186" fill="#14532d">✓ Blinkit 2/2</text>
+      <!-- running -->
+      <rect x="146" y="164" width="130" height="34" rx="17" fill="#fef3c7" stroke="#f59e0b"/><circle cx="164" cy="181" r="6" fill="none" stroke="#b45309" stroke-width="2.2" stroke-dasharray="20 8"/><text x="176" y="186" fill="#92400e" font-weight="600">Instamart 1/2</text>
+      <!-- waiting -->
+      <rect x="26" y="206" width="160" height="34" rx="17" fill="#f3f4f6" stroke="#d1d5db"/><text x="40" y="228" fill="#4b5563">⏱ BigBasket · in 12 s</text>
+      <rect x="194" y="206" width="170" height="34" rx="17" fill="#f3f4f6" stroke="#d1d5db"/><text x="208" y="228" fill="#4b5563">… Flipkart Minutes</text>
+    </g>
+    <text x="26" y="252" font-size="11" fill="#6b7280">Tap a chip for its log line (e.g. "BigBasket: pause between searches").</text>
+
+    <!-- result card filling in -->
+    <rect x="12" y="272" width="366" height="300" rx="14" fill="#ffffff" stroke="#e5e7eb"/>
+    <text x="26" y="300" font-size="15" font-weight="700" fill="#111827">tata salt 1kg</text>
+    <text x="364" y="300" font-size="11.5" fill="#16a34a" text-anchor="end" font-weight="600">updating…</text>
+    <g font-size="13">
+      <rect x="20" y="312" width="350" height="50" rx="8" fill="#166534"/>
+      <text x="32" y="333" fill="#fff" font-weight="700">KPN Fresh</text><text x="32" y="351" fill="#dcfce7" font-size="11.5">Tata Iodised Crystal Salt 1 kg · just now</text>
+      <text x="358" y="342" fill="#fff" font-weight="800" text-anchor="end">₹19</text>
+      <rect x="20" y="368" width="350" height="50" rx="8" fill="#bbf7d0"/>
+      <text x="32" y="389" fill="#14532d" font-weight="700">Zepto</text><text x="32" y="407" fill="#166534" font-size="11.5">Tata Salt Crystal 1 kg · just now</text>
+      <text x="358" y="398" fill="#14532d" font-weight="800" text-anchor="end">₹22</text>
+      <rect x="20" y="424" width="350" height="50" rx="8" fill="#ffffff" stroke="#e5e7eb"/>
+      <text x="32" y="445" fill="#111827" font-weight="700">Instamart</text><text x="32" y="463" fill="#9ca3af" font-size="11.5">saved 20 Nov · checking now…</text>
+      <text x="358" y="454" fill="#9ca3af" font-weight="800" text-anchor="end">₹21</text>
+      <rect x="20" y="480" width="350" height="50" rx="8" fill="#f9fafb" stroke="#e5e7eb" stroke-dasharray="4 3"/>
+      <text x="32" y="501" fill="#6b7280" font-weight="700">BigBasket</text><text x="32" y="519" fill="#9ca3af" font-size="11.5">saved 19 Nov · waiting its turn</text>
+      <text x="358" y="510" fill="#9ca3af" font-weight="800" text-anchor="end">₹22</text>
+    </g>
+    <text x="26" y="556" font-size="11" fill="#6b7280">Saved prices show at once (grey); each turns live as its site answers.</text>
+
+    <!-- stop -->
+    <rect x="12" y="586" width="366" height="48" rx="12" fill="#ffffff" stroke="#fca5a5"/>
+    <text x="195" y="616" font-size="15" font-weight="700" fill="#b91c1c" text-anchor="middle">Stop · keep what's done</text>
+
+    <use href="#tabs" x="0" y="780" width="390" height="64"/>
+  </g>
+
+  <!-- ============ Phone 2: freshness on saved prices ============ -->
+  <g transform="translate(470,96)">
+    <rect width="390" height="844" rx="34" fill="#f9fafb" stroke="#d1d5db" stroke-width="2"/>
+    <use href="#bag" x="16" y="18" width="28" height="28"/>
+    <text x="52" y="40" font-size="22" font-weight="800" fill="#14532d">jhola</text>
+    <text x="374" y="38" font-size="12" fill="#6b7280" text-anchor="end">4 items · from saved prices</text>
+
+    <!-- freshness strip -->
+    <rect x="12" y="62" width="366" height="132" rx="14" fill="#ffffff" stroke="#e5e7eb"/>
+    <text x="26" y="88" font-size="14" font-weight="700" fill="#111827">How fresh are these prices?</text>
+    <g font-size="12.5">
+      <circle cx="32" cy="111" r="5" fill="#16a34a"/><text x="44" y="115" fill="#374151">Zepto, KPN, JioMart, Blinkit</text><text x="364" y="115" fill="#16a34a" text-anchor="end" font-weight="600">2 h ago</text>
+      <circle cx="32" cy="135" r="5" fill="#f59e0b"/><text x="44" y="139" fill="#374151">Instamart, Flipkart Minutes</text><text x="364" y="139" fill="#b45309" text-anchor="end" font-weight="600">yesterday</text>
+      <circle cx="32" cy="159" r="5" fill="#ef4444"/><text x="44" y="163" fill="#374151">BigBasket</text><text x="364" y="163" fill="#b91c1c" text-anchor="end" font-weight="600">3 days ago</text>
+    </g>
+    <rect x="26" y="172" width="250" height="0" />
+    <text x="26" y="186" font-size="11.5" fill="#2563eb" font-weight="600">Refresh only the old ones (3 sites · ~25 s)</text>
+
+    <!-- buttons -->
+    <rect x="12" y="206" width="178" height="46" rx="12" fill="#15803d"/><text x="101" y="235" font-size="15" font-weight="700" fill="#fff" text-anchor="middle">Find the cheapest</text>
+    <rect x="200" y="206" width="178" height="46" rx="12" fill="#ffffff" stroke="#d1d5db"/><text x="289" y="235" font-size="15" font-weight="700" fill="#111827" text-anchor="middle">Get fresh prices</text>
+
+    <!-- verdict -->
+    <rect x="12" y="266" width="366" height="76" rx="14" fill="#ffffff" stroke="#16a34a" stroke-width="1.5"/>
+    <text x="26" y="290" font-size="11" fill="#6b7280" font-weight="700">CHEAPEST BASKET</text>
+    <text x="26" y="320" font-size="22" font-weight="800" fill="#111827">KPN Fresh ₹376</text>
+    <text x="364" y="320" font-size="12" fill="#6b7280" text-anchor="end">saves ₹41 · all 4 found</text>
+
+    <!-- item card with age per cell -->
+    <rect x="12" y="356" width="366" height="236" rx="14" fill="#ffffff" stroke="#e5e7eb"/>
+    <text x="26" y="384" font-size="15" font-weight="700" fill="#111827">aashirvaad atta 1kg</text>
+    <g font-size="13">
+      <rect x="20" y="396" width="350" height="54" rx="8" fill="#166534"/>
+      <text x="32" y="418" fill="#fff" font-weight="700">KPN Fresh</text><text x="32" y="437" fill="#dcfce7" font-size="11.5">Aashirvaad Atta 1 kg</text>
+      <rect x="208" y="408" width="74" height="22" rx="11" fill="#14532d"/><text x="245" y="423" fill="#bbf7d0" font-size="11" text-anchor="middle">● 2 h ago</text>
+      <text x="358" y="428" fill="#fff" font-weight="800" text-anchor="end">₹62</text>
+      <rect x="20" y="456" width="350" height="54" rx="8" fill="#bbf7d0"/>
+      <text x="32" y="478" fill="#14532d" font-weight="700">Instamart</text><text x="32" y="497" fill="#166534" font-size="11.5">Aashirvaad Shudh Atta 1 kg</text>
+      <rect x="196" y="468" width="86" height="22" rx="11" fill="#fef3c7"/><text x="239" y="483" fill="#92400e" font-size="11" text-anchor="middle">● yesterday</text>
+      <text x="358" y="488" fill="#14532d" font-weight="800" text-anchor="end">₹64</text>
+      <rect x="20" y="516" width="350" height="54" rx="8" fill="#ffffff" stroke="#e5e7eb"/>
+      <text x="32" y="538" fill="#111827" font-weight="700">BigBasket</text><text x="32" y="557" fill="#6b7280" font-size="11.5">Aashirvaad Atta 1 kg</text>
+      <rect x="196" y="528" width="86" height="22" rx="11" fill="#fee2e2"/><text x="239" y="543" fill="#991b1b" font-size="11" text-anchor="middle">● 3 days ago</text>
+      <text x="358" y="548" fill="#111827" font-weight="800" text-anchor="end">₹68</text>
+    </g>
+
+    <!-- annotation -->
+    <rect x="12" y="606" width="366" height="150" rx="14" fill="#fffbeb" stroke="#fcd34d"/>
+    <text x="26" y="632" font-size="13" font-weight="700" fill="#92400e">What changes</text>
+    <g font-size="12" fill="#78350f">
+      <text x="26" y="654">• Age dot per site: green &lt; 6 h, amber &lt; 2 days, red older</text>
+      <text x="26" y="674">• "Refresh only the old ones" = Get for missing, plus stale</text>
+      <text x="26" y="694">• Bottom tabs replace the scattered top links on phones;</text>
+      <text x="38" y="712">desktop keeps today's layout</text>
+      <text x="26" y="732">• Colours and ranking rules are unchanged</text>
+    </g>
+
+    <use href="#tabs" x="0" y="780" width="390" height="64"/>
+  </g>
+</svg>

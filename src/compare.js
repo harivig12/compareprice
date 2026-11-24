@@ -175,14 +175,19 @@ export async function compareBasket({
 
   let platformResults;
   const cachedAt = {}; // site -> query -> ISO time of the stored record
+  const savedFrom = {}; // site -> query -> the more specific saved line it was answered from
   if (cached) {
     platformResults = active.map((site) => {
       const resultsByQuery = {};
       cachedAt[site] = {};
+      savedFrom[site] = {};
       for (const query of queries) {
-        const row = store.latestFor(query, site);
+        // A line with no saved price of its own may use a more specific saved
+        // line's ("salt" from "tata salt 1kg"); see store.savedFor.
+        const row = store.latestFor(query, site) ?? store.savedFor?.(query, site) ?? null;
         resultsByQuery[query] = row ? [row] : [];
         if (row) cachedAt[site][query] = row.seenAt;
+        if (row?.savedFrom) savedFrom[site][query] = row.savedFrom;
       }
       return { platform: site, available: true, error: null, errorKind: null, partialFailures: [], failures: [], resultsByQuery };
     });
@@ -255,8 +260,12 @@ export async function compareBasket({
     Object.fromEntries(platformResults.filter((r) => r.available).map((r) => [r.platform, r.resultsByQuery || {}])),
   );
 
+  // What each line usually is on each site (learned from saved prices), and the
+  // optional AI labels: both only reorder candidates (categories, 2026-11-20).
+  const prefs = store?.prefsFor?.(queries, active) ?? {};
+  const aiGroups = store?.aiGroups?.() ?? new Map();
   for (const result of platformResults) {
-    const scored = scorePlatform(result.platform, basket, filtered[result.platform] ?? result.resultsByQuery ?? {}, feeConfig);
+    const scored = scorePlatform(result.platform, basket, filtered[result.platform] ?? result.resultsByQuery ?? {}, feeConfig, { prefs: prefs[result.platform], aiGroups });
     if (result.perAccount) addAccountPrices(scored, result, accounts);
     for (const line of scored.lines) {
       const d = dropped[result.platform]?.[line.query];
@@ -286,8 +295,10 @@ export async function compareBasket({
         if (at) {
           line.cachedAt = at;
           seen.push(at);
-          // ▲/▼ and lows for the saved price, from the store itself.
-          if (store.cachedHistory) line.history = store.cachedHistory(line.query, p.platform);
+          const from = savedFrom[p.platform]?.[line.query];
+          if (from) line.savedFrom = from;
+          // ▲/▼ and lows for the saved price, from the store itself (the source line's, when borrowed).
+          if (store.cachedHistory) line.history = store.cachedHistory(from ?? line.query, p.platform);
         } else {
           line.status = 'not-cached';
           uncached.push({ platform: p.platform, query: line.query });

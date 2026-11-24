@@ -1,0 +1,105 @@
+# query|product|label — hand-labelled 2026-11-20 from saved product titles (public site data), see docs/diagnosis/2026-11-20-ghee-laddu-and-category-preference.md
+besan|Sweet Sanskriti Ghee Besan Laddu Pack 200 g|sweets
+ghee|Shubhkart Darshana Puja Ghee Jar 500 ml|pooja
+hing|Patanjali Pachak Hing - Peda 100 g|packaged
+pooja oil|Mr. Gold Nakshatra Pooja Oil 500 ml|pooja
+pooja oil|Divya Maarg Pooja Oil (Mustard and Sesame Blend) 900 ml|pooja
+pooja oil|Cycle Om Shanti Chandanam Pooja Oil 1 L|pooja
+pooja oil|Pooja Nariyal (Poojai Thengai) 1 pc (450 gm - 550 gm approx.)|pooja
+sweet corn|SPT American Frozen Sweet Corn 1 kg|packaged
+sweet corn|Farmland Sweet Corn Frozen Veg 500 g|packaged
+mosambi|Sweet Lime (Mosambi) (Sathukkudi) 1 kg|staple
+mosambi|Mosambi 3 pcs (Pack) (Approx. 350 g - 500 g)|staple
+condensed milk|Nestle Milkmaid Condensed Milk Tin 400 g|staple
+condensed milk|Milky Mist Sweetened Condensed Milk 395 g|staple
+sweet corn|Tadaa Sour Cream & Onion Sweet Corn Kernels 125 g|packaged
+peanuts|Crax Double Mazza Roasted Chana Peanuts Namkeen Snacks 160 g x 3|packaged
+badam|Unibic Cashew Badam Cookies (Pack Of 2) 2 x 500 gm|packaged
+biscuits|Parle-G Original Gluco Biscuits 1 pack (250 g)|packaged
+biscuits|Sunfeast Bourbon Bliss Biscuits 108 g|packaged
+rusk|Parle Premium Real Elaichi Rusk 291.2 g|packaged
+maggi 2-minute noodles 280g|Maggi 2 Minute Masala Noodles 420 g|packaged
+moong dal chilka moong|Haldiram'S Nagpur Moong Dal(BBD:15-12-2026) 1 kg|packaged
+cumin seeds|Try Mi Traditional Cumin Pappad 200 g|packaged
+curry leaves|NOICE Masala Peanut with Curry Leaves (23g+ Protein Per Pack) 100 g x 2|packaged
+biryani masala|Cookd Wedding Bhai Biryani Kit, 505 g + Madras 65 Masala, 50 g Combo|packaged
+bread|Wheafree Gluten Free Bread Mix 1Kg / Neutral Flavour/ Quick and Easy to Bake / Sweet and Savoury Preparations |packaged
+ghee|Milky Mist Cow Ghee 1 ltr|staple
+ghee|Desi Farms Cow Ghee 1 pc (1 L)|staple
+aashirvaad atta 5kg|Aashirvaad Superior MP Chakki Atta 2 kg|staple
+atta 1kg|Naga Whole Wheat Atta 1 kg|staple
+basmati rice|Zeeba Mogra Basmati Rice / Broken/Tuta Basmati Rice for all Dishes / Cooked length upto 12mm 1 pack (10 kg)|staple
+brown rice|Daily Good Brown Rice 1 pack (1 kg)|staple
+idli rice|bb Royal Idli Rice/Idli Arisi 5 kg|staple
+kolam rice|Value Vada Kolam Rice Long Grain Steam Rice 10 kg|staple
+chilka urad dal|Good Life Chilka Urad Dal 500 g|staple
+toor daal|Basic Toor Dal 1 kg x 2|staple
+kabuli chana|Good Life Kabuli Chana 1 kg|staple
+red rajma|True Story Organic Red Rajma 500 g|staple
+poha|Vijay Thick Poha 1 pack (1 kg)|staple
+rice flour|Naga Rice Flour 1 pack (500 g)|staple
+sugar|bb Popular Sugar/Sakarai 5 kg|staple
+jaggery|Miltop Kolhapuri Jaggery 900 g|staple
+rock salt|True Story Himalayan Pink Rock Salt / Sendha Namak 1 kg|staple
+black salt|Dr Brand Black Salt 200 gm|staple
+coriander powder|Aachi Coriander Powder 100 g|staple
+turmeric powder|Aashirvaad Haldi/ Turmeric Powder (Manjal Podi) 100 g|staple
+rasam powder|Aachi Rasam Powder 100 g|staple
+sambar powder|LG Sambar Powder 100 g|staple
+kasuri methi|Catch Kasuri Methi 50 g|staple
+black pepper|bb Popular Black Pepper/Milagu 100 g|staple
+cloves|Notlih Cloves 200g Whole (Lavang)|staple
+fennel seeds|Good Life Roasted Fennel 100 gm|staple
+sesame seeds|Good Life Sesame Seeds (Til) 100 gm|staple
+mustard seeds|Value Mustard Small 100 g|staple
+poppy seeds|Whole Farm Premium Poppy Seeds / Khus Khus (Kasakasa) 50 g|staple
+chat masala|Surya 1kg Chat Masala/ Sprinkle on Fruit Chats, Fritters, Fries & everything possible|staple
+asafoetida|Catch Hing / Compounded Asafoetida 100 g|staple
+asafoetida|bb Royal Hing - Compounded Asafoetida 100 g|staple
+refined oil|Be Rite Refined Sunflower Oil 1 ltr|staple
+coconut oil|Mr. Gold Coconut Oil 1 ltr|staple
+idhayam oil|Idhayam Gingelly Oil 1 l|staple
+vanaspati|Gold Winner Vanaspati 1 L|staple
+honey|Apis Himalaya Pure Honey 1k Natural Honey for Daily Use 1 kg|staple
+tea leaves|Tata Tea Chakra Gold Premium Leaf Tea with Added Long Leaves Rich Aroma & Taste 500 g|staple
+dates|Supreme Harvest Zahidi Dates 500 g|staple
+makhana|Value Makhana 100 g|staple
+tomato|Hybrid Tomato (Thakkali) 500 g x 2|staple
+potato|Potato (Urulai Kilangu) / Combo 1000 g X 2|staple
+onion 1kg|Organically Grown Onion 500 g|staple
+lemon|Lemon (Elumichai Pazham) 200 g|staple
+milk powder|Cavin's Cow Milk Pouch 450 ml|staple
+amul taaza toned milk 500ml|Amul Taaza Homogenised Toned Milk 1 L|staple
+buttermilk|Amul Spiced Buttermilk 1 L|packaged
+coconut oil|Brown Coconut Small 1 pc ( 300 - 400 gm approx)|staple
+cashew whole|Pineapple Whole (Queen) 1 pc (750 gm - 1 kg approx.)|staple
+vermicelli roasted|Bambino Roasted Semolina Vermicelli 850 g x 2|staple
+dried green peas|Delish Frozen Green Peas 500 g|packaged
+moth beans|Freshcon Boiled Matki Moth Beans 250 g|packaged
+bleaching powder|Bison Bleaching Powder 500 g|nonfood
+detergent bar|Vim Lemon Dishwash Bar 250 g|nonfood
+detergent bar|Rin Detergent Bar 120 g|nonfood
+detergent liquid|Mr. White Liquid Detergent 2 L|nonfood
+detergent powder|More Light Extra Power Detergent 4 kg|nonfood
+detergent powder|Glintz Lemon & Jasmine Detergent Powder 1kg|nonfood
+dishwash liquid|Giffy Tough Grease Removal Dishwash Liquid Gel With Turbo Boosters - Lemon 900 ml|nonfood
+dishwash powder|Sabena Dishwash Powder 900 g|nonfood
+dustpan|Gala Dustpan for Floor Cleaning (Plastic, Red) 1 pc|nonfood
+floor cleaner|Gainda White Phenyl Disinfectant Floor Cleaner 1 ltr|nonfood
+drain cleaner|Kleenest Klenzmo Drain Cleaner 400 ml|nonfood
+glass cleaner|Stripcare Premium Glass Cleaner (5 L)|nonfood
+handwash|Savlon Moisture Shield Germ Protection Liquid Handwash Refill Pouch 1.3 ltr|nonfood
+battery aa|Nippo Gold 3 DG AA Battery 4 pcs|nonfood
+broom|Se7En Coco Natural Broom (Seekh Jhadu) (Assorted) 1 unit|nonfood
+garbage bags|Beco Compostable Garbage Bags (Small, 17 x 19 Inch) 1 pack (15 pcs)|nonfood
+parachute hair oil|Parachute Coconut Hair Oil 600 ml|nonfood
+toothpaste|Dabur Herb'L Neem Germ Protection Toothpaste -Flouride & Paraben Free 200 g|nonfood
+sanitary napkins|Niine Naturally Soft Sanitary Napkins Xl Pouch 36 pieces|nonfood
+patanjali wash powder|Patanjali Saundarya Face Wash Acne Control- Brightening 1 pc (60 g)|nonfood
+steel scrubber|Swype Stainless Steel Sparkling Shine Scrubber (Silver) 2 pieces|nonfood
+mop|Gebi Spin Mop Microfiber Refill for Floor Cleaning 1 pc|nonfood
+toilet-freshener tablets|Godrej Aer Power Pocket Bathroom Freshener Assorted Pack 1 Piece And Godrej Spic Toilet Cleaner, shiny & stain|nonfood
+surf excel|Surf Excel Detergent Bar (Pack Of 3) 3 x 100 gm|nonfood
+pooja oil|Camphor & Sesame Pooja Oil (Non-Edible) by Shubhkart 900 ml|pooja
+pooja oil|Sri Balamurugan Cotton 365 Pooja Panju Wicks - 365 pcs 365 pc|pooja
+mosquito repellent|Flipkart Supermart Mosquito Repellent Natural Incense Sticks 50 x 1 Units|nonfood

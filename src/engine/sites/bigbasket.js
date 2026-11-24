@@ -12,6 +12,7 @@
 import { pageFetch, expectJson } from '../page-fetch.js';
 import { SiteError } from '../errors.js';
 import { bestPack, addressSearchText } from './_util.js';
+import { categoryPath } from '../../categories.js';
 
 const ID = 'bigbasket';
 const ORIGIN = 'https://www.bigbasket.com/';
@@ -51,6 +52,7 @@ export function parse(json) {
       // avail_status "001" = available; anything else is out of stock.
       inStock: p.availability?.avail_status ? p.availability.avail_status === '001' : true,
       url: p.absolute_url ? new URL(p.absolute_url, ORIGIN).href : ORIGIN,
+      category: categoryPath(p.category?.tlc_name, p.category?.mlc_name, p.category?.llc_name),
     });
   }
   return rows;

@@ -1,15 +1,7 @@
 # One item per line. Optional leading quantity: "2x", "2 x", or "2 ".
 # Blank lines and #-comments are ignored.
 
-2x amul taaza toned milk 500ml
-amul butter 500g
-brown bread 400g
-6 eggs
-maggi 2-minute noodles 280g
+toor dal
 tata salt 1kg
-aashirvaad atta 5kg
-fortune sunflower oil 1L
+aashirvaad atta 1kg
 onion 1kg
-tomato 500g
-britannia good day cashew 200g
-tropicana orange juice 1L

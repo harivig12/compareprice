@@ -73,6 +73,19 @@ Result lines can carry `alternative: { product, price, pack, pricePerUnit, unit,
 
 Result lines from a site searched per account (Instamart) carry `product.account` and `accountPrices: [{ account, name, price }]`, cheapest first. A result's `deals: Deal[]` lists the 80%+ candidates seen in that run's searches (never totalled).
 
+## AI labels (`/api/ai*`, optional)
+
+- `GET /api/ai` → `{ settings, providers, hasKey, keyHint, file, counts: { labelled, waiting } }`.
+  - `settings` comes from `<data>/ai.md`: `enabled, provider, baseUrl, model, batchSize, pauseSeconds, maxCallsPerDay`.
+  - The key is never returned, only `keyHint` ("••••abcd").
+- `PUT /api/ai` takes `{ enabled?, provider?, baseUrl?, model?, key?, clearKey? }` and answers like GET. On a bad value it answers 400 `{ error, field }`.
+  - `provider` is one of `groq`, `openrouter` or `custom`.
+  - The key goes to `<data>/secrets.json` (mode 600).
+- `POST /api/ai/check` → `{ ok, modelListed, sample: { ok, got }, error }`. It calls `GET {base}/models`, then labels two known titles.
+- `POST /api/ai/run` → 202 `{ jobId, queued }`, which queues an `ai-labels` job. It answers 400 when the labeller is off.
+
+Cached `POST /api/compare` lines can now carry `savedFrom`: the more specific saved line they were answered from ("salt" ← "tata salt 1kg"). Line products carry `category`.
+
 ## Sign-in (`/api/login*`)
 
 The popup calls `start`, then polls `GET /api/login` about once a second:

@@ -25,6 +25,13 @@
 | `master/` | The master price list run (`scripts/master-list.js`, run on the host): `state.json` (progress, so it can resume), `run.log`, `run.lock`, `master-<date>.csv` / `.md` (the reports). |
 | `cache/milkbasket-catalog-<hub>.json` | Milkbasket's catalogue (product names, prices, packs only), refreshed after 20 h. Safe to delete; the next search rebuilds it in ~4 min. |
 
+## The default list
+
+- **Where it lives:** `<data>/basket.txt` (on this host `/home/a/basket-data/basket.txt`). It is used by scheduled runs and pre-fills the list on the main page.
+- **How to change it:** edit the file directly, or use Settings → Default list. Both write the same file, and it is re-read on every load, so no restart or rebuild is needed.
+- **The repo copy:** `compareprice/basket.txt` is only the starting list for a new data folder.
+- **Before 2026-11-20:** the list was saved inside `config.json` on the first Save, so editing `basket.txt` did nothing. The first start of the new version moves it out and keeps that copy as `<data>/basket.previous.txt`.
+
 ## Schedules
 
 The config holds `schedules: [{ name, sites, times: ['HH:MM', …], enabled }]` in `timezone` (default `Asia/Kolkata`). Edit it at `/settings` or with `PUT /api/config`.
@@ -57,6 +64,24 @@ One-time store clean-ups (spelling folds, refused rows) run once per `CLEANUP_VE
 On startup the store:
 - folds item spellings into one key (`toor dal 1 kg` = `toor dal 1kg`)
 - deletes saved rows the current matcher refuses (e.g. Moong Dal saved under "toor dal" by the older matcher), and logs `store: removed N saved price(s)…`
+
+## Categories, saved-line reuse and AI labels (2026-11-20)
+
+- **"Find the cheapest" fallback.** A line with no saved price of its own is answered from a more specific saved line on the same site, and the cell says "saved for “…”". The saved line must:
+  - contain every word of the line, and add no kind word (black or rock salt is not salt);
+  - have the same pack when the line names one;
+  - have a product the matcher still accepts.
+
+  A more specific new line ("cow ghee 1l") never borrows from "ghee". It needs Get fresh prices.
+- **Matcher re-checks.** Matcher-only changes bump `MATCH_VERSION` (now 3). On the next start, saved rows the matcher now refuses are marked `hidden = 'no-match'`, never deleted. So are rows whose own site category says sweets or pooja for a generic line.
+- **AI labels (optional, off by default).** These run as a queue job `ai-labels` after the offer check that follows a schedule, or from Settings → "Label now". The job:
+  - sends only product titles to the chosen OpenAI-compatible API (Groq, OpenRouter, or a local server);
+  - sends one batch per call;
+  - saves results to `product_groups`.
+- **AI settings files:**
+  - `<data>/ai.md` holds the tunables: `batch size` (default 100), `pause seconds` (65), `max calls per day` (50), plus provider/model. Edit it to change them; it is re-read on every run.
+  - `<data>/secrets.json` (mode 600) holds the key. Set it on the Settings page. Don't copy it anywhere.
+- **AI accuracy check:** `docker exec basket node scripts/ai-groups-eval.js` scores the configured model on `test/fixtures/ai/labels.txt` (103 hand-labelled titles). The image leaves out `test/`, so run it from a checkout with `BASKET_HOME=/home/a/basket-data`.
 
 ## Waiting, pacing and sign-ins
 
@@ -103,6 +128,22 @@ docker exec basket node src/cli.js history "toor dal 1kg"
 | Amazon sign-in: `3 wrong passwords. Stopped…` | The popup stops after 3 wrong passwords in one sign-in so Amazon doesn't lock the account. Check the password, then start again. |
 | Zepto `session … page never issued a search request` right after signing in | Fixed 2026-11-19: signed-in Zepto searches with `POST …/user-search-service/api/v3/search`, and the engine now copies that request as well as the guest `GET …/v1/search`. |
 | MCP `compare_basket fresh=true` says a site needs a pause | The same per-site budget as the page. The tool shows the saved prices meanwhile; ask again after the wait. |
+
+## Deploying a change
+
+Run this from the `compareprice` folder:
+
+```bash
+BASKET_DATA=/home/a/basket-data scripts/deploy.sh      # SKIP_TESTS=1 to skip npm test
+```
+
+The script:
+- runs the tests, and waits for a running job;
+- keeps the current image as `compareprice:previous`, then builds and restarts on port 7777;
+- **rolls back on its own** if `/health` doesn't answer within 60 s;
+- removes only this project's untagged leftover builds (label `org.opencontainers.image.title=jhola`).
+
+The data folder and volumes are never touched. Use this script instead of a hand-typed `docker build && docker run`, because each hand deploy used to leave ~1.1 GB behind (docs/diagnosis/2026-11-20-docker-disk-cleanup.md).
 
 ## Upgrading
 

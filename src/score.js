@@ -9,6 +9,7 @@
 
 import { annotate, CONFIDENCE_THRESHOLD, parsePack } from './normalize.js';
 import { feesFor, loadFees } from './fees.js';
+import { groupOf, namedGroups } from './categories.js';
 
 /**
  * How many packs you must actually buy to cover what was asked for.
@@ -50,8 +51,42 @@ function packsNeeded(query, product, qty = 1) {
  */
 export const BIGGER_PACK_FACTOR = 1.5;
 
-export function pickBest(query, products, qty = 1) {
+/**
+ * @param {object} [prefs]  { category?: the site category this line usually
+ *   lands in (learned from saved prices), aiGroups?: Map title -> AI group }
+ */
+export function pickBest(query, products, qty = 1, prefs = {}) {
   const annotated = (products || []).map((p) => annotate(query, p));
+  // A generic line gets the raw product first (2026-11-20): sweets and pooja
+  // items are refused unless the line names them; packaged foods, and what an
+  // AI label demotes, only come after staples.
+  const named = namedGroups(query);
+  const groupFor = (p) => groupOf({ name: p.name, category: p.category, aiGroup: prefs.aiGroups?.get(String(p.name ?? '').trim()) });
+  for (const p of annotated) {
+    const g = groupFor(p);
+    p.group = g.group;
+    p.groupSource = g.source;
+    if (g.refusable && !named.has(g.group)) {
+      p.refused = true;
+      p.confident = false;
+      p.confidenceReason = `different kind (${g.group}, from its ${g.source})`;
+    }
+  }
+  // `prefs.lineGroup`: what the line's own saved products mostly are ("honey" is
+  // labelled packaged everywhere): that kind is normal for this line, not demoted.
+  // Only ordering: it never lets a sweet or pooja item through.
+  // An AI label demotes only on a line known to be a staple (its saved products
+  // are mostly labelled staple): the labeller is inconsistent within a kind
+  // (one brown bread "packaged", another "staple"), so elsewhere it is ignored.
+  // And never a product already saved for this line (`prefs.saved`): it was
+  // picked before and not ✕'d, which beats a label.
+  const normal = (p) => p.group === 'staple' || named.has(p.group) || p.group === prefs.lineGroup
+    || (p.groupSource === 'ai' && (prefs.lineGroup !== 'staple' || prefs.saved?.has(String(p.name ?? '').trim())));
+  const tierOf = (p) => (prefs.category && p.category === prefs.category ? 0 : normal(p) ? 1 : 2);
+  const bestTier = (list) => {
+    const t = Math.min(...list.map(tierOf));
+    return list.filter((p) => tierOf(p) === t);
+  };
 
   const inStock = annotated.filter((p) => p.inStock);
   // When the query names a size, a product whose size we can't read can't be
@@ -96,10 +131,10 @@ export function pickBest(query, products, qty = 1) {
   const sane = pool.filter(fits);
   if (sane.length === 0) {
     // Only bigger packs exist: show the cheapest-per-unit one, don't count it.
-    const bigger = [...pool].sort((a, b) => (a.pricePerUnit ?? Infinity) - (b.pricePerUnit ?? Infinity))[0];
+    const bigger = [...bestTier(pool)].sort((a, b) => (a.pricePerUnit ?? Infinity) - (b.pricePerUnit ?? Infinity))[0];
     return { chosen: bigger, candidates: annotated, status: 'bigger-pack' };
   }
-  return { chosen: [...sane].sort(byValue)[0], candidates: annotated, status };
+  return { chosen: [...bestTier(sane)].sort(byValue)[0], candidates: annotated, status };
 }
 
 /**
@@ -109,13 +144,16 @@ export function pickBest(query, products, qty = 1) {
  * @param {Array<{raw:string, query:string, qty:number}>} items
  * @param {Record<string, Array>} resultsByQuery  query -> adapter rows
  */
-export function scorePlatform(platform, items, resultsByQuery, feeConfig) {
+/**
+ * @param {object} [opts]  { prefs?: query -> { category }, aiGroups?: Map } (see pickBest)
+ */
+export function scorePlatform(platform, items, resultsByQuery, feeConfig, opts = {}) {
   const lines = [];
   let subtotal = 0;
 
   for (const item of items) {
     const products = resultsByQuery[item.query] || [];
-    const { chosen, status } = pickBest(item.query, products, item.qty);
+    const { chosen, status } = pickBest(item.query, products, item.qty, { ...(opts.prefs?.[item.query] ?? {}), aiGroups: opts.aiGroups });
 
     if (!chosen) {
       lines.push({
@@ -146,6 +184,7 @@ export function scorePlatform(platform, items, resultsByQuery, feeConfig) {
       // Which account showed this price (sites searched per account, e.g. Instamart).
       ...(chosen.account ? { account: chosen.account } : {}),
       url: chosen.url,
+      category: chosen.category ?? null,
     };
     if (status === 'bigger-pack') {
       // Visible, with its rate, but not part of the basket total.

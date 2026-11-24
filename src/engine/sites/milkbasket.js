@@ -21,6 +21,7 @@ import { expectJson } from '../page-fetch.js';
 import { apiFetch } from '../direct.js';
 import { SiteError } from '../errors.js';
 import { bestPack } from './_util.js';
+import { categoryPath } from '../../categories.js';
 import { CATEGORIES, CATALOG, MEGA_DEAL, MEGA_DEAL_PRODUCTS } from './milkbasket/queries.js';
 import { collectResponses } from './_capture.js';
 import { DATA_DIR } from '../../paths.js';
@@ -57,6 +58,7 @@ export function productRow(item) {
     mrp: mrp > price ? mrp : null,
     inStock: !(av.oos || av.isOos || av.forcedOos),
     url: `${ORIGIN}?product=${p.id}`,
+    category: categoryPath(p.category?.name, p.category?.subCategory?.name, p.category?.subCategory?.type),
     ...(av.maxQuantity ? { maxQty: Number(av.maxQuantity) } : {}),
   };
 }

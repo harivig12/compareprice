@@ -14,6 +14,8 @@ It runs as an always-on service, natively or in Docker. You get a web page for a
 
 ---
 
+The web app is called **Jhola** (the market bag): one list, every app, the cheapest bag. Open it on a phone and use "Add to home screen" to install it with its icon.
+
 ## Quick start
 
 ### Docker (recommended: always on, restarts with the machine)
@@ -169,6 +171,10 @@ Details on how the engine works, how errors are classified, and how to add a sit
 - **Totals are goods only** until you set fees (`basket fees`). The output always says which.
 
 ---
+
+### Generic lines get the raw product
+
+"ghee" means ghee: sweets and pooja items made with it ("Ghee Besan Laddu", "Puja Ghee") are only matched when the line says so ("ghee laddu", "pooja ghee"). Packaged foods come after staples. Each site's own category is used where it sends one; see docs/ENGINE.md. An optional AI labeller (Settings → AI labels, free API key, only product titles sent) fills in for sites without categories.
 
 ## Master price list (`product list.md`)
 

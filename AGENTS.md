@@ -21,6 +21,8 @@ History:
 - **Deals (80%+ off MRP) are never part of a total** (`src/deals.js`).
 - **Saved prices are never deleted** (user decision 2026-11-20). A wrong match (✕), a refused row or an odd price is marked in `prices.hidden` (`rejected` / `no-match` / `outlier` / `removed`) and every read skips it (`hidden IS NULL`). New reads must do the same.
 - **"Others"** (`site = 'others'`, entered by the user with `source` = where bought) is a column for colours, "Best per item" and lookups, but never searched, ranked, totalled or a deal.
+- **Generic lines get the raw product** (user decision 2026-11-20). Sweets and pooja items are refused unless the line names them; packaged foods sort after staples. Group words live in `src/categories.js`. Add a title word only if the saved products show no staple using it.
+- **AI labels only demote, and only titles are sent** (`src/ai/`). The key lives only in `<data>/secrets.json`; it is never returned, logged or committed.
 - **Every failure is a `SiteError` with a kind and a message that starts with the site id.** Never return `[]` to mean "something broke". `[]` means the site answered and had no match.
 - **Keep the UA matched to the real Chrome version** (`matchedUserAgent`). A mismatch makes BigBasket return 403.
 - **Totals are goods only** unless the user set fees (`src/fees.js` holds no fee numbers).

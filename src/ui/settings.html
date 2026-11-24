@@ -3,7 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Basket — settings &amp; schedule</title>
+<title>Jhola · settings &amp; schedule</title>
+<link rel="icon" href="/ui/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/ui/apple-touch-icon.png">
+<link rel="manifest" href="/ui/manifest.webmanifest">
+<meta name="theme-color" content="#14532d">
+<meta name="apple-mobile-web-app-title" content="Jhola">
 <link rel="stylesheet" href="/ui/theme.css">
 <script src="/ui/theme.js"></script>
 <style>
@@ -42,7 +47,7 @@
 </head>
 <body>
 <div class="wrap">
-  <header><h1>Settings &amp; schedule</h1><nav style="display:flex;gap:12px;align-items:center"><span id="themetoggle"></span><a href="/">← Compare</a></nav></header>
+  <header><h1 style="display:flex;align-items:center;gap:8px"><img src="/ui/icon.svg" alt="" width="26" height="26" style="border-radius:7px"><span><span style="color:var(--brand);font-weight:800">jhola</span> · Settings &amp; schedule</span></h1><nav style="display:flex;gap:12px;align-items:center"><span id="themetoggle"></span><a href="/">← Compare</a></nav></header>
 
   <form id="f" novalidate>
     <section class="panel">
@@ -82,6 +87,27 @@
       <button type="submit">Save</button>
       <button type="button" class="secondary" id="runnow">Run the list now</button>
       <span id="status" role="status" aria-live="polite"></span>
+    </div>
+  </form>
+
+  <form id="aif" class="panel" novalidate aria-labelledby="aih">
+    <h2 id="aih">AI labels (optional)</h2>
+    <p class="hint" style="margin:0 0 10px">Sorts saved products from sites that send no category (Blinkit, Amazon, Flipkart Minutes) into staple / packaged / sweets / pooja.
+      A label only moves a product down the list, it never hides one. <b>Only product titles are sent</b>, many in one call, to the provider you pick.
+      Batch size, pause and the daily cap are in <code id="aifile">ai.md</code> in the data folder; edit that file to change them.</p>
+    <div class="grid">
+      <div><label for="aiprov">Provider</label><select id="aiprov"><option value="groq">Groq (free tier)</option><option value="openrouter">OpenRouter (free models)</option><option value="custom">Custom (OpenAI-compatible)</option></select></div>
+      <div><label for="aimodel">Model</label><input id="aimodel" type="text" spellcheck="false" autocomplete="off"><div class="err" data-aierr="model"></div></div>
+      <div><label for="aiurl">Base URL</label><input id="aiurl" type="text" spellcheck="false" autocomplete="off" inputmode="url"><div class="err" data-aierr="baseUrl"></div></div>
+      <div><label for="aikey">API key</label><input id="aikey" type="password" autocomplete="new-password" spellcheck="false" aria-describedby="aikeyhint"><div class="hint" id="aikeyhint">Not saved yet</div></div>
+    </div>
+    <div style="margin-top:8px"><label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="aion"> Label new products after the scheduled runs</label></div>
+    <div class="bar" style="position:static">
+      <button type="submit">Save AI settings</button>
+      <button type="button" class="secondary" id="aicheck">Check connection</button>
+      <button type="button" class="secondary" id="airun">Label now</button>
+      <button type="button" class="danger" id="aiclear">Remove key</button>
+      <span id="aistatus" role="status" aria-live="polite"></span>
     </div>
   </form>
 </div>
@@ -124,6 +150,53 @@ function readSchedules() {
     enabled: el.querySelector('.s-on').checked,
   }));
 }
+
+// ── AI labels ──
+let AI = null;
+function aiShow(v) {
+  AI = v;
+  $('aiprov').value = v.settings.provider;
+  $('aimodel').value = v.settings.model;
+  $('aiurl').value = v.settings.baseUrl;
+  $('aion').checked = v.settings.enabled;
+  $('aikey').value = '';
+  $('aikey').placeholder = v.hasKey ? 'saved; type to replace' : 'paste your key';
+  $('aikeyhint').textContent = v.hasKey ? `Saved (${v.keyHint}). Kept in secrets.json, never shown.` : 'Not saved yet';
+  $('aifile').textContent = v.file;
+  $('aiclear').hidden = !v.hasKey;
+  const c = v.counts;
+  if (c) aiStatus(`${c.labelled} product(s) labelled, ${c.waiting} waiting`);
+}
+function aiStatus(text, cls = '') { $('aistatus').textContent = text; $('aistatus').className = cls; }
+$('aiprov').addEventListener('change', () => {
+  const p = AI?.providers?.[$('aiprov').value];
+  if (p && $('aiprov').value !== 'custom') { $('aiurl').value = p.baseUrl; $('aimodel').value = p.model; }
+});
+async function aiSave(extra = {}) {
+  document.querySelectorAll('[data-aierr]').forEach((e) => { e.textContent = ''; });
+  const body = { provider: $('aiprov').value, model: $('aimodel').value, baseUrl: $('aiurl').value, enabled: $('aion').checked, ...extra };
+  if ($('aikey').value.trim() && !extra.clearKey) body.key = $('aikey').value;
+  const res = await fetch('/api/ai', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  const b = await res.json();
+  if (!res.ok) { const e = document.querySelector(`[data-aierr="${b.field}"]`); if (e) e.textContent = b.error; aiStatus(b.error, 'bad'); return false; }
+  aiShow(b);
+  return true;
+}
+$('aif').addEventListener('submit', async (e) => { e.preventDefault(); if (await aiSave()) aiStatus('Saved', 'ok'); });
+$('aiclear').addEventListener('click', async () => { if (await aiSave({ clearKey: true })) aiStatus('Key removed', 'ok'); });
+$('aicheck').addEventListener('click', async () => {
+  if (!(await aiSave())) return;
+  aiStatus('Checking…');
+  const r = await (await fetch('/api/ai/check', { method: 'POST' })).json();
+  aiStatus(r.ok ? `Connected. The model answered right${r.modelListed === false ? ' (it is not in the provider\'s model list, but it worked)' : ''}.` : `Not working: ${r.error}`, r.ok ? 'ok' : 'bad');
+});
+$('airun').addEventListener('click', async () => {
+  if (!(await aiSave())) return;
+  const res = await fetch('/api/ai/run', { method: 'POST' });
+  const b = await res.json();
+  aiStatus(res.ok ? `Queued as job ${b.jobId}. It runs after any search in progress.` : b.error, res.ok ? 'ok' : 'bad');
+});
+fetch('/api/ai').then((r) => r.json()).then(aiShow).catch(() => aiStatus('Could not load AI settings', 'bad'));
 
 async function load() {
   META = await (await fetch('/api/meta')).json();

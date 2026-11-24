@@ -123,7 +123,9 @@ export async function startService({
   // saved address even when a search is the first thing after a restart.
   const engineRun = (opts) => (opts.trigger === 'offers'
     ? runOfferCheck(opts)
-    : import('./compare.js').then((m) => m.compareBasket({ ...opts, accounts, poolSet, store, pool: poolSet.getMain() })));
+    : opts.trigger === 'ai-labels'
+      ? runAiLabelsJob(opts)
+      : import('./compare.js').then((m) => m.compareBasket({ ...opts, accounts, poolSet, store, pool: poolSet.getMain() })));
   const runOfferCheck = async ({ signal, onProgress, platforms }) => {
     const [{ checkOffers, OFFER_SITES }, { SITES }, { getLimiter }] = await Promise.all([import('./offers.js'), import('./engine/sites/index.js'), import('./limits.js')]);
     const out = await checkOffers({
@@ -136,6 +138,16 @@ export async function startService({
     for (const o of out.offers) log(`offers ${o.site} ${o.account === 'main' ? '' : `(${o.name}) `}${o.error ? `FAILED ${o.error}` : `${o.deals} deal(s) of ${o.scanned} checked`}`);
     return out;
   };
+  // Optional AI labels (src/ai/, off by default): no browser, paced by <data>/ai.md.
+  const runAiLabelsJob = async ({ signal }) => {
+    const { runAiLabels } = await import('./ai/job.js');
+    const out = await runAiLabels({ store, dataDir, signal, log, timeZone: getConfig().timezone });
+    log(`ai-labels: ${out.error ? `FAILED ${out.error}` : `${out.labelled} labelled in ${out.calls} call(s)${out.skipped ? ` (${out.skipped})` : ''}`}`);
+    // A failure shows in the jobs list with its reason (what was labelled before it is kept).
+    if (out.error) throw new Error(`ai-labels: ${out.error}${out.labelled ? ` (after ${out.labelled} labelled)` : ''}`);
+    return out;
+  };
+  const aiEnabled = async () => (await import('./ai/settings.js')).readAiSettings(dataDir).enabled;
   const queue = new JobQueue({ run: run ?? engineRun, store });
   const meta = new Map(); // jobId -> { id, trigger, sites }
   const origEnqueue = queue.enqueue.bind(queue);
@@ -213,6 +225,14 @@ export async function startService({
       }, OFFERS_AFTER_SCHEDULE_MS);
       offersTimer.unref?.();
     }
+    // After the offer check (the quiet slot after a schedule), label new titles
+    // if the AI labeller is on. Queued, so it never overlaps a search.
+    if (!run && lastTrigger.get(jobId) === 'offers') {
+      aiEnabled().then((on) => {
+        const already = queue.pending().some((j) => j.trigger === 'ai-labels') || queue.current()?.trigger === 'ai-labels';
+        if (on && !already) queue.enqueue({ items: '', sites: null, trigger: 'ai-labels' });
+      }).catch((err) => log(`ai-labels: could not read ai.md: ${err.message}`));
+    }
     lastTrigger.delete(jobId);
     idle.touch();
     pruneResults(resultsDir, getConfig().results?.keepDays ?? 60);
@@ -227,6 +247,7 @@ export async function startService({
     queue,
     store,
     getConfig,
+    dataDir,
     setConfig: (c) => saveConfig(c, dataDir),
     saveLatest: (r) => writeFileSync(join(dataDir, 'last-result.json'), JSON.stringify(r, null, 2)),
     loadLatest: () => {

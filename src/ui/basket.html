@@ -3,7 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Basket — cheapest groceries near you</title>
+<title>Jhola · one list, every app, the cheapest bag</title>
+<link rel="icon" href="/ui/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/ui/apple-touch-icon.png">
+<link rel="manifest" href="/ui/manifest.webmanifest">
+<meta name="theme-color" content="#14532d">
+<meta name="apple-mobile-web-app-title" content="Jhola">
 <link rel="stylesheet" href="/ui/theme.css">
 <script src="/ui/theme.js"></script>
 <style>
@@ -14,6 +19,10 @@
   .wrap { max-width:1280px; margin:0 auto; padding:16px; }
   header { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 16px; margin-bottom:10px; }
   header h1 { font-size:18px; margin:0; }
+  header h1.brand { display:flex; align-items:center; gap:8px; align-self:center; font-size:22px; font-weight:800; letter-spacing:-.5px; color:var(--brand); }
+  header h1.brand img { border-radius:7px; flex:none; }
+  header .title { font-weight:600; }
+  header .title:empty { display:none; }
   header .sub { color:var(--dim); font-size:12px; }
   header nav { margin-left:auto; }
   .bar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:10px; }
@@ -33,6 +42,39 @@
   .progress { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; font-size:12px; }
   .chip { padding:4px 9px; border-radius:12px; background:var(--panel); border:1px solid var(--line); }
   .chip.ok { border-color:var(--ok); color:var(--ok); } .chip.run { border-color:var(--warn); color:var(--warn); }
+  /* Mockup A (2026-11-20): run panel, freshness, age dots, phone tabs. */
+  .run { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-bottom:10px; }
+  .run .rh { display:flex; justify-content:space-between; align-items:baseline; gap:8px; flex-wrap:wrap; }
+  .run .rh b { font-size:14px; } .run .rh .eta { color:var(--dim); font-size:12px; }
+  .run .rbar { height:8px; border-radius:4px; background:var(--bar-empty); margin:8px 0 10px; overflow:hidden; }
+  .run .rbar i { display:block; height:100%; width:0; background:var(--ok); border-radius:4px; transition:width .4s; }
+  .run .rchips { display:flex; flex-wrap:wrap; gap:6px; }
+  .run .rc { display:inline-flex; align-items:center; gap:6px; min-height:34px; padding:4px 12px; border-radius:17px; font-size:12.5px; border:1px solid var(--line); background:var(--panel2); color:var(--dim); }
+  .run .rc.ok { background:var(--banner-ok); border-color:transparent; color:var(--ok-ink); }
+  .run .rc.run { background:var(--banner-warn); border-color:var(--warn); color:var(--warn); font-weight:600; }
+  .run .rc.err { border-color:var(--bad); color:var(--bad-ink); }
+  .run .spin { width:12px; height:12px; border-radius:50%; border:2px solid currentColor; border-right-color:transparent; animation:spin .9s linear infinite; flex:none; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .run .spin { animation:none; border-right-color:currentColor; opacity:.6; } .run .rbar i { transition:none; } }
+  .run .rfoot { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:8px; font-size:11.5px; color:var(--dim); flex-wrap:wrap; }
+  .run .rfoot button { min-height:36px; }
+  #result.updating table.cmp td, #result.updating .cards .row { opacity:.6; }
+  .fresh { display:grid; grid-template-columns:auto 1fr auto; gap:4px 8px; align-items:center; font-size:12.5px; }
+  .fresh .d, .age { display:inline-block; width:9px; height:9px; border-radius:50%; flex:none; }
+  .age { width:7px; height:7px; margin-right:3px; vertical-align:middle; }
+  .a0 { background:var(--ok); } .a1 { background:var(--warn); } .a2 { background:var(--bad); }
+  .fresh .t { text-align:right; font-weight:600; } .fresh .t.a0t { color:var(--ok-ink); } .fresh .t.a1t { color:var(--warn); } .fresh .t.a2t { color:var(--bad-ink); }
+  .freshbox h3 { margin:0 0 8px; font-size:14px; }
+  .freshbox .linkbtn { margin-top:8px; font-size:12.5px; }
+  .tabbar { display:none; }
+  @media (max-width:700px) {
+    body { padding-bottom:calc(64px + env(safe-area-inset-bottom)); }
+    header nav a[href="/settings"] { display:none; }
+    .tabbar { display:grid; grid-template-columns:repeat(4,1fr); position:fixed; left:0; right:0; bottom:0; z-index:40; background:var(--panel); border-top:1px solid var(--line); padding:4px 6px calc(4px + env(safe-area-inset-bottom)); }
+    .tabbar a, .tabbar button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; min-height:52px; background:none; border:0; border-radius:12px; color:var(--dim); font:600 11px/1.2 system-ui,sans-serif; text-decoration:none; padding:4px 0; cursor:pointer; }
+    .tabbar svg { width:22px; height:22px; }
+    .tabbar [aria-current="page"] { color:var(--brand); background:var(--banner-ok); }
+  }
   .chip.err { border-color:var(--bad); color:var(--bad-ink); white-space:normal; }
   .banner { display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; background:var(--banner-warn); border:1px solid var(--warn); border-radius:10px; padding:8px 12px; margin-bottom:10px; }
   .banner.live { background:var(--banner-ok); border-color:var(--ok); } .banner.wait { background:var(--banner-info); border-color:var(--accent); }
@@ -134,12 +176,31 @@
   dialog .row2 { display:flex; gap:8px; margin-top:12px; justify-content:flex-end; }
   .msg { min-height:1.4em; margin-top:8px; font-size:13px; } .msg.err { color:var(--bad-ink); } .msg.ok { color:var(--ok-ink); }
   .acct { font-size:13px; padding:6px 0; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; gap:8px; }
+  /* Tap tips (2026-11-20): every hover text also opens on tap; (i) where the thing is a link or button. */
+  .info { float:right; width:24px; height:24px; margin:-3px -3px 0 4px; padding:0; border-radius:50%; border:1.5px solid currentColor; background:none; color:inherit;
+          font:italic 700 13px/20px Georgia, serif; text-align:center; cursor:pointer; opacity:.8; }
+  .info:hover, .info:focus-visible, .info[aria-expanded="true"] { opacity:1; outline:2px solid var(--accent); outline-offset:1px; }
+  #tip { position:fixed; z-index:50; max-width:min(320px, calc(100vw - 16px)); padding:8px 28px 8px 10px; border-radius:8px; background:#111827; color:#f9fafb;
+         font-size:12.5px; line-height:1.45; white-space:pre-line; overflow-wrap:anywhere; box-shadow:0 6px 20px rgba(0,0,0,.3); }
+  #tip[hidden] { display:none; }
+  #tip .x { position:absolute; top:2px; right:2px; width:24px; height:24px; background:none; border:0; color:#9ca3af; font-size:15px; cursor:pointer; padding:0; }
+  .tr .info, .look td .info { float:none; display:inline-block; vertical-align:middle; margin:0 0 0 4px; }
+  /* Phones: site names and "Now" (with its (i)) get room, so words don't split mid-word. */
+  @media (max-width:700px) { .look colgroup col:nth-child(1) { width:23% !important; } .look colgroup col:nth-child(4) { width:30% !important; } .look td:first-child { overflow-wrap:normal; } }
 </style>
 </head>
 <body>
+<div id="tip" role="status" hidden><span class="t"></span><button type="button" class="x" aria-label="Close details">✕</button></div>
+<nav class="tabbar" aria-label="Sections">
+  <button type="button" data-tab="compare" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 8h18l-2 12H5z"/><path d="M8 8a4 4 0 0 1 8 0"/></svg>Compare</button>
+  <button type="button" data-tab="prices"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>Prices</button>
+  <button type="button" data-tab="deals"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12V3h9l9 9-9 9z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>Deals</button>
+  <a href="/settings" data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>Settings</a>
+</nav>
 <div class="wrap">
   <header>
-    <h1 id="title">Basket</h1>
+    <h1 class="brand"><img src="/ui/icon.svg" alt="" width="28" height="28"><span>jhola</span></h1>
+    <span class="title" id="title"></span>
     <span class="sub" id="sub">…</span>
     <nav style="display:flex;gap:12px;align-items:center"><span id="themetoggle"></span><a href="/settings">Settings &amp; schedule</a></nav>
   </header>
@@ -167,10 +228,16 @@
 
   <div class="banner wait" id="waitbar" hidden role="status" aria-live="polite"></div>
   <div class="panel look" id="lookup" hidden></div>
-  <div class="progress" id="chips" aria-live="polite"></div>
+  <div class="run" id="run" hidden>
+    <div class="rh"><b id="runhead" aria-live="polite"></b><span class="eta" id="runeta"></span></div>
+    <div class="rbar" role="progressbar" aria-label="Searches done" aria-valuemin="0" aria-valuemax="100" id="runbar"><i></i></div>
+    <div class="rchips" id="chips"></div>
+    <div class="rfoot"><span id="runnote">Tap a site for its last step.</span><button type="button" class="secondary" id="stop2">Stop</button></div>
+  </div>
 
   <section id="result" hidden>
     <div class="banner" id="banner" role="status"></div>
+    <div class="panel freshbox" id="freshness" hidden></div>
     <div class="verdicts" id="verdicts"></div>
     <div class="panel" style="padding:8px">
       <table class="cmp" id="table"></table>
@@ -266,6 +333,17 @@ const rs = (n) => n == null ? '—' : '₹' + Number(n).toLocaleString('en-IN', 
 const when = (iso) => iso ? new Date(iso).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
 const ddmmyy = (iso) => iso ? new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'Asia/Kolkata' }) : '';
 const day = (iso) => iso ? new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '';
+// Price age (mockup A): green under 6 h, amber under 2 days, red older.
+const FRESH_MS = 6 * 3_600_000, AGING_MS = 48 * 3_600_000;
+const ageBand = (iso) => { const a = Date.now() - new Date(iso).getTime(); return a < FRESH_MS ? 0 : a < AGING_MS ? 1 : 2; };
+function ageText(iso) {
+  const m = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60_000));
+  if (m < 2) return 'just now';
+  if (m < 60) return `${m} min ago`;
+  if (m < 24 * 60) return `${Math.round(m / 60)} h ago`;
+  if (m < 48 * 60) return 'yesterday';
+  return `${Math.round(m / 1440)} days ago`;
+}
 let META = { labels: {} }, currentJob = null, countdown = null;
 // Free-delivery facts per site (GET /api/siteinfo), the missing pairs of the
 // view, sites never searched, and the job id of a "missing only" run.
@@ -342,6 +420,15 @@ function badge(h) {
   return `<span class="badge above" title="lowest seen ${esc(day(h.lowSeenAt))}">low ${esc(fmtRate(h.low, h.unit))} · ${esc(day(h.lowSeenAt))}</span>`;
 }
 
+/** "was ₹22 for 1kg (₹2.20/100g) · 19 Nov", or '' (the ▼/▲ hover, for the tap tip). */
+const wasText = (h) => (h?.prev && h.change && h.change !== 'same' ? `was ${rs(h.prev.price)}${h.prev.pack ? ' for ' + h.prev.pack : ''} (${fmtRate(h.prev.unitPrice, h.unit)}) · ${when(h.prev.seenAt)}` : '');
+const acctText = (l, pr) => ['Cheapest from account: ' + ((l.accountPrices || []).find((a) => a.account === pr.account)?.name || pr.account || 'Main'), ...(l.accountPrices || []).filter((a) => a.account !== pr.account).map((a) => `${a.name}: ${rs(a.price)}`)].join('\n');
+/** The (i) button: opens the tip on tap or click, on every device. */
+const infoBtn = (lines) => {
+  const text = lines.filter(Boolean).join('\n');
+  return text ? `<button type="button" class="info" aria-label="Show details" aria-expanded="false" data-tip="${esc(text)}">i</button>` : '';
+};
+
 /** ▼/▲ against the latest earlier saved price (any run). Nothing when unchanged or new. */
 function arrow(h) {
   if (!h || !h.change || h.change === 'same' || !h.prev) return '';
@@ -393,10 +480,20 @@ function cellHtml(p, l, cls) {
       <div class="n">${esc(pr.name)}</div><div class="u">${esc(unitLine(l))}</div>
       <div class="asof">${esc(l.source ? l.source + ' · ' : '')}${esc(ddmmyy(l.cachedAt))}</div></td>`;
   }
+  const info = infoBtn([
+    pr.name,
+    l.savedFrom ? `saved for “${l.savedFrom}”` : '',
+    l.cachedAt ? `saved ${when(l.cachedAt)}` : '',
+    wasText(l.history),
+    l.history?.low != null ? `lowest seen ${fmtRate(l.history.low, l.history.unit)} · ${day(l.history.lowSeenAt)}` : '',
+    acctTip ? acctText(l, pr) : '',
+    l.dropped?.length ? l.dropped.map((d) => `skipped ${d.name} ${rs(d.price)}: ${d.reason}`).join('\n') : '',
+    alt ? `cheaper: ${alt.product} ${rs(alt.price)} (${alt.savingPct}% less per unit)` : '',
+  ]);
   const rej = `<button type="button" class="rej" data-rej-site="${esc(p.platform)}" data-rej-q="${esc(l.query)}" data-rej-p="${esc(pr.name)}" title="Wrong product for “${esc(l.query)}”? Remove it and never use it for this item on ${esc(label(p.platform))} again" aria-label="Remove wrong match ${esc(pr.name)}">✕</button>`;
-  return `<td class="${weak ? 'dimmed' : cls(l)}"${acctTip}><div class="p">${rej}${rs(l.lineTotal)}${weak ? ' <span class="flag" title="weak name match: check it">?</span>' : ''}${arrow(l.history)} ${badge(l.history)}${acctTag}</div>
+  return `<td class="${weak ? 'dimmed' : cls(l)}"${acctTip}><div class="p">${rej}${info}${rs(l.lineTotal)}${weak ? ' <span class="flag" title="weak name match: check it">?</span>' : ''}${arrow(l.history)} ${badge(l.history)}${acctTag}</div>
     <div class="n" title="${esc(pr.name)}">${esc(pr.name)}</div><div class="u">${esc(unitLine(l))}</div>
-    ${l.cachedAt ? `<div class="asof" title="saved ${esc(when(l.cachedAt))}">as of ${esc(ddmmyy(l.cachedAt))}</div>` : ''}${skipped}${altBox}</td>`;
+    ${l.cachedAt ? `<div class="asof" title="saved ${esc(when(l.cachedAt))} · ${esc(ageText(l.cachedAt))}"><span class="age a${ageBand(l.cachedAt)}" aria-hidden="true"></span>as of ${esc(ddmmyy(l.cachedAt))}${l.savedFrom ? ` · saved for “${esc(l.savedFrom)}”` : ''}</div>` : ''}${skipped}${altBox}</td>`;
 }
 /** ₹ per 100 g / 100 ml / pc from a per-unit price (per g, ml or piece). */
 const perLabel = (ppu, unit) => (unit === 'piece' ? `₹${(+ppu).toFixed(2)}/pc` : `₹${(+ppu * 100).toFixed(2)}/100${unit === 'ml' ? 'ml' : 'g'}`);
@@ -418,10 +515,47 @@ function renderBanner(r) {
   }
 }
 
+/** Saved-price view: how old each site's prices are, and refresh only the old ones. */
+let STALE = {};
+function renderFreshness(r) {
+  const box = $('freshness');
+  STALE = {};
+  if (r.source !== 'history') { box.hidden = true; return; }
+  const groups = [[], [], [], []]; // fresh, aging, old, none
+  const oldest = {};
+  for (const p of r.platforms) {
+    if (p.failed || p.others) continue;
+    const ats = (p.lines || []).map((l) => l.cachedAt).filter(Boolean).sort();
+    for (const item of r.basket) {
+      const l = lineFor(p, item.query);
+      if (!l?.cachedAt || ageBand(l.cachedAt) > 0 || l.status === 'not-cached') (STALE[p.platform] ??= []).push(item.raw || item.query);
+    }
+    if (!ats.length) { groups[3].push(p.platform); continue; }
+    oldest[p.platform] = ats[0];
+    groups[ageBand(ats[0])].push(p.platform);
+  }
+  const names = (list) => list.map((s) => esc(label(s))).join(', ');
+  const age = (list) => { const o = list.map((s) => oldest[s]).sort()[0]; return esc(ageText(o)); };
+  const rows = [
+    groups[0].length ? `<span class="d a0"></span><span>${names(groups[0])}</span><span class="t a0t">${age(groups[0])}</span>` : '',
+    groups[1].length ? `<span class="d a1"></span><span>${names(groups[1])}</span><span class="t a1t">${age(groups[1])}</span>` : '',
+    groups[2].length ? `<span class="d a2"></span><span>${names(groups[2])}</span><span class="t a2t">${age(groups[2])}</span>` : '',
+    groups[3].length ? `<span class="d" style="border:1.5px solid var(--faint)"></span><span>${names(groups[3])}</span><span class="t" style="color:var(--dim)">no saved price</span>` : '',
+  ].join('');
+  const n = Object.values(STALE).flat().length;
+  const sites = Object.keys(STALE).length;
+  box.innerHTML = `<h3>How fresh are these prices?</h3><div class="fresh" title="Age of the oldest saved price of each site in this list">${rows}</div>`
+    + (n ? `<button type="button" class="linkbtn" id="refreshold">Refresh only the old ones (${n} search${n === 1 ? '' : 'es'} on ${sites} site${sites === 1 ? '' : 's'})</button>` : '<p class="muted" style="margin:8px 0 0;font-size:12.5px">All saved prices here are under 6 h old.</p>');
+  box.hidden = false;
+  $('refreshold')?.addEventListener('click', () => fetchOnly(STALE, 'old'));
+}
+
 function render(r) {
   $('result').hidden = false;
-  $('title').textContent = `Basket · ${r.basket.length} items`;
+  $('title').textContent = `${r.basket.length} item${r.basket.length === 1 ? '' : 's'}`;
   renderBanner(r);
+  renderFreshness(r);
+  $('result').classList.toggle('updating', false);
   const plats = r.platforms;
   const up = plats.filter((p) => !p.failed);
   const down = plats.filter((p) => p.failed);
@@ -483,7 +617,8 @@ function render(r) {
         const why = !l ? '—' : l.status === 'not-cached' ? 'no saved price' : l.status === 'bigger-pack' ? `bigger pack (${fmtPack(l.product.packSize, l.product.packUnit)}, ${rs(l.product.price)})` : l.status === 'suspect' ? 'price looked wrong, left out' : l.status === 'no-match' ? 'no matching product' : l.status === 'out-of-stock' ? 'out of stock' : l.lineTotal != null ? `${rs(l.lineTotal)} ? (weak match)` : 'not found';
         return `<div class="row"><b>${esc(label(p.platform))}</b><span class="muted">${esc(why)}</span><span></span></div>`;
       }
-      return `<div class="row ${cls(l)}"><b>${esc(label(p.platform))}</b><span>${esc(l.product.name)}<div class="u">${esc(unitLine(l))} ${l.cachedAt ? '· as of ' + esc(ddmmyy(l.cachedAt)) : ''} ${badge(l.history)}</div></span><b>${rs(l.lineTotal)}${arrow(l.history)}</b></div>`;
+      const tip = infoBtn([l.product.name, l.savedFrom ? `saved for “${l.savedFrom}”` : '', l.cachedAt ? `saved ${when(l.cachedAt)}` : '', wasText(l.history), l.accountPrices?.length > 1 ? acctText(l, l.product) : '']);
+      return `<div class="row ${cls(l)}"><b>${esc(label(p.platform))}</b><span>${esc(l.product.name)}<div class="u">${esc(unitLine(l))} ${l.cachedAt ? `· <span class="age a${ageBand(l.cachedAt)}" aria-hidden="true"></span>${esc(ageText(l.cachedAt))}` : ''}${l.savedFrom ? ` · saved for “${esc(l.savedFrom)}”` : ''} ${badge(l.history)}</div></span><b>${rs(l.lineTotal)}${arrow(l.history)}${tip}</b></div>`;
     }).join('')}</div>`;
   }).join('');
 
@@ -517,7 +652,7 @@ $('go').addEventListener('click', async () => {
     const res = await fetch('/api/compare', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...input, mode: 'cached' }) });
     const body = await res.json();
     if (res.status !== 200) throw new Error(body.error || res.status);
-    currentJob = null; $('chips').innerHTML = ''; render(body);
+    currentJob = null; chipState.clear(); renderChips(); render(body);
     $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch (e) { alert('Could not load saved prices: ' + e.message); } finally { $('go').disabled = false; }
 });
@@ -541,28 +676,38 @@ async function fetchFresh() {
     if (res.status === 429) { startWait(body.waitMs, body.error, fetchFresh); return; }
     if (res.status !== 202) throw new Error(body.error || res.status);
     $('waitbar').hidden = true;
-    currentJob = body.jobId; chipState.clear();
-    input.platforms.forEach((p) => chipState.set(p, { text: body.queued ? 'waiting in queue' : 'starting' }));
+    currentJob = body.jobId;
+    startRun(input.platforms, input.platforms.length * listItems().length, body.queued, 'Getting fresh prices');
+    input.platforms.forEach((p) => chipState.set(p, { text: body.queued ? 'waiting in queue' : 'starting', cls: 'wait' }));
     renderChips(); loadJobs();
+    // Saved prices show at once (dimmed) while the sites answer; the live result replaces them.
+    if ($('result').hidden) {
+      const cached = await fetch('/api/compare', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...input, mode: 'cached' }) }).then((x) => (x.ok ? x.json() : null)).catch(() => null);
+      if (cached && currentJob === body.jobId) render(cached);
+    }
+    if (!$('result').hidden) markUpdating();
   } catch (e) { alert('Could not start: ' + e.message); } finally { $('fresh').disabled = false; }
 }
 $('fresh').addEventListener('click', fetchFresh);
 
 // "Get for missing only": search just the item/site pairs with no price in
 // this view; when it finishes, the view is rebuilt from saved prices.
-async function fetchMissing() {
+async function fetchMissing() { return fetchOnly(MISSING, 'missing'); }
+/** Search just some item/site pairs (missing ones, or old ones), then re-show the list from saved prices. */
+async function fetchOnly(pairs, why) {
   const input = formInput(); if (!input) return;
-  const only = Object.fromEntries(Object.entries(MISSING).filter(([site, list]) => input.platforms.includes(site) && list.length));
+  const only = Object.fromEntries(Object.entries(pairs).filter(([site, list]) => input.platforms.includes(site) && list.length));
   if (!Object.keys(only).length) return;
   $('missing').disabled = true;
   try {
     const res = await fetch('/api/compare', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...input, mode: 'missing', only }) });
     const body = await res.json();
-    if (res.status === 429) { startWait(body.waitMs, body.error, fetchMissing); return; }
+    if (res.status === 429) { startWait(body.waitMs, body.error, () => fetchOnly(pairs, why)); return; }
     if (res.status !== 202) throw new Error(body.error || res.status);
     $('waitbar').hidden = true;
-    currentJob = body.jobId; missingJob = body.jobId; chipState.clear();
-    Object.keys(only).forEach((p) => chipState.set(p, { text: `${only[p].length} missing · ${body.queued ? 'waiting in queue' : 'starting'}` }));
+    currentJob = body.jobId; missingJob = body.jobId;
+    startRun(Object.keys(only), Object.values(only).reduce((a, l) => a + l.length, 0), body.queued, why === 'old' ? 'Refreshing old prices' : 'Getting missing prices');
+    Object.keys(only).forEach((p) => chipState.set(p, { text: `${only[p].length} ${why} · ${body.queued ? 'waiting in queue' : 'starting'}`, cls: 'wait' }));
     renderChips(); loadJobs();
   } catch (e) { alert('Could not start: ' + e.message); } finally { $('missing').disabled = false; }
 }
@@ -581,24 +726,61 @@ $('table').addEventListener('click', async (ev) => {
   $('go').click();
 });
 
+$('stop2').addEventListener('click', () => $('stop').click());
 $('stop').addEventListener('click', async () => {
   clearInterval(countdown); $('waitbar').hidden = true;
   await fetch('/api/stop', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(currentJob != null ? { jobId: currentJob } : {}) });
   loadJobs();
 });
 
+// Run panel (mockup A): one chip per site, a bar of searches done, a time estimate.
+const RUN = { title: '', total: 0, startedAt: 0, finished: null };
+function startRun(sites, total, queued, title) {
+  chipState.clear();
+  Object.assign(RUN, { title, total: Math.max(1, total), startedAt: Date.now(), finished: null, queued: Boolean(queued) });
+  $('stop2').disabled = false;
+}
+function markUpdating() {
+  $('result').classList.add('updating');
+  const b = $('banner');
+  if (b && !b.querySelector('.upd')) b.insertAdjacentHTML('beforeend', '<p class="upd" style="margin:4px 0 0;color:var(--ok-ink);font-weight:600">Updating… these are saved prices until the sites answer.</p>');
+}
 function renderChips() {
-  $('chips').innerHTML = [...chipState].map(([site, s]) => `<span class="chip ${s.cls || ''}">${esc(label(site))} · ${esc(s.text)}</span>`).join('');
+  const run = $('run');
+  if (!chipState.size) { run.hidden = true; return; }
+  run.hidden = false;
+  const all = [...chipState.entries()].filter(([site]) => site !== 'run');
+  const done = all.reduce((a, [, s]) => a + (s.cls === 'ok' || s.cls === 'err' ? (s.total ?? 0) : (s.done ?? 0)), 0);
+  const sitesDone = all.filter(([, s]) => s.cls === 'ok' || s.cls === 'err').length;
+  const pct = RUN.finished ? 100 : Math.min(99, Math.round((100 * done) / RUN.total));
+  const bar = $('runbar');
+  bar.firstElementChild.style.width = `${pct}%`;
+  bar.setAttribute('aria-valuenow', String(pct));
+  const runErr = chipState.get('run');
+  $('runhead').textContent = runErr ? 'The run failed' : RUN.finished ? `Done · ${sitesDone} of ${all.length} sites` : `${RUN.title} · ${sitesDone} of ${all.length} sites`;
+  const secs = Math.round((Date.now() - RUN.startedAt) / 1000);
+  let eta = '';
+  if (RUN.finished) eta = `took ${Math.round((RUN.finished - RUN.startedAt) / 1000)} s`;
+  else if (done > 0 && done < RUN.total) eta = `~${Math.max(5, Math.round(((Date.now() - RUN.startedAt) / done) * (RUN.total - done) / 1000))} s left`;
+  else if (done >= RUN.total) eta = 'finishing…';
+  else eta = `${secs} s`;
+  $('runeta').textContent = eta;
+  const icon = (s) => (s.cls === 'ok' ? '✓' : s.cls === 'err' ? '✖' : s.cls === 'run' ? '<span class="spin" aria-hidden="true"></span>' : '⏱');
+  $('chips').innerHTML = all.map(([site, s]) => `<span class="rc ${s.cls || 'wait'}" title="${esc(`${label(site)}: ${s.log || s.text}`)}">${icon(s)} ${esc(label(site))} ${esc(s.short ?? s.text)}</span>`).join('')
+    + (runErr ? `<span class="rc err">✖ ${esc(runErr.text)}</span>` : '');
+  $('runnote').textContent = RUN.finished || runErr ? '' : 'Tap a site for its last step. Prices are saved when every site has answered.';
+  $('stop2').hidden = Boolean(RUN.finished || runErr);
 }
 function onProgress({ jobId, event: e }) {
   if (currentJob != null && jobId !== currentJob) return;
-  const s = chipState.get(e.site) || { text: 'starting' };
-  if (e.type === 'site-start') Object.assign(s, { text: `0/${e.total}`, cls: 'run' });
-  if (e.type === 'query') Object.assign(s, { text: `${e.index}/${e.total} · ${e.query}`, cls: 'run' });
-  if (e.type === 'wait') Object.assign(s, { text: `pausing ${Math.ceil(e.waitMs / 1000)}s (${e.reason})`, cls: 'run' });
-  if (e.type === 'retry') Object.assign(s, { text: `retrying (${e.kind})`, cls: 'run' });
-  if (e.type === 'fallback') Object.assign(s, { text: 'trying the page view', cls: 'run' });
-  if (e.type === 'site-done') Object.assign(s, e.ok ? { text: '✓ done', cls: 'ok' } : { text: `✖ ${e.error}`, cls: 'err' });
+  if (!e.site) return;
+  const s = chipState.get(e.site) || { text: 'starting', cls: 'wait' };
+  if (e.type === 'site-start') Object.assign(s, { total: e.total, done: 0, text: `0/${e.total}`, short: `0/${e.total}`, cls: 'run', log: 'started' });
+  if (e.type === 'query') Object.assign(s, { total: e.total, done: e.index - 1, text: `${e.index}/${e.total} · ${e.query}`, short: `${e.index - 1}/${e.total}`, cls: 'run', log: `searching “${e.query}”` });
+  if (e.type === 'wait') Object.assign(s, { short: `· in ${Math.ceil(e.waitMs / 1000)} s`, cls: 'wait', log: `pausing ${Math.ceil(e.waitMs / 1000)} s (${e.reason})` });
+  if (e.type === 'retry') Object.assign(s, { short: '· retrying', cls: 'run', log: `retrying after ${e.kind}: ${e.message || ''}` });
+  if (e.type === 'fallback') Object.assign(s, { short: '· page view', cls: 'run', log: 'trying the page view' });
+  if (e.type === 'site-done') Object.assign(s, e.ok ? { done: s.total ?? 0, short: s.total ? `${s.total}/${s.total}` : 'done', cls: 'ok', log: 'done' } : { short: 'failed', cls: 'err', log: e.error });
   chipState.set(e.site, s); renderChips();
 }
 
@@ -617,9 +799,11 @@ function connect() {
     loadDeals();
     if (d.kind === 'offers') { loadSiteInfo(); return; }
     // A "missing only" run fills gaps: show the whole list again from saved prices.
+    const mine = currentJob != null && d.jobId === currentJob;
+    if (mine && d.ok) { RUN.finished = Date.now(); renderChips(); }
     if (d.ok && missingJob != null && d.jobId === missingJob) { missingJob = null; currentJob = null; $('go').click(); return; }
     if (currentJob == null || d.jobId === currentJob) {
-      if (d.ok) loadResult(d.jobId); else { chipState.set('run', { text: `✖ ${d.error}`, cls: 'err' }); renderChips(); }
+      if (d.ok) loadResult(d.jobId); else { chipState.set('run', { text: d.error === 'cancelled' ? 'stopped, nothing saved' : d.error, cls: 'err' }); $('result').classList.remove('updating'); renderChips(); }
     }
   });
   es.addEventListener('job', () => loadJobs());
@@ -678,13 +862,72 @@ async function doLookup(q) {
       return `<tr class="${i === 0 ? 'cheap' : ''}"><td${x.source ? ` title="${esc(`Bought from ${x.source}`)}"` : ''}>${siteName(x)}</td>
         <td><span class="spark" aria-hidden="true">${cells.map(bar).join('')}</span><span class="tr">${cells.map(val).join(' → ')}</span></td>
         <td class="pk-col"><span class="tr">${cells.map(pk).join(' → ')}${lastPack(cells)}</span></td>
-        <td><b title="${esc(`${rs(x.lastPrice)} · ${x.product || ''} · ${when(x.seenAt)}`)}">${rs(x.rate)}</b>${nowArrow(x)}<div class="muted" style="font-size:11px">${esc(per.replace('piece', 'pc'))} · ${esc(ddmmyy(x.seenAt))}</div></td>
+        <td><b title="${esc(`${rs(x.lastPrice)} · ${x.product || ''} · ${when(x.seenAt)}`)}">${rs(x.rate)}</b>${nowArrow(x)}${infoBtn([x.product, `${rs(x.lastPrice)}${x.pack ? ' for ' + fmtPack(...packParts(x.pack)) : ''} · ${rs(x.rate)} per ${b.per}`, `seen ${when(x.seenAt)}`, x.source ? `bought from ${x.source}` : '', x.lowRate != null ? `lowest ${rs(x.lowRate)} · ${day(x.lowSeenAt)}` : ''])}<div class="muted" style="font-size:11px">${esc(per.replace('piece', 'pc'))} · ${esc(ddmmyy(x.seenAt))}</div></td>
         <td class="opt-col">${rs(x.lowRate)} · ${esc(day(x.lowSeenAt))}</td></tr>`;
     }).join('')}
     </tbody></table>
     ${b.options?.length ? `<div class="opts muted" style="margin-top:6px">Also saved: ${b.options.map((o) => `<button type="button" class="secondary" data-q="${esc(o.query)}">${esc(o.query)}</button>`).join('')}</div>` : ''}`;
   box.querySelectorAll('[data-q]').forEach((btn) => btn.addEventListener('click', () => { $('q').value = btn.dataset.q; doLookup(btn.dataset.q); }));
 }
+
+// ───────────────────────── phone tabs (mockup A) ─────────────────────────
+// Phones only (CSS): Compare / Prices / Deals / Settings at the bottom.
+document.querySelector('.tabbar').addEventListener('click', (e) => {
+  const t = e.target.closest('[data-tab]');
+  if (!t || t.dataset.tab === 'settings') return;
+  document.querySelectorAll('.tabbar [data-tab]').forEach((x) => x.removeAttribute('aria-current'));
+  t.setAttribute('aria-current', 'page');
+  if (t.dataset.tab === 'compare') scrollTo({ top: 0, behavior: 'smooth' });
+  if (t.dataset.tab === 'prices') { $('q').scrollIntoView({ behavior: 'smooth', block: 'center' }); $('q').focus({ preventScroll: true }); }
+  if (t.dataset.tab === 'deals') {
+    const d = $('deals');
+    if (d.hidden) { showTip(t, 'No deals (80%+ off) right now. They show here after the offer check.'); return; }
+    d.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+});
+
+// ───────────────────────── tap tips (2026-11-20) ─────────────────────────
+// Hover text doesn't exist on a phone. There, tapping anything with a tooltip
+// opens it in a bubble; the (i) buttons open it on every device (and are the
+// way in where the thing itself is a link or a button). One bubble at a time.
+const TIP = $('tip');
+const coarse = matchMedia('(pointer: coarse)');
+let tipFor = null;
+function hideTip() {
+  if (TIP.hidden) return;
+  TIP.hidden = true;
+  if (tipFor?.classList?.contains('info')) tipFor.setAttribute('aria-expanded', 'false');
+  tipFor = null;
+}
+function showTip(anchor, text) {
+  if (!text) return;
+  if (tipFor === anchor) { hideTip(); return; }
+  hideTip();
+  TIP.querySelector('.t').textContent = text;
+  TIP.hidden = false;
+  const r = anchor.getBoundingClientRect();
+  const w = TIP.offsetWidth, h = TIP.offsetHeight;
+  const left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), innerWidth - w - 8);
+  const top = r.bottom + 6 + h > innerHeight - 8 ? Math.max(8, r.top - h - 6) : r.bottom + 6;
+  TIP.style.left = `${left}px`;
+  TIP.style.top = `${top}px`;
+  tipFor = anchor;
+  if (anchor.classList.contains('info')) anchor.setAttribute('aria-expanded', 'true');
+}
+document.addEventListener('click', (e) => {
+  if (e.target.closest('#tip .x')) { hideTip(); return; }
+  if (e.target.closest('#tip')) return;
+  const info = e.target.closest('.info');
+  if (info) { e.preventDefault(); e.stopPropagation(); showTip(info, info.dataset.tip); return; }
+  if (coarse.matches) {
+    const t = e.target.closest('[title]');
+    if (t?.title && !e.target.closest('a, button, input, select, textarea, label, summary, dialog')) { showTip(t, t.title); return; }
+  }
+  hideTip();
+}, true);
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hideTip(); });
+addEventListener('scroll', hideTip, { passive: true, capture: true });
+addEventListener('resize', hideTip);
 
 // ───────────────────────── deals (80%+ off) ─────────────────────────
 // Option 1 (approved 2026-11-19): compact table grouped by site, first rows then

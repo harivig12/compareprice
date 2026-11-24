@@ -96,6 +96,34 @@ How it is applied:
 - **Instamart `offers()`**: the home feed (`/api/instamart/home/v2`); no separate deal feed exists.
 - **Deals** (`src/deals.js`): `price ≤ (1 − pct/100) × MRP`, with no MRP never counting. They're collected from every raw search candidate (before the price check) and from the offer feeds (`src/offers.js`), and stored in the `deals` and `deal_checks` tables.
 
+## Categories and product groups (2026-11-20)
+
+- Every row carries `category`: the site's own path, joined with ` › `, or `null`.
+  - BigBasket: `tlc › mlc › llc`.
+  - Instamart: variation `superCategory › category › subCategoryType`.
+  - Milkbasket: `category › subCategory › type`.
+  - KPN: `l0 › l1`, with the "(1_13)" ids dropped.
+  - Zepto: `primaryCategoryName`.
+  - JioMart: `l3-category`.
+  - Blinkit, Amazon and Flipkart Minutes send none.
+- It is saved in `prices.category`.
+- `src/categories.js` turns title + category into a group: `staple`, `packaged`, `sweets` or `pooja`. The word lists and their sources are in `docs/diagnosis/2026-11-20-category-trigger-words.md`.
+  - Title words are only the safe ones.
+  - Risky words ("sweet", "frozen", "instant") count only inside a category path.
+  - The top level of a multi-level path never refuses: BigBasket files milk under "Bakery, Cakes & Dairy".
+- `pickBest`:
+  - Refuses **sweets and pooja** unless the line names them ("ghee laddu", "pooja oil").
+  - Then picks from the best tier present:
+    1. the category this line usually lands in on this site (`store.prefsFor`: 2+ visible staple rows);
+    2. staples;
+    3. packaged, or demoted by an AI label.
+  - Packaged is still returned when it is all there is.
+- **AI labels** (`product_groups`, optional, `src/ai/`) only demote. They never refuse or hide, because they can be wrong. Even demotion is narrow:
+  - It applies only on a line known to be a staple: 2+ of its saved products are labelled, and staple is the most common label.
+  - It never touches a product already saved for that line.
+
+  So in practice it pushes a new, different kind of product down, such as a ghee masala paste found in a "ghee" search. See `store.prefsFor` (`lineGroup`, `saved`).
+
 ## Sign-in (`src/engine/login.js`)
 
 Mobile → OTP flows for Milkbasket (`/login`), Zepto (the header's *Login*) and Instamart (swiggy.com → *Sign in* → *Login*; `open` may list several clicks, each tried only while the number box is missing); number or email → password for Amazon (`/ap/signin`).
