@@ -6,11 +6,13 @@ You give it a grocery list. It checks **Instamart, BigBasket, Zepto, Blinkit, KP
 
 It runs as an always-on service, natively or in Docker. You get a web page for ad-hoc lists, and the configured list is checked on a schedule (once or twice a day per site). That way the time-of-day deals on Instamart and BigBasket are caught, and you can see whether today's price is the best so far.
 
-![Compare page](docs/evidence/2026-11-18-ui/compare-1280.png)
+![Compare page](docs/evidence/2026-11-23-glass-ui/compare-result-1280.png)
 
 - **No logins and no pasted tokens.** Every site is used as a guest. One warm headless Chrome keeps a tab per site with your location set. Each search is the site's own API, called from inside that tab. Sessions refresh themselves.
 - **Specific errors, never just "offline".** Each failure is reported per site as one of these kinds: `blocked` (bot wall or rate limit), `session`, `unserviceable`, `timeout`, `parse`, `not_found` or `browser`. The site's own message comes with it.
 - **Generic lines match any brand.** `moong dal` matches any brand of moong dal, but never moong dal namkeen. `amul butter` only matches Amul.
+- **One product, many names.** `kismis`, `kishmish` and `dry grapes` are all `raisins`; `gud`, `vellam` and `jagrey` are all `jaggery`. They share one row and one price history (see [Names and synonyms](#names-and-synonyms)).
+- **A sweep that fills the gaps.** In the background it prices catalogue products nobody has searched yet, a few at a time at random gaps (see [Catalogue sweep](#catalogue-sweep)).
 
 ---
 
@@ -51,6 +53,8 @@ node src/cli.js basket.txt --ui   # one-shot comparison in the terminal
 | `basket serve [--port=7777] [--host=127.0.0.1] [--open]` | The service: web UI, JSON API, scheduler, history |
 | `basket run-now [--sites=a,b]` | Queue the configured list on the running service. It runs locally if no service answers. |
 | `basket history "<item>"` | Lowest price per kg / L / pc seen on each site, with date and product |
+| `basket catalog ["<item>"] [--category=spices]` | What a word resolves to (`kismis` → `raisins`), or the products in a category |
+| `basket sweep-now` | Queue one catalogue sweep batch on the running service |
 | `basket <file\|"items"> [--ui\|--json\|--web]` | One-shot live comparison |
 | `basket <file\|"items"> --cached` | Same view built from saved prices only, dated; no site contacted |
 | `basket search "<item>" [--json]` | One item across sites |
@@ -80,7 +84,9 @@ The comparison table:
 
 The three verdict boxes above the table show the cheapest single site, the runner-up, and the cheapest mix if you buy each item wherever it's cheapest.
 
-**`/settings`:** edit the location, default sites, default list and schedules (HH:MM, any number per day, each with its own sites). There's also a **Run the list now** button.
+**`/settings`:** edit the location, default sites, default list, schedules (HH:MM, any number per day, each with its own sites) and the catalogue sweep. There's also a **Run the list now** button.
+
+**`/guide`:** a step-by-step guide with separate website and phone tracks, a box to try the synonyms, and a table of error kinds. The same page is published as the [public landing page](https://harivig12.github.io/compareprice/) (`npm run build:site`). On a phone, open the service from your home Wi-Fi and use *Add to Home screen* (see [Using it from a phone](docs/OPERATIONS.md#using-it-from-a-phone)).
 
 There is no login: bind to localhost only (see [Security](#security)).
 
@@ -103,7 +109,8 @@ Config lives in `<data>/config.json` (`~/.basket` natively, `~/basket-data` in D
     { "name": "daily-check", "sites": ["instamart", "bigbasket", "zepto", "blinkit", "kpn", "jiomart", "flipkart_minutes"], "times": ["07:00", "09:00", "12:00"] }
   ],
   "timezone": "Asia/Kolkata",
-  "server": { "host": "127.0.0.1", "port": 7777 }
+  "server": { "host": "127.0.0.1", "port": 7777 },
+  "sweep": { "enabled": true, "sites": [], "minItems": 2, "maxItems": 4, "minGapMinutes": 5, "maxGapMinutes": 20, "staleHours": 24 }
 }
 ```
 
@@ -153,6 +160,25 @@ Details on how the engine works, how errors are classified, and how to add a sit
 
 ---
 
+## Names and synonyms
+
+About 230 products are listed as synonym sets in `src/catalog-data.js`: a canonical tag, English, Hindi, Tamil, Telugu and Kannada names, common misspellings, narrower names (`salted butter`), brand facets and a category (`staples`, `pulses`, `spices`, `masala`, `oil`, `dairy`, `sweetener`, `dry-fruits`, `snacks`, `beverages`, `household`, `personal-care`, ...).
+
+- A line that is a product plus only brands, pack sizes and plain modifiers is searched, matched and saved under the canonical tag (`gud 1kg` → `jaggery 1kg`). Two lines naming one product merge into one row, and the page shows what you typed.
+- Anything else is left as typed: `britannia good day cashew` is not `cashew`, and a brand is never swapped for another.
+- A listing called "Kishmish" or "Dry Grapes" matches a search for raisins.
+- Saved prices under an old spelling are regrouped under the canonical name when the service starts.
+
+`basket catalog "kismis"` or `GET /api/catalog?q=kismis` shows what a word resolves to. To add a product, see [CONTRIBUTING.md](../CONTRIBUTING.md#common-changes).
+
+---
+
+## Catalogue sweep
+
+Every 5–20 minutes at random, the service queues 2–4 catalogue products that have no saved price yet (or an old one), at most once a day each, and never while another job is running. That way a new search often already has an answer. Configure it in `config.json → sweep` or on `/settings`. Run a batch now with `basket sweep-now`. Details: [docs/OPERATIONS.md](docs/OPERATIONS.md#catalogue-sweep).
+
+---
+
 ## History and scheduled runs
 
 - Every finished job, manual or scheduled, records each confidently matched line in `<data>/basket.db` (SQLite). Prices are kept **per kg / L / pc**, and units never mix.
@@ -187,7 +213,8 @@ The tools are `compare_basket`, `search_product`, `open_basket_view` and `open_p
 ## Development
 
 ```bash
-npm test                 # 184 offline tests (fixtures under test/fixtures/sites)
+npm test                 # offline suite, about 190 tests (fixtures under test/fixtures/sites)
+npm run build:site       # the public landing page, into ./site
 npm run test:live        # LIVE=1 searches against the real sites (needs Chrome + network)
 node scripts/mcp-smoke.js
 ```
@@ -199,8 +226,10 @@ node scripts/mcp-smoke.js
 | `src/engine/sites/` | One module per site (`search`, `parse`, location) |
 | `src/normalize.js`, `src/score.js` | Pack parsing, match confidence, best pick, ranking |
 | `src/store.js` | SQLite price history and jobs |
+| `src/catalog.js`, `src/catalog-data.js` | Product catalogue: synonyms, categories, brand facets |
+| `src/sweep.js` | The random catalogue sweep |
 | `src/jobs.js`, `src/scheduler.js`, `src/service.js` | Queue, daily-times scheduler, the long-running service |
-| `src/server.js`, `src/ui/` | HTTP API with SSE, compare and settings pages |
+| `src/server.js`, `src/ui/` | HTTP API with SSE; the compare, settings and guide pages and their shared `theme.css` |
 | `src/extract/` | Legacy DOM extractors, used as page fallbacks and by the webcmd backend |
 | `docs/` | Design, plan, diagnosis, engine/API/ops guides, UI evidence |
 

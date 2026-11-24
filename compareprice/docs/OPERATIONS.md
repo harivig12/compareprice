@@ -49,6 +49,14 @@ On startup the store:
 - On start the store re-keys saved prices, so rows saved under a synonym join the canonical product's history (`store: regrouped N saved price(s)…`).
 - `basket catalog "<item>"` shows what a line resolves to. `basket catalog --category=spices` lists one category. `GET /api/catalog` returns the same information.
 
+## The public landing page
+
+The guide (`src/ui/guide.html`) is a static page, so it can be published for free on GitHub Pages as the project's landing page: https://harivig12.github.io/compareprice/. The app itself cannot be hosted there, because it needs a headless Chrome and a scheduler running on a machine of yours.
+
+- `npm run build:site` writes the static copy to `site/` (git-ignored): the page marked `<html class="static">` so links to app pages hide and GitHub links show, the shared `theme.css`, the icons, and a manifest that starts at the page itself.
+- `.github/workflows/pages.yml` builds and publishes it when `main` changes the pages.
+- One-time setup in the repository: **Settings → Pages → Build and deployment → Source: GitHub Actions**. Then set the repository's **About → Website** to the address above.
+
 ## Using it from a phone
 
 The user guide at `/guide` covers this step by step. In short:

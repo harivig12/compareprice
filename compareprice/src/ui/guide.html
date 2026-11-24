@@ -6,12 +6,23 @@
 <meta name="theme-color" content="#F4F7F2">
 <title>Basket · compareprice — how to use it on the website and on your phone</title>
 <meta name="description" content="How to use compareprice: paste a grocery list, find the cheapest basket across seven quick-commerce sites, on a computer or on your phone.">
-<link rel="icon" href="/icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="manifest" href="/manifest.webmanifest">
-<link rel="stylesheet" href="/theme.css">
+<meta property="og:type" content="website">
+<meta property="og:title" content="compareprice: the cheapest grocery basket across 7 Indian quick-commerce sites">
+<meta property="og:description" content="Write your list once. See where the whole basket and each item cost least. Self-hosted, no logins, price history and schedules. MIT licensed.">
+<meta property="og:url" content="https://harivig12.github.io/compareprice/">
+<meta property="og:image" content="https://harivig12.github.io/compareprice/social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="theme.css">
 <style>
   html { scroll-behavior: smooth; }
+  /* The same page is the app guide (/guide) and the public landing page (GitHub Pages).
+     The static build adds a "static" class to the html element: app links disappear, GitHub ones appear. */
+  html:not(.static) .static-only { display: none !important; }
+  .static .app-only { display: none !important; }
+  .static .app-link { pointer-events: none; color: inherit; text-decoration: none; }
   .wrap { max-width: 1180px; margin: 0 auto; padding: 0 clamp(.75rem, 2.5vw, 1.5rem) 3rem; }
   section[id] { scroll-margin-top: 5.5rem; }
 
@@ -219,16 +230,18 @@
   <symbol id="i-terminal" viewBox="0 0 24 24"><path d="m4 17 6-6-6-6"/><path d="M12 19h8"/></symbol>
   <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></symbol>
   <symbol id="i-box" viewBox="0 0 24 24"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></symbol>
+  <symbol id="i-github" viewBox="0 0 24 24"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></symbol>
   <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
 </svg>
 
 <div class="wrap">
   <header class="topnav glass">
-    <a class="brand" href="/"><span class="mark"><svg class="ico"><use href="#i-basket"/></svg></span>compareprice</a>
+    <a class="brand" href="./"><span class="mark"><svg class="ico"><use href="#i-basket"/></svg></span>compareprice</a>
     <nav aria-label="Main">
-      <a href="/"><svg class="ico"><use href="#i-scale"/></svg><span>Compare</span></a>
-      <a href="/settings"><svg class="ico"><use href="#i-gear"/></svg><span>Settings</span></a>
-      <a href="/guide" aria-current="page"><svg class="ico"><use href="#i-book"/></svg><span>Guide</span></a>
+      <a class="app-only" href="/"><svg class="ico"><use href="#i-scale"/></svg><span>Compare</span></a>
+      <a class="app-only" href="/settings"><svg class="ico"><use href="#i-gear"/></svg><span>Settings</span></a>
+      <a href="./" aria-current="page"><svg class="ico"><use href="#i-book"/></svg><span>Guide</span></a>
+      <a class="static-only" href="https://github.com/harivig12/compareprice"><svg class="ico"><use href="#i-github"/></svg><span>GitHub</span></a>
     </nav>
   </header>
 
@@ -238,7 +251,8 @@
     <h1 id="h-hero">Groceries, <span>priced everywhere</span> at once.</h1>
     <p class="lede">Write your list once. compareprice checks Instamart, BigBasket, Zepto, Blinkit, KPN Fresh, JioMart and Flipkart Minutes at your address. It tells you where the whole basket costs least, and where each item does. Use it on the computer it runs on, or on your phone over home Wi-Fi.</p>
     <div class="ctas">
-      <a class="btn" href="/">Open the app <svg class="ico"><use href="#i-arrow"/></svg></a>
+      <a class="btn app-only" href="/">Open the app <svg class="ico"><use href="#i-arrow"/></svg></a>
+      <a class="btn static-only" href="https://github.com/harivig12/compareprice"><svg class="ico"><use href="#i-github"/></svg>Get it on GitHub</a>
       <a class="btn secondary" href="#web"><svg class="ico"><use href="#i-laptop"/></svg>Website steps</a>
       <a class="btn secondary" href="#phone"><svg class="ico"><use href="#i-phone"/></svg>Phone steps</a>
     </div>
@@ -282,6 +296,11 @@
       <span class="bubble"><svg class="ico"><use href="#i-box"/></svg></span>
       <h2 id="h-start">Start the service</h2>
       <p>compareprice runs on one computer, which can be a laptop, a desktop or a small home server. It keeps a browser warm for each site, checks your list on a schedule, and serves the page you use. Do this once.</p>
+    </div>
+    <div class="static-only" style="margin-bottom:1rem">
+<pre class="cmd"><span class="c"># get the code</span>
+git clone https://github.com/harivig12/compareprice.git
+cd compareprice/compareprice</pre>
     </div>
     <div class="quick">
       <div class="qc surface">
@@ -397,7 +416,7 @@ node src/cli.js serve</pre>
         <span class="n">9</span>
         <div>
           <h3>Set it and forget it</h3>
-          <p>In <a href="/settings">Settings</a>, set your <b>delivery location</b>, <b>default sites</b>, a <b>default list</b> and <b>schedules</b>. Schedules use 24-hour times, as many per day as you like, and each can have its own sites. Scheduled runs keep the saved prices fresh, so <b>Find the cheapest</b> is always recent.</p>
+          <p>In <a class="app-link" href="/settings">Settings</a>, set your <b>delivery location</b>, <b>default sites</b>, a <b>default list</b> and <b>schedules</b>. Schedules use 24-hour times, as many per day as you like, and each can have its own sites. Scheduled runs keep the saved prices fresh, so <b>Find the cheapest</b> is always recent.</p>
           <div class="mini"><div class="chips"><span class="chip">daily-check</span><span class="chip ok">07:00</span><span class="chip ok">09:00</span><span class="chip ok">12:00</span></div></div>
         </div>
       </article>
@@ -519,7 +538,7 @@ node src/cli.js serve</pre>
       </div>
       <div class="kc surface">
         <h3><svg class="ico"><use href="#i-shuffle"/></svg>Catalogue sweep</h3>
-        <p>In the background, the service prices 2–4 catalogue products at a time at random 5–20 minute gaps, starting with ones that have no saved price. That way new searches often have an answer already. You can change it or turn it off in <a href="/settings#s-sweep">Settings</a>.</p>
+        <p>In the background, the service prices 2–4 catalogue products at a time at random 5–20 minute gaps, starting with ones that have no saved price. That way new searches often have an answer already. You can change it or turn it off in <a class="app-link" href="/settings#s-sweep">Settings</a>.</p>
       </div>
       <div class="kc surface">
         <h3><svg class="ico"><use href="#i-truck"/></svg>Delivery fees</h3>
@@ -544,7 +563,7 @@ node src/cli.js serve</pre>
         <tbody>
           <tr><th scope="row"><span class="k">blocked</span></th><td>The site hit a bot wall or rate limit (403 or 429).</td><td>Wait. The site rests for a while before it's searched again. Keep your schedule to once or twice a day.</td></tr>
           <tr><th scope="row"><span class="k">session</span></th><td>The site's guest session expired, or it wants you to sign in.</td><td>It refreshes itself and retries once. For Zepto, use <b>Sign in</b>.</td></tr>
-          <tr><th scope="row"><span class="k">unserviceable</span></th><td>The site doesn't deliver to your address.</td><td>Check the location in <a href="/settings#s-loc">Settings</a>, or untick that site.</td></tr>
+          <tr><th scope="row"><span class="k">unserviceable</span></th><td>The site doesn't deliver to your address.</td><td>Check the location in <a class="app-link" href="/settings#s-loc">Settings</a>, or untick that site.</td></tr>
           <tr><th scope="row"><span class="k">timeout</span></th><td>The site took too long to answer.</td><td>Try <b>Get fresh prices</b> again later.</td></tr>
           <tr><th scope="row"><span class="k">parse</span></th><td>The site changed what it sends back.</td><td>This needs a code fix. Note the message and report it.</td></tr>
           <tr><th scope="row"><span class="k">not_found</span></th><td>The site answered but has nothing matching.</td><td>Try a more general name, such as "moong dal" instead of "organic split moong dal".</td></tr>
@@ -578,7 +597,7 @@ node src/cli.js serve</pre>
     </div>
   </section>
 
-  <footer>compareprice · totals are goods only unless you add fees · <a href="/">Open the app</a></footer>
+  <footer>compareprice · totals are goods only unless you add fees · <a class="app-only" href="/">Open the app</a><span class="static-only"><a href="https://github.com/harivig12/compareprice">GitHub</a> · <a href="https://github.com/harivig12/compareprice/blob/main/compareprice/CHANGELOG.md">Changelog</a> · MIT</span></footer>
 </div>
 
 <script>
@@ -626,7 +645,7 @@ node src/cli.js serve</pre>
     const v = inp.value.trim();
     if (!v) { out.innerHTML = ''; return; }
     try {
-      const res = await fetch('/api/catalog?q=' + encodeURIComponent(v));
+      const res = await fetch('api/catalog?q=' + encodeURIComponent(v));
       if (!res.ok) throw new Error();
       const b = await res.json();
       if (!b.product) return paint(b.canonical, '', '', 'Not a catalogue product, so it is searched as typed.');

@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Offline tests (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['22', '24'] # package.json needs >= 22.13; the Docker image uses 24
+    defaults:
+      run:
+        working-directory: compareprice
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+          cache-dependency-path: compareprice/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - name: The landing page builds
+        run: npm run build:site

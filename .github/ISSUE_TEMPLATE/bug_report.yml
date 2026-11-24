@@ -1,0 +1,68 @@
+name: Bug report
+description: Something is wrong: a site stopped working, a price looks wrong, or the app misbehaves.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. For a site that stopped working, the **error kind and message** shown on the page are the most useful detail.
+        For anything security-related, please don't file it here: see [SECURITY.md](https://github.com/harivig12/compareprice/blob/main/SECURITY.md).
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where does it go wrong?
+      options:
+        - A site returns an error or no results
+        - A price or product looks wrong
+        - Synonyms or the catalogue (for example kismis and raisins split)
+        - The web page or phone layout
+        - Schedules or the catalogue sweep
+        - CLI or MCP
+        - Install, Docker or Chrome
+        - Something else
+    validations:
+      required: true
+  - type: dropdown
+    id: site
+    attributes:
+      label: Which site, if any?
+      multiple: true
+      options: [Instamart, BigBasket, Zepto, Blinkit, KPN Fresh, JioMart, Flipkart Minutes, Amazon Now, Milkbasket, Not site-specific]
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+      description: Paste the error kind and message from the page (for example `blocked: HTTP 403`), or the line from your list and the wrong result.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. List: `kismis 500g`
+        2. Press "Get fresh prices"
+        3. ...
+  - type: dropdown
+    id: how
+    attributes:
+      label: How are you running it?
+      options: [Docker, Node directly, Not sure]
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      description: "`version` in package.json, or the output of `git rev-parse --short HEAD`."
+  - type: input
+    id: os
+    attributes:
+      label: OS and Chrome version
+      placeholder: Windows 11, Chrome 131
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Anything from the terminal or `docker compose logs basket`. Remove phone numbers and addresses first.
+      render: shell

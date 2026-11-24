@@ -1,0 +1,45 @@
+name: Landing page
+
+# Publishes the in-app guide as a static page at https://harivig12.github.io/compareprice/
+# One-time setup: Settings > Pages > Build and deployment > Source: "GitHub Actions".
+# Only the guide is hosted. The app itself needs Chrome and a scheduler, so it runs on your own machine.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'compareprice/src/ui/**'
+      - 'compareprice/scripts/build-site.js'
+      - 'compareprice/docs/assets/social-preview.png'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Build the static site
+        working-directory: compareprice
+        run: node scripts/build-site.js
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: compareprice/site
+      - id: deployment
+        uses: actions/deploy-pages@v4

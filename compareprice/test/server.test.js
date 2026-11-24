@@ -87,13 +87,14 @@ test('GET / serves the page', async () => {
 
 test('GET /guide, /settings and /theme.css serve the shared-theme pages', async () => {
   await withServer(async (s) => {
+    // /guide uses relative links so the same file also works as a static landing page.
     for (const path of ['/guide', '/settings']) {
       const res = await fetch(`${s.url}${path}`);
       assert.equal(res.status, 200, path);
       const html = await res.text();
-      assert.match(html, /<link rel="stylesheet" href="\/theme.css">/, path);
-      assert.match(html, /href="\/guide"/, `${path} links to the guide`);
+      assert.match(html, path === '/guide' ? /<link rel="stylesheet" href="theme.css">/ : /<link rel="stylesheet" href="\/theme.css">/, path);
     }
+    assert.match(await (await fetch(`${s.url}/settings`)).text(), /href="\/guide"/, 'settings links to the guide');
     const css = await fetch(`${s.url}/theme.css`);
     assert.equal(css.status, 200);
     assert.match(css.headers.get('content-type'), /text\/css/);
@@ -106,8 +107,9 @@ test('pages use system fonts and ship a home-screen icon and manifest', async ()
     for (const path of ['/', '/settings', '/guide']) {
       const html = await (await fetch(`${s.url}${path}`)).text();
       assert.doesNotMatch(html, /fonts\.googleapis|fonts\.gstatic/, `${path} fetches no web fonts`);
-      assert.match(html, /<link rel="manifest" href="\/manifest.webmanifest">/, path);
-      assert.match(html, /<link rel="apple-touch-icon" href="\/apple-touch-icon.png">/, path);
+      const lead = path === '/guide' ? '' : '/';
+      assert.ok(html.includes(`<link rel="manifest" href="${lead}manifest.webmanifest">`), `${path} links the manifest`);
+      assert.ok(html.includes(`<link rel="apple-touch-icon" href="${lead}apple-touch-icon.png">`), `${path} links the touch icon`);
     }
     const man = await fetch(`${s.url}/manifest.webmanifest`);
     assert.match(man.headers.get('content-type'), /application\/manifest\+json/);

@@ -1,17 +1,18 @@
 {
   "name": "compareprice",
-  "version": "1.0.0",
-  "description": "Compare a grocery basket across Instamart, BigBasket, Zepto, Blinkit, KPN Fresh and more — a warm headless-Chrome engine, price history, daily scheduler and web UI",
+  "version": "1.1.0",
+  "description": "Compare a grocery basket across Instamart, BigBasket, Zepto, Blinkit, KPN Fresh, JioMart and Flipkart Minutes. A warm headless-Chrome engine, price history, schedules, a web UI, a CLI and an MCP server. Self-hosted, no logins.",
   "type": "module",
   "license": "MIT",
   "author": "Soubhik Halder",
-  "homepage": "https://github.com/harivig12/prototype/tree/main/compareprice#readme",
+  "homepage": "https://harivig12.github.io/compareprice/",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/harivig12/prototype.git"
+    "url": "git+https://github.com/harivig12/compareprice.git",
+    "directory": "compareprice"
   },
   "bugs": {
-    "url": "https://github.com/harivig12/prototype/issues"
+    "url": "https://github.com/harivig12/compareprice/issues"
   },
   "bin": {
     "basket": "src/cli.js"
@@ -24,7 +25,9 @@
     "LICENSE",
     "Dockerfile",
     "docker-compose.yml",
-    "docs/**/*"
+    "docs/**/*",
+    "scripts/build-site.js",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "serve": "node src/cli.js serve",
@@ -38,22 +41,28 @@
     "setup": "node src/cli.js setup",
     "doctor": "node src/cli.js doctor",
     "build:adapters": "node scripts/build-adapters.js",
-    "probe": "node scripts/probe.js"
+    "probe": "node scripts/probe.js",
+    "build:site": "node scripts/build-site.js"
   },
   "keywords": [
     "grocery",
     "price-comparison",
+    "price-tracker",
     "quick-commerce",
-    "blinkit",
-    "zepto",
-    "bigbasket",
-    "instamart",
-    "mcp",
     "india",
-    "cli",
-    "kpn",
+    "instamart",
+    "bigbasket",
+    "zepto",
+    "blinkit",
+    "jiomart",
+    "flipkart-minutes",
+    "kpn-fresh",
     "headless-chrome",
-    "price-history"
+    "self-hosted",
+    "docker",
+    "sqlite",
+    "mcp",
+    "cli"
   ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0"
