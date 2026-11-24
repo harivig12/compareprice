@@ -11,6 +11,7 @@
 import { pageFetch } from '../page-fetch.js';
 import { SiteError } from '../errors.js';
 import { bestPack } from './_util.js';
+import { categoryPath } from '../../categories.js';
 
 const ID = 'kpn';
 const ORIGIN = 'https://www.kpnfresh.com/';
@@ -47,6 +48,8 @@ export function parse(json) {
         mrp: mrp > sp ? mrp : null,
         inStock: (pack.stock_details?.status || 'IN_STOCK') === 'IN_STOCK',
         url: new URL(pack.product_url || p.product_url || '', ORIGIN).href,
+        // Levels carry an id suffix: "Rice, Atta & Dal (1_13)".
+        category: categoryPath([p.primary_navigation_category_l0, p.primary_navigation_category_l1].map((c) => String(c ?? '').replace(/\s*\(\d+_\d+\)\s*$/, ''))),
       });
     }
   }

@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jhola · logo comparison and Liquid Glass on the deployed pages</title>
+<style>
+/* ───── review sheet ───── */
+*{box-sizing:border-box}
+body{margin:0;background:#E9EDF5;color:#1f2937;font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.sheet{max-width:1360px;margin:0 auto;padding:1.8rem 1.25rem 3rem}
+h1{margin:0 0 .3rem;font-size:1.7rem}
+h2{margin:2.4rem 0 .4rem;font-size:1.3rem;border-top:2px solid #cbd5e1;padding-top:1.3rem}
+h3{margin:1.2rem 0 .4rem;font-size:1.05rem}
+p{margin:.2rem 0 .8rem;max-width:980px}
+.note{background:#fff;border-left:4px solid #2563EB;padding:.7rem 1rem;border-radius:.4rem;max-width:980px;margin:.6rem 0}
+.note ul{margin:.3rem 0 0;padding-left:1.2rem}
+.ask{background:#FFFBEB;border-left:4px solid #B45309;padding:.8rem 1rem;border-radius:.4rem;max-width:980px}
+.ask ol{margin:.3rem 0 0;padding-left:1.2rem}
+code{font:600 .86em ui-monospace,Consolas,monospace;background:#fff;border:1px solid #e2e8f0;border-radius:5px;padding:.05rem .3rem}
+
+/* ───── logo comparison ───── */
+.logos{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem}
+.lcard{background:#fff;border-radius:18px;padding:1.1rem 1.2rem}
+.lcard h3{margin:0 0 .15rem;display:flex;align-items:center;gap:.5rem}
+.lcard .tag{font-size:.72rem;font-weight:800;border-radius:999px;padding:.08rem .55rem;background:#1e3a8a;color:#fff}
+.lcard .tag.y{background:#0E7A4B}
+.lcard p{font-size:.9rem;color:#475569;margin:0 0 .8rem}
+.sizes{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:.9rem}
+.sizes img{display:block}
+.sizes figure{margin:0;text-align:center;font-size:.7rem;color:#64748b}
+.ctx{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+.bar{display:flex;align-items:center;gap:.5rem;border-radius:14px;padding:.5rem .7rem;font-weight:800}
+.bar img{width:32px;height:32px;border-radius:9px;display:block}
+.bar.l{background:#F4F7F2;color:#0B1B14;border:1px solid #e2e8f0}
+.bar.d{background:#0B1410;color:#E8F1EC;border:1px solid #1f2d26}
+.home{display:flex;gap:.9rem;align-items:center;background:linear-gradient(135deg,#1e293b,#334155);border-radius:16px;padding:.8rem;color:#fff;font-size:.72rem}
+.home div{display:grid;justify-items:center;gap:.25rem}
+.home img{width:56px;height:56px;display:block}
+.home .sq{border-radius:22%} .home .ci{border-radius:50%}
+.tabrow{display:flex;gap:.5rem;align-items:center;font-size:.78rem}
+.tabrow span{display:inline-flex;align-items:center;gap:.35rem;background:#DEE3EA;border-radius:8px 8px 0 0;padding:.3rem .65rem}
+.tabrow span.dk{background:#2b2f36;color:#e5e7eb}
+.cmp{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;margin-top:1rem;font-size:.92rem}
+.cmp th,.cmp td{text-align:left;padding:.55rem .75rem;border-bottom:1px solid #e2e8f0;vertical-align:top}
+.cmp th{background:#f1f5f9}
+
+/* ───── Liquid Glass on the deployed compare page ───── */
+.shots{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:1.2rem;align-items:start;margin-top:.8rem}
+.frame{border-radius:22px;overflow:hidden;box-shadow:0 18px 40px #0b1b1426}
+.cap{font-size:.82rem;color:#475569;margin:.4rem 0 0}
+
+.app{--g:#0E7A4B;--g2:#D5F2E3;--gink:#06492C;--ink:#0B1B14;--muted:#3E5148;--faint:#5C6E65;--line:#D9E4DD;
+  --surface:rgba(255,255,255,.9);--glass:rgba(255,255,255,.55);--rim:rgba(255,255,255,.8);--amber:#9A4A06;--amberbg:#FFF3E3;--bad:#B42318;
+  --yel:#FFD54A;--shadow:0 10px 30px rgba(11,27,20,.08),inset 0 1px 0 rgba(255,255,255,.7);--cell:#F4F8F5;--dim:#F1F1EE;
+  --bgmesh:radial-gradient(60% 50% at 8% 6%,#BFF0D4 0,transparent 60%),radial-gradient(45% 45% at 96% 10%,#FFE3B0 0,transparent 60%),radial-gradient(60% 60% at 75% 100%,#DCD3FF 0,transparent 60%),#F4F7F2;
+  color:var(--ink);background:var(--bgmesh);font:13px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:12px 14px 16px;position:relative}
+.app[data-theme=dark]{--g:#1FA866;--g2:#143A28;--gink:#7EE2AE;--ink:#E8F1EC;--muted:#A9BDB2;--faint:#8FA69A;--line:#24362D;
+  --surface:rgba(19,30,25,.92);--glass:rgba(22,36,30,.55);--rim:rgba(255,255,255,.09);--amber:#F6C25B;--amberbg:#2A2210;--bad:#FF8A80;
+  --shadow:0 10px 30px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.05);--cell:#16241E;--dim:#121A16;
+  --bgmesh:radial-gradient(60% 50% at 8% 6%,#0F3B27 0,transparent 60%),radial-gradient(45% 45% at 96% 10%,#3A2A0B 0,transparent 60%),radial-gradient(60% 60% at 75% 100%,#211A3D 0,transparent 60%),#08110D}
+.app .glass{background:var(--glass);backdrop-filter:blur(16px) saturate(1.4);-webkit-backdrop-filter:blur(16px) saturate(1.4);border:1px solid var(--rim);box-shadow:var(--shadow)}
+.app .surface{background:var(--surface);border:1px solid var(--rim);box-shadow:var(--shadow)}
+.top{display:flex;align-items:center;gap:8px;border-radius:999px;padding:5px 6px 5px 6px;margin-bottom:10px}
+.top .brand{display:flex;align-items:center;gap:7px;font-weight:800;font-size:15px}
+.top .brand img{width:28px;height:28px;border-radius:8px;display:block;box-shadow:0 2px 6px rgba(0,0,0,.18)}
+.top .meta{color:var(--muted);font-weight:600;font-size:11.5px}
+.top nav{margin-left:auto;display:flex;gap:2px;background:rgba(127,127,127,.12);border-radius:999px;padding:3px}
+.top nav a{padding:4px 10px;border-radius:999px;font-weight:700;font-size:11.5px;color:var(--muted);text-decoration:none}
+.top nav a.on{background:var(--ink);color:var(--surface)}
+.app[data-theme=dark] .top nav a.on{color:#08110D}
+.tt{display:inline-flex;border-radius:999px;padding:2px;background:rgba(127,127,127,.12);font-size:10.5px;font-weight:700}
+.tt span{padding:3px 8px;border-radius:999px;color:var(--muted)} .tt span.on{background:var(--g);color:#fff}
+.acts{display:flex;flex-wrap:wrap;gap:6px;align-items:center;border-radius:18px;padding:6px;margin-bottom:9px}
+.b{display:inline-flex;align-items:center;gap:5px;min-height:30px;padding:0 12px;border-radius:999px;font-weight:700;font-size:12px;border:1.5px solid rgba(127,127,127,.35);background:transparent;color:var(--ink)}
+.b.pri{background:var(--g);border-color:var(--g);color:#fff}
+.b.dis{opacity:.45}
+.srch{flex:1 1 200px;min-height:30px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);display:flex;align-items:center;padding:0 12px;color:var(--faint);font-size:12px}
+.list{border-radius:16px;padding:8px 12px;margin-bottom:9px;font-weight:800;display:flex;justify-content:space-between}
+.list span{color:var(--muted);font-weight:600}
+.ban{border-radius:14px;padding:8px 12px;margin-bottom:9px;display:flex;align-items:center;gap:10px;background:var(--amberbg);border:1px solid rgba(214,158,46,.35)}
+.ban p{margin:0;flex:1;font-size:12px}
+.fresh{border-radius:16px;padding:8px 12px;margin-bottom:9px;font-size:11.5px}
+.fresh b{font-size:12px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:0;margin-right:4px}
+.dot.g{background:#16A34A}.dot.a{background:#D97706}.dot.r{background:#DC2626}
+.fresh a{color:var(--gink);font-weight:700}
+.verd{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:9px}
+.verd div{border-radius:16px;padding:8px 11px;font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
+.verd div.w{background:#0B1B14;color:var(--yel);border-color:#0B1B14}
+.app[data-theme=dark] .verd div.w{background:#0E2A1D;border-color:#1E5B3E}
+.verd b{display:block;font-size:17px;letter-spacing:-.02em;text-transform:none;color:var(--ink);margin-top:1px}
+.verd .w b{color:#fff}
+.verd small{display:block;font-size:10.5px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--muted)}
+.verd .w small{color:#C7D6CE}
+.tw{border-radius:18px;padding:6px}
+table.t{width:100%;border-collapse:separate;border-spacing:3px;table-layout:fixed;font-size:11px}
+table.t th{text-align:left;font-size:11px;padding:4px 6px;border-radius:9px;background:var(--surface)}
+table.t th small{display:block;color:var(--faint);font-weight:600}
+table.t td{background:var(--cell);border-radius:10px;padding:5px 6px;vertical-align:top;position:relative}
+table.t td.it{background:transparent;font-weight:800;font-size:11.5px}
+table.t td.it small{display:block;color:var(--faint);font-weight:600;font-size:10px}
+table.t td.best{background:var(--g);color:#fff}
+table.t td.sec{background:var(--g2)}
+table.t td.miss{background:transparent;border:1.5px dashed var(--line);color:var(--faint);font-weight:600}
+.p{font-weight:800;font-size:13px}
+.n{font-weight:600;opacity:.85;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.u{font-size:10px;opacity:.75}
+.bd{display:inline-block;font-size:9px;font-weight:800;border-radius:999px;padding:0 6px;margin:2px 0}
+.bd.at{background:#DBEAFE;color:#1E3A8A}.bd.lo{background:#DCFCE7;color:#065F46}.bd.ab{background:#EEF2EF;color:#334155}
+.ib{position:absolute;right:5px;top:4px;display:flex;gap:3px}
+.ib i{font-style:normal;width:16px;height:16px;border-radius:50%;border:1px solid currentColor;display:grid;place-items:center;font-size:9px;font-weight:800;opacity:.7}
+.hint{margin-top:4px;border:1px solid rgba(214,158,46,.6);background:var(--amberbg);color:var(--amber);border-radius:8px;padding:3px 5px;font-size:10px}
+.deals{border-radius:18px;padding:10px 12px;margin-top:9px}
+.deals h4{margin:0 0 6px;font-size:13px;display:flex;align-items:center;gap:8px}
+.deals h4 small{color:var(--muted);font-weight:600}
+.deals .site{font-weight:800;font-size:11.5px;margin:6px 0 3px;display:flex;gap:6px;align-items:center}
+.cond{font-size:10px;font-weight:800;color:var(--amber);background:var(--amberbg);border-radius:999px;padding:1px 7px}
+.drow{display:grid;grid-template-columns:1fr auto auto auto;gap:8px;align-items:center;padding:4px 6px;border-radius:9px;background:var(--cell);margin-bottom:3px;font-size:11px}
+.drow s{color:var(--faint)}
+.off{font-size:10px;font-weight:800;background:var(--g);color:#fff;border-radius:999px;padding:0 7px}
+.foot{display:flex;justify-content:space-between;margin-top:9px;border-radius:14px;padding:7px 12px;font-weight:800;font-size:12px}
+
+/* phone */
+.phone{border-radius:34px;padding:8px;background:#0b0f0d}
+.phone .app{border-radius:27px;padding:10px 10px 66px;min-height:640px;font-size:12px}
+.phone .top{padding:4px 5px}
+.phone .top nav{display:none}
+.phone .verd{grid-template-columns:1fr 1fr}.phone .verd div.w{grid-column:1/-1}
+.pc{border-radius:16px;padding:8px;margin-bottom:7px}
+.pc h5{margin:0;font-size:12.5px}.pc h5 small{display:block;color:var(--faint);font-weight:600;font-size:10px}
+.pr{display:grid;grid-template-columns:62px 1fr auto;gap:5px;padding:5px 6px;border-radius:10px;background:var(--cell);margin-top:4px;align-items:start;font-size:10.5px}
+.pr.best{background:var(--g);color:#fff}.pr.sec{background:var(--g2)}
+.pr b{font-size:11px}
+.tabs{position:absolute;left:10px;right:10px;bottom:10px;border-radius:20px;padding:5px;display:grid;grid-template-columns:repeat(4,1fr);gap:3px}
+.tabs span{display:grid;justify-items:center;gap:1px;padding:5px 0;border-radius:14px;font-size:9.5px;font-weight:800;color:var(--muted)}
+.tabs span.on{background:var(--g);color:#fff}
+.tabs span i{font-style:normal;font-size:14px;line-height:1}
+@media (max-width:1100px){.shots{grid-template-columns:1fr}.logos{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="sheet">
+  <h1>Jhola · logo comparison and Liquid Glass on the deployed pages</h1>
+  <p>Two things to approve before the merge is built. <b>1</b>: which Jhola logo to keep, shown side by side. <b>2</b>: how Liquid Glass looks on the deployed compare page (the one at price.vignas.online), in light and dark. Every deployed feature stays: the run buttons, freshness, the (i) and ✕ buttons, the badges, the cheaper-brand hint, the Deals section, and the bottom tabs on phones.</p>
+  <div class="note"><b>References used</b> (design library):
+    <ul>
+      <li><code>guides/dashboards.md</code>: table-first layout, one highlighted KPI (the dark "cheapest basket" card), bottom tabs on phones, follow the device theme, dark = deep tone, not pure black.</li>
+      <li><code>guides/mobile-app-flows.md</code>: primary actions in the thumb zone, 44 px targets, status as word + colour.</li>
+      <li><code>tokens/tokens.css</code>: one easing curve, light/dark via <code>data-theme</code>.</li>
+      <li><code>references/</code>: Milkinside's Google Merchant Center (light glass panels over a soft room), Scarlet (frosted panels on soft colour) and Hume (dark glass controls). These are for the feel only, nothing is copied.</li>
+    </ul></div>
+
+  <!-- ═════════ 1. logo ═════════ -->
+  <h2>1 · Logo: deployed vs today's pick</h2>
+  <div class="logos">
+    <div class="lcard">
+      <h3>A · Deployed (2026-11-20) <span class="tag">on price.vignas.online</span></h3>
+      <p>An amber bag with a falling bar chart (prices going down) on dark green. The rounded corners are drawn into the file.</p>
+      <div class="sizes">
+        <figure><img src="2026-11-24-deployed-icon-2026-11-20.svg" width="128" height="128" alt="Deployed logo, 128 px"><figcaption>128</figcaption></figure>
+        <figure><img src="2026-11-24-deployed-icon-2026-11-20.svg" width="64" height="64" alt=""><figcaption>64</figcaption></figure>
+        <figure><img src="2026-11-24-deployed-icon-2026-11-20.svg" width="32" height="32" alt=""><figcaption>32</figcaption></figure>
+        <figure><img src="2026-11-24-deployed-icon-2026-11-20.svg" width="16" height="16" alt=""><figcaption>16</figcaption></figure>
+      </div>
+      <div class="ctx">
+        <div class="bar l"><img src="2026-11-24-deployed-icon-2026-11-20.svg" alt="">Jhola</div>
+        <div class="bar d"><img src="2026-11-24-deployed-icon-2026-11-20.svg" alt="">Jhola</div>
+        <div class="home"><div><img class="sq" src="2026-11-24-deployed-icon-2026-11-20.svg" alt="">Jhola</div><div><img class="ci" src="2026-11-24-deployed-icon-2026-11-20.svg" alt="">round mask</div></div>
+        <div class="tabrow"><span><img src="2026-11-24-deployed-icon-2026-11-20.svg" width="16" height="16" alt="">Jhola</span><span class="dk"><img src="2026-11-24-deployed-icon-2026-11-20.svg" width="16" height="16" alt="">Jhola</span></div>
+      </div>
+    </div>
+    <div class="lcard">
+      <h3>B · Today's pick (2026-11-24) <span class="tag y">on GitHub main</span></h3>
+      <p>A yellow jhola with a green ₹ price tag on a green gradient. It's full-bleed, so each platform rounds or masks it the same way. The master is <code>assets/brand/jhola-icon.svg</code>.</p>
+      <div class="sizes">
+        <figure><img src="../../assets/brand/jhola-icon.svg" width="128" height="128" style="border-radius:24%" alt="Today's logo, 128 px"><figcaption>128</figcaption></figure>
+        <figure><img src="../../assets/brand/jhola-icon.svg" width="64" height="64" style="border-radius:24%" alt=""><figcaption>64</figcaption></figure>
+        <figure><img src="../../assets/brand/jhola-icon.svg" width="32" height="32" style="border-radius:7px" alt=""><figcaption>32</figcaption></figure>
+        <figure><img src="../../assets/brand/jhola-icon.svg" width="16" height="16" style="border-radius:3px" alt=""><figcaption>16</figcaption></figure>
+      </div>
+      <div class="ctx">
+        <div class="bar l"><img src="../../assets/brand/jhola-icon.svg" alt="">Jhola</div>
+        <div class="bar d"><img src="../../assets/brand/jhola-icon.svg" alt="">Jhola</div>
+        <div class="home"><div><img class="sq" src="../../assets/brand/jhola-icon.svg" alt="">Jhola</div><div><img class="ci" src="../../assets/brand/jhola-icon.svg" alt="">round mask</div></div>
+        <div class="tabrow"><span><img src="../../assets/brand/jhola-icon.svg" width="16" height="16" style="border-radius:3px" alt="">Jhola</span><span class="dk"><img src="../../assets/brand/jhola-icon.svg" width="16" height="16" style="border-radius:3px" alt="">Jhola</span></div>
+      </div>
+    </div>
+  </div>
+  <table class="cmp">
+    <thead><tr><th></th><th>A · Deployed</th><th>B · Today's pick</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">Says</th><td>"bag + prices falling"</td><td>"bag + price tag (₹)"</td></tr>
+      <tr><th scope="row">At 16 px</th><td>Reads as an amber bag. The chart bars blur together.</td><td>Reads as a yellow bag with a green mark. The ₹ shows from 32 px.</td></tr>
+      <tr><th scope="row">On dark</th><td>Dark green on dark gets low contrast at the edge.</td><td>Brighter green, so it stays separate from the dark background.</td></tr>
+      <tr><th scope="row">Home-screen masks</th><td>Corners are drawn in, so Android's round mask shows a square inside a circle.</td><td>Full-bleed, so the round mask fills the circle.</td></tr>
+      <tr><th scope="row">Fits the Liquid Glass palette</th><td>Darker and more formal.</td><td>Matches the app green and the warm yellow.</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:.6rem"><b>My suggestion: B</b>. You picked it today, it works better on dark and in round masks, and its master file and tests are already in the repo. If you prefer A, I'll make it full-bleed so the masks work, and move it into <code>assets/brand/</code>.</p>
+
+  <!-- ═════════ 2. glass ═════════ -->
+  <h2>2 · Liquid Glass on the deployed compare page</h2>
+  <p>What changes: the deployed page keeps its layout and every control. The look moves to the shared Liquid Glass theme (<code>theme.css</code>): frosted glass for the top bar, toolbar and panels; solid surfaces for prices and forms so numbers stay readable; the app green; and the Jhola logo. The ☀ / ☾ / Auto switch stays and follows the device by default. Dark uses a deep green-black mesh, not pure black.</p>
+
+  <h3>Light</h3>
+  <div class="shots">
+    <div>
+      <div class="frame"><div class="app" data-theme="light" id="desk-light"></div></div>
+      <p class="cap">Desktop 1280 px, light. The deployed table with its (i)/✕ buttons, badges, as-of dates and the "cheaper: …" hint, then the Deals section below.</p>
+    </div>
+    <div>
+      <div class="phone"><div class="app" data-theme="light" id="phone-light"></div></div>
+      <p class="cap">Phone 390 px, light. Cards per item, cheapest first, and the deployed bottom tabs (Compare / Prices / Deals / Settings).</p>
+    </div>
+  </div>
+
+  <h3>Dark</h3>
+  <div class="shots">
+    <div>
+      <div class="frame"><div class="app" data-theme="dark" id="desk-dark"></div></div>
+      <p class="cap">Desktop, dark. The same meaning in both themes: dark green is cheapest, light green is second, amber is a warning.</p>
+    </div>
+    <div>
+      <div class="phone"><div class="app" data-theme="dark" id="phone-dark"></div></div>
+      <p class="cap">Phone, dark.</p>
+    </div>
+  </div>
+
+  <h2>To confirm</h2>
+  <div class="ask"><ol>
+    <li><b>Logo:</b> A or B? (My suggestion is B.)</li>
+    <li><b>Glass:</b> go ahead as shown in light and dark? Or change something, for example the dark background tone, or less glass on the toolbar?</li>
+  </ol>
+  <p style="margin:.6rem 0 0">Settings and the guide get the same theme. Deals stay a separate section and never count towards "cheapest", as you chose. Deals and offers will run at 07:00 and 18:00.</p></div>
+</div>
+
+<script>
+// One renderer for all four frames, so light/dark and desktop/phone show the same content.
+const logo = '../../assets/brand/jhola-icon.svg';
+const topBar = (phone) => `
+  <div class="top glass">
+    <span class="brand"><img src="${logo}" alt="">Jhola</span>
+    ${phone ? '' : '<span class="meta">4 items · Marutham Prestige · 600045 · goods only</span>'}
+    <nav aria-label="Main"><a class="on">Compare</a><a>Settings</a><a>Guide</a></nav>
+    <span class="tt" ${phone ? 'style="margin-left:auto"' : ''}><span>☀</span><span>☾</span><span class="on">Auto</span></span>
+  </div>`;
+const acts = (phone) => phone ? '' : `
+  <div class="acts glass">
+    <span class="b pri">⚡ Find the cheapest</span><span class="b">↻ Get fresh prices</span><span class="b">Get for missing only (7)</span>
+    <span class="b dis">■ Stop</span><span class="b">🔑 Sign in…</span><span class="b">+ Add a price</span>
+    <span class="srch">⌕ Check a saved price: onion…</span>
+  </div>`;
+const head = (phone) => `
+  <div class="list glass">☰ Your list · 4 items · 7 sites <span>${phone ? '▾' : 'click to edit ▾'}</span></div>
+  <div class="ban"><p><b>Saved prices from 19/11/26 – 20/11/26</b>. No site was contacted. 7 item/site pairs have no saved price.</p>${phone ? '' : '<span class="b pri">Get fresh prices</span>'}</div>
+  <div class="fresh glass"><b>How fresh are these prices?</b> <span class="dot a"></span>7 sites · yesterday ${phone ? '<br>' : ' · '}<a>Refresh only the old ones (28 searches)</a></div>
+  <div class="verd">
+    <div class="w">Cheapest basket<b>Site A ₹161</b><small>3 of 4 items · saves ₹65</small></div>
+    <div class="surface">Runner-up<b>Site B ₹226</b><small>goods only</small></div>
+    <div class="surface">Best per item (mix)<b>₹158</b><small>3/4 items · 2 sites</small></div>
+  </div>`;
+const cell = (cls, p, n, u, bd = '', extra = '') => `<td class="${cls}"><span class="ib"><i>i</i><i>✕</i></span><div class="p">${p}</div>${bd}<div class="n">${n}</div><div class="u">${u}</div>${extra}</td>`;
+const at = (d) => `<span class="bd at">at lowest · ${d}</span>`;
+const lo = (t) => `<span class="bd lo">${t}</span>`;
+const table = `
+  <div class="tw surface"><table class="t">
+    <thead><tr><th style="width:14%">Item</th><th>Site A<small>3/4 found</small></th><th>Site B<small>3/4 found</small></th><th>Site C<small>3/4 found</small></th><th>Site D<small>3/4 found</small></th><th>Site E<small>3/4 found</small></th><th>Site F<small>3/4 found</small></th></tr></thead>
+    <tbody>
+      <tr><td class="it">toor dal</td>${cell('sec', '₹72', 'Value Toor/Arhar Dal 500 g', '500 g · ₹14.40/100g · as of 20/11', at('20 Nov'))}${cell('best', '₹135', 'bb Popular Toor/Arhar Dal', '1 kg · ₹13.50/100g · as of 20/11', at('20 Nov'))}${cell('', '₹146', 'Toor Dal Economy Loose 1 kg', '1 kg · ₹14.60/100g', at('20 Nov'))}${cell('', '₹155', 'Basic ARHAR/TOOR DAL', '1 kg · ₹15.50/100g', at('20 Nov'))}${cell('', '₹150', 'Aashirvaad Arhar Dal', '1 kg · ₹15.00/100g', at('20 Nov'))}${cell('', '₹327', 'Basic Toor Dal 1 kg x 2', '2 kg · ₹16.35/100g', at('20 Nov'))}</tr>
+      <tr><td class="it">tata salt 1kg</td>${cell('', '₹22', 'Tata Salt Crystal Iodized', '1 kg · ₹2.20/100g', at('19 Nov'))}${cell('', '₹22', 'Tata Salt Iodised Crystal', '1 kg · ₹2.20/100g', at('18 Nov'))}${cell('best', '₹19', 'Tata Iodised Crystal Salt', '1 kg · ₹1.90/100g', at('18 Nov'))}${cell('', '₹22', 'Tata Salt - Iodised Crystal', '1 kg · ₹2.20/100g', at('18 Nov'))}${cell('', '₹22', 'Tata Salt Crystal 1 pack', '1 kg · ₹2.20/100g', at('18 Nov'), '<div class="hint">cheaper: Annapurna Iodized Salt ₹18</div>')}${cell('sec', '₹21', 'Tata Crystal Salt 1 kg', '1 kg · ₹2.10/100g', at('18 Nov'))}</tr>
+      <tr><td class="it">aashirvaad atta 1kg</td><td class="miss">no saved price</td><td class="miss">no saved price</td><td class="miss">no saved price</td><td class="miss">no saved price</td><td class="miss">no saved price</td><td class="miss">no saved price</td></tr>
+      <tr><td class="it">onion 1kg<small>you typed: vengayam</small></td>${cell('best', '₹67', 'Onion 0.95-1.05 kg', '1 kg · ₹6.70/100g', lo('low ₹6.38/100g · 19 Nov'))}${cell('sec', '₹69', 'fresho! Onion 1 kg', '1 kg · ₹6.90/100g', lo('low ₹6.56 · 18 Nov'))}${cell('', '₹75', 'Onion (Vengayam) 1 kg', '1 kg · ₹7.50/100g', '<span class="bd ab">low ₹7.2 · 18 Nov</span>')}${cell('sec', '₹69', 'Onion (Vengayam) 1 kg', '1 kg · ₹6.90/100g', at('18 Nov'))}${cell('', '₹144', 'Organically Grown Onion', '2 × 500 g · ₹14.40/100g', '')}${cell('', '₹72 <small style="color:var(--bad)">▲4.3%</small>', 'Onion (Vengayam) 1 kg', '1 kg · ₹7.20/100g', '')}</tr>
+    </tbody>
+  </table>
+  <div class="foot glass" style="margin:6px 2px 2px"><span>Total</span><span style="color:var(--gink)">Site A ₹161 · Site B ₹226 · Site C ₹244 · …</span></div></div>`;
+const deals = (phone) => `
+  <div class="deals surface">
+    <h4>Deals · 80%+ off <small>not in totals · checked 07:00</small><span class="b" style="margin-left:auto">Check offers</span></h4>
+    <div class="site">Site G <span class="cond">max 1 item · basket ₹9+</span></div>
+    <div class="drow"><span>Tomato Desi 1 kg</span><b>₹1</b><s>₹78</s><span class="off">99% off</span></div>
+    <div class="drow"><span>Carrot Local 500 g</span><b>₹1</b><s>₹65</s><span class="off">99% off</span></div>
+    ${phone ? '' : '<div class="drow"><span>Banana Poovan 500 g</span><b>₹1</b><s>₹70</s><span class="off">98% off</span></div>'}
+    <div class="site">Site B <span class="cond">deals of the week · max 3</span></div>
+    <div class="drow"><span>Diaper Pants S 38 pcs</span><b>₹299</b><s>₹499</s><span class="off">40% off</span></div>
+  </div>`;
+const cards = `
+  <div class="pc surface"><h5>toor dal<small>cheapest first</small></h5>
+    <div class="pr best"><b>Site B</b><span>bb Popular Toor/Arhar Dal<br><span class="u">1 kg · ₹13.50/100g · as of 20/11</span></span><b>₹135</b></div>
+    <div class="pr sec"><b>Site A</b><span>Value Toor/Arhar Dal<br><span class="u">500 g · ₹14.40/100g</span></span><b>₹72</b></div>
+    <div class="pr"><b>Site C</b><span>Toor Dal Economy<br><span class="u">1 kg · ₹14.60/100g</span></span><b>₹146</b></div></div>
+  <div class="pc surface"><h5>onion 1kg<small>you typed: vengayam</small></h5>
+    <div class="pr best"><b>Site A</b><span>Onion 0.95-1.05 kg<br><span class="u">1 kg · ₹6.70/100g</span></span><b>₹67</b></div>
+    <div class="pr sec"><b>Site B</b><span>fresho! Onion 1 kg</span><b>₹69</b></div></div>`;
+const tabs = `<div class="tabs glass"><span class="on"><i>⚖</i>Compare</span><span><i>⌕</i>Prices</span><span><i>🏷</i>Deals</span><span><i>⚙</i>Settings</span></div>`;
+for (const t of ['light', 'dark']) {
+  document.getElementById(`desk-${t}`).innerHTML = topBar(false) + acts(false) + head(false) + table + deals(false);
+  document.getElementById(`phone-${t}`).innerHTML = topBar(true) + head(true) + cards + deals(true) + tabs;
+}
+</script>
+</body>
+</html>

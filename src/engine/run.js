@@ -73,6 +73,9 @@ async function searchQuery({ siteId, site, query, first, pool, emit, extractors,
   } catch (e) {
     err = e;
   }
+  // Resting after a block: no retry, no page reload, no fallback. Touching the
+  // site now would only prolong the block.
+  if (err?.code === 'resting') return { rows: [], failure: { query, kind: 'blocked', code: 'resting', message: err.message } };
 
   const kind = err ? classify(err) : null;
   const retryable = err ? kind === 'session' || kind === 'blocked' : first && rows.length === 0;
@@ -151,7 +154,8 @@ async function runSite({ siteId, queries, pool, onProgress, signal, sitesImpl, e
     // A page-scrape site whose page never renders is broken for every query.
     const brokenPage = site.mode === 'dom' && res.failure?.kind === 'parse';
     // The site refused us: rest it, so the next manual run says "wait" instead of hammering.
-    if (res.failure?.kind === 'blocked') limiter?.penalize(siteId, res.failure.message.slice(0, 120));
+    // (Not when it was already resting: that would extend the rest on every run.)
+    if (res.failure?.kind === 'blocked' && res.failure.code !== 'resting') limiter?.penalize(siteId, res.failure.message.slice(0, 120));
     if (res.failure && (res.failure.kind === 'blocked' || res.failure.kind === 'unserviceable' || brokenPage)) {
       for (const rest of queries.slice(i + 1)) {
         resultsByQuery[rest] = [];

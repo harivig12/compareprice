@@ -11,7 +11,7 @@
  * and one summary line is appended to DATA_DIR/results/runs.jsonl, so runs
  * can be cross-checked without the UI (see docs/OPERATIONS.md).
  */
-import { mkdirSync, writeFileSync, appendFileSync, readFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, appendFileSync, readFileSync, readdirSync, statSync, unlinkSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { DATA_DIR } from './paths.js';
@@ -19,8 +19,33 @@ import { loadConfig, saveConfig } from './config.js';
 import { openStore } from './store.js';
 import { JobQueue } from './jobs.js';
 import { startScheduler } from './scheduler.js';
-import { startServer } from './server.js';
 import { startSweep } from './sweep.js';
+import { startOfferSchedule } from './offer-schedule.js';
+import { startServer } from './server.js';
+import { IdleCloser } from './engine/idle.js';
+import { defaultLoginManager, LOGIN_SITES } from './engine/login.js';
+import { peekPool, getPool } from './engine/pool.js';
+import { openAccounts } from './engine/accounts.js';
+import { PoolSet } from './engine/poolset.js';
+
+/**
+ * Delete per-run result files older than `keepDays` (runs.jsonl is kept).
+ * @returns {number} files deleted
+ */
+export function pruneResults(dir, keepDays, now = Date.now()) {
+  let n = 0;
+  const cutoff = now - keepDays * 86_400_000;
+  if (!existsSync(dir)) return 0;
+  for (const f of readdirSync(dir)) {
+    if (!f.endsWith('.json')) continue;
+    const file = join(dir, f);
+    try {
+      if (statSync(file).mtimeMs < cutoff) { unlinkSync(file); n++; }
+    } catch { /* raced with another delete */ }
+  }
+  return n;
+}
+
 
 /** One-line summary of a finished job, for runs.jsonl. */
 export function summarize(job, outcome) {
@@ -78,11 +103,60 @@ export async function startService({
   const resultsDir = join(dataDir, 'results');
   mkdirSync(resultsDir, { recursive: true });
 
-  const queue = new JobQueue({ ...(run ? { run } : {}), store });
+  // Accounts (main in chrome-profile, extras in profiles/<site>-<id>) and their browsers.
+  const accounts = openAccounts(join(dataDir, 'accounts.json'), {
+    legacyFile: join(dataDir, 'sessions.json'),
+    multiAccount: (s) => Boolean(LOGIN_SITES[s]?.multiAccount),
+  });
+  const blockMedia = cfg.browser?.blockMedia !== false;
+  const signedIn = (site, id = 'main') => Boolean(accounts.get(site, id)?.loggedInAt);
+  const poolSet = new PoolSet({
+    dataDir,
+    blockMedia,
+    getLocation: () => getConfig().location,
+    signedIn,
+    // Close the main Chrome before an extra account's starts, unless a sign-in is open in it.
+    canCloseMain: () => !login.status().some((x) => x.pending),
+    // A signed-in main account keeps the address saved on it; config fills in the rest.
+    getMain: () => getPool({ location: getConfig().location, blockMedia, ownLocation: (site) => signedIn(site) }),
+  });
+  // One queue: basket runs and offer checks take turns, so a tab is never shared.
+  // The main pool always comes from poolSet, so a signed-in account keeps its
+  // saved address even when a search is the first thing after a restart.
+  const engineRun = (opts) => (opts.trigger === 'offers'
+    ? runOfferCheck(opts)
+    : opts.trigger === 'ai-labels'
+      ? runAiLabelsJob(opts)
+      : import('./compare.js').then((m) => m.compareBasket({ ...opts, accounts, poolSet, store, pool: poolSet.getMain() })));
+  const runOfferCheck = async ({ signal, onProgress, platforms }) => {
+    const [{ checkOffers, OFFER_SITES }, { SITES }, { getLimiter }] = await Promise.all([import('./offers.js'), import('./engine/sites/index.js'), import('./limits.js')]);
+    const out = await checkOffers({
+      poolSet, accounts, store, signal, onProgress, sitesImpl: SITES,
+      sites: platforms?.length ? platforms.filter((s) => OFFER_SITES.includes(s)) : OFFER_SITES,
+      limiter: getLimiter(getConfig().limits),
+      minPct: getConfig().deals?.minDiscountPct,
+      accountGapMs: (await import('./offers.js')).OFFER_ACCOUNT_GAP_MS,
+    });
+    for (const o of out.offers) log(`offers ${o.site} ${o.account === 'main' ? '' : `(${o.name}) `}${o.error ? `FAILED ${o.error}` : `${o.deals} deal(s) of ${o.scanned} checked`}`);
+    return out;
+  };
+  // Optional AI labels (src/ai/, off by default): no browser, paced by <data>/ai.md.
+  const runAiLabelsJob = async ({ signal }) => {
+    const { runAiLabels } = await import('./ai/job.js');
+    const out = await runAiLabels({ store, dataDir, signal, log, timeZone: getConfig().timezone });
+    log(`ai-labels: ${out.error ? `FAILED ${out.error}` : `${out.labelled} labelled in ${out.calls} call(s)${out.skipped ? ` (${out.skipped})` : ''}`}`);
+    // A failure shows in the jobs list with its reason (what was labelled before it is kept).
+    if (out.error) throw new Error(`ai-labels: ${out.error}${out.labelled ? ` (after ${out.labelled} labelled)` : ''}`);
+    return out;
+  };
+  const aiEnabled = async () => (await import('./ai/settings.js')).readAiSettings(dataDir).enabled;
+  const queue = new JobQueue({ run: run ?? engineRun, store });
   const meta = new Map(); // jobId -> { id, trigger, sites }
   const origEnqueue = queue.enqueue.bind(queue);
+  const lastTrigger = new Map(); // jobId -> trigger, for the after-schedule offer check
   queue.enqueue = (job) => {
     const id = origEnqueue(job);
+    lastTrigger.set(id, job.trigger ?? 'manual');
     meta.set(id, { id, trigger: job.trigger ?? 'manual', sites: job.sites ?? null });
     log(`job ${id} queued (${job.trigger ?? 'manual'}; sites ${job.sites?.join(',') || 'default'})`);
     return id;
@@ -116,6 +190,45 @@ export async function startService({
     );
   });
 
+  const pruned = pruneResults(resultsDir, cfg.results?.keepDays ?? 60);
+  if (pruned) log(`deleted ${pruned} result file(s) older than ${cfg.results?.keepDays ?? 60} days`);
+
+  // Sign-ins and jobs share one browser; the idle closer must wait for both.
+  const idle = new IdleCloser({
+    getPool: () => peekPool(),
+    isBusy: () => Boolean(queue.current()) || queue.pending().length > 0 || login.status().some((x) => x.pending),
+    // (Extra accounts' browsers close themselves after each step; see PoolSet.)
+    idleMs: cfg.browser?.idleCloseMs ?? 300_000,
+    log,
+  });
+  const login = defaultLoginManager({
+    file: join(dataDir, 'accounts.json'),
+    accounts,
+    poolSet,
+    log,
+    getLocation: () => getConfig().location,
+    inUse: () => Boolean(queue.current()),
+    onActivity: () => idle.touch(),
+    onSignedOut: (site, account) => store.forgetAccountDeals(site, account),
+  });
+  queue.on('progress', () => idle.touch());
+  queue.on('done', (jobId, outcome) => {
+    // The offer check (deals) runs at fixed times of its own (deals.times,
+    // 07:00 and 18:00 by default; src/offer-schedule.js), not after each
+    // scheduled basket run.
+    // After the offer check (the quiet slot after a schedule), label new titles
+    // if the AI labeller is on. Queued, so it never overlaps a search.
+    if (!run && lastTrigger.get(jobId) === 'offers') {
+      aiEnabled().then((on) => {
+        const already = queue.pending().some((j) => j.trigger === 'ai-labels') || queue.current()?.trigger === 'ai-labels';
+        if (on && !already) queue.enqueue({ items: '', sites: null, trigger: 'ai-labels' });
+      }).catch((err) => log(`ai-labels: could not read ai.md: ${err.message}`));
+    }
+    lastTrigger.delete(jobId);
+    idle.touch();
+    pruneResults(resultsDir, getConfig().results?.keepDays ?? 60);
+  });
+  const idleTimer = run ? null : idle.start(30_000);
   // The sweep starts after the server (it shares the queue), but the server's
   // /api/sweep routes need it: hand over a holder filled in below.
   const sweep = { ref: null };
@@ -124,11 +237,14 @@ export async function startService({
       status: () => sweep.ref?.status() ?? null,
       runOnce: (opts) => sweep.ref?.runOnce(opts) ?? { jobId: null, items: [], reason: 'not started' },
     },
+    login,
+    accounts,
     port: port ?? Number(process.env.BASKET_PORT || cfg.server?.port || 7777),
     host: host ?? process.env.BASKET_HOST ?? cfg.server?.host ?? '127.0.0.1',
     queue,
     store,
     getConfig,
+    dataDir,
     setConfig: (c) => saveConfig(c, dataDir),
     saveLatest: (r) => writeFileSync(join(dataDir, 'last-result.json'), JSON.stringify(r, null, 2)),
     loadLatest: () => {
@@ -142,6 +258,8 @@ export async function startService({
 
   const scheduler = startScheduler({ queue, getConfig, store, ...(now ? { now } : {}), ...(tickMs ? { tickMs } : {}) });
   sweep.ref = startSweep({ queue, getConfig, store, log, ...(now ? { now } : {}), ...(sweepTimers ?? {}) });
+  // Not with an injected test runner, which has no engine to check offers with.
+  const offerSchedule = run ? null : startOfferSchedule({ queue, getConfig, store, log, ...(now ? { now } : {}), ...(tickMs ? { tickMs } : {}) });
   const sw = getConfig().sweep ?? {};
   const sched = getConfig().schedules.filter((s) => s.enabled !== false).map((s) => `${s.name} ${s.times.join('/')} [${s.sites.join(',')}]`);
   log(`Jhola service on ${server.url} (bind ${server.host}); data ${dataDir}; tz ${cfg.timezone}`);
@@ -159,10 +277,17 @@ export async function startService({
     scheduler,
     sweep: sweep.ref,
     resultsDir,
+    idle,
+    login,
+    accounts,
+    poolSet,
     async close() {
+      offerSchedule?.stop();
+      idleTimer?.stop();
       scheduler.stop();
       sweep.ref.stop();
       await server.close();
+      await poolSet.closeAll().catch(() => {});
       const pool = await import('./engine/pool.js').then((m) => m.peekPool?.()).catch(() => null);
       await pool?.close().catch(() => {});
       store.close();

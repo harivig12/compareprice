@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="980" viewBox="0 0 900 980" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+  <defs>
+    <symbol id="bag" viewBox="0 0 512 512"><rect width="512" height="512" rx="116" fill="#14532d"/><path d="M188 192 q0-80 68-80 q68 0 68 80" fill="none" stroke="#fde68a" stroke-width="26" stroke-linecap="round"/><path d="M128 196 h256 l-26 224 q-3 26-29 26 H183 q-26 0-29-26 z" fill="#f59e0b"/><rect x="190" y="298" width="32" height="96" rx="9" fill="#14532d"/><rect x="240" y="258" width="32" height="136" rx="9" fill="#14532d" opacity=".55"/><rect x="290" y="330" width="32" height="64" rx="9" fill="#fde68a"/></symbol>
+    <symbol id="tabs" viewBox="0 0 390 64">
+      <rect width="390" height="64" fill="#ffffff"/><rect width="390" height="1" fill="#e5e7eb"/>
+      <g font-size="11" text-anchor="middle" fill="#6b7280">
+        <rect x="14" y="8" width="70" height="30" rx="15" fill="#dcfce7"/>
+        <path d="M38 18 h22 l-3 14 h-16 z" fill="none" stroke="#14532d" stroke-width="2.2"/><text x="49" y="54" fill="#14532d" font-weight="700">Compare</text>
+        <circle cx="146" cy="23" r="9" fill="none" stroke="#6b7280" stroke-width="2.2"/><path d="M152 29 l6 6" stroke="#6b7280" stroke-width="2.2"/><text x="146" y="54">Prices</text>
+        <path d="M238 15 h14 l8 8 l-11 12 l-11 -11 z" fill="none" stroke="#6b7280" stroke-width="2.2"/><text x="244" y="54">Deals</text>
+        <circle cx="341" cy="23" r="8" fill="none" stroke="#6b7280" stroke-width="2.2"/><circle cx="341" cy="23" r="3" fill="#6b7280"/><text x="341" y="54">Settings</text>
+      </g>
+    </symbol>
+  </defs>
+  <rect width="900" height="980" fill="#eef0f3"/>
+  <text x="40" y="44" font-size="22" font-weight="800" fill="#111827">B · List as chips, undo for ✕, bigger tap targets</text>
+  <text x="40" y="70" font-size="13.5" fill="#4b5563">Left: editing the list. Right: after tapping ✕ on a wrong match. Light theme, 390 px wide.</text>
+
+  <!-- ============ Phone 1: list editor ============ -->
+  <g transform="translate(40,96)">
+    <rect width="390" height="844" rx="34" fill="#f9fafb" stroke="#d1d5db" stroke-width="2"/>
+    <use href="#bag" x="16" y="18" width="28" height="28"/>
+    <text x="52" y="40" font-size="22" font-weight="800" fill="#14532d">jhola</text>
+    <text x="374" y="38" font-size="12" fill="#6b7280" text-anchor="end">Your list · 5 items</text>
+
+    <rect x="12" y="62" width="366" height="236" rx="14" fill="#ffffff" stroke="#e5e7eb"/>
+    <g font-size="13.5">
+      <rect x="24" y="76" width="168" height="40" rx="20" fill="#f0fdf4" stroke="#86efac"/>
+      <rect x="30" y="82" width="34" height="28" rx="14" fill="#14532d"/><text x="47" y="101" fill="#fff" font-size="12" font-weight="700" text-anchor="middle">2×</text>
+      <text x="72" y="101" fill="#14532d" font-weight="600">toor dal 1kg</text><text x="176" y="101" fill="#6b7280" text-anchor="middle">✕</text>
+      <rect x="200" y="76" width="140" height="40" rx="20" fill="#f0fdf4" stroke="#86efac"/><text x="216" y="101" fill="#14532d" font-weight="600">tata salt 1kg</text><text x="324" y="101" fill="#6b7280" text-anchor="middle">✕</text>
+      <rect x="24" y="124" width="196" height="40" rx="20" fill="#f0fdf4" stroke="#86efac"/><text x="40" y="149" fill="#14532d" font-weight="600">aashirvaad atta 1kg</text><text x="204" y="149" fill="#6b7280" text-anchor="middle">✕</text>
+      <rect x="228" y="124" width="120" height="40" rx="20" fill="#f0fdf4" stroke="#86efac"/><text x="244" y="149" fill="#14532d" font-weight="600">onion 1kg</text><text x="332" y="149" fill="#6b7280" text-anchor="middle">✕</text>
+      <rect x="24" y="172" width="112" height="40" rx="20" fill="#fef3c7" stroke="#fbbf24"/><text x="40" y="197" fill="#92400e" font-weight="600">ghee ◆</text><text x="120" y="197" fill="#92400e" text-anchor="middle">✕</text>
+    </g>
+    <!-- input -->
+    <rect x="24" y="226" width="342" height="46" rx="10" fill="#ffffff" stroke="#2563eb" stroke-width="2"/>
+    <text x="38" y="255" font-size="15" fill="#111827">mil</text><rect x="62" y="238" width="2" height="22" fill="#2563eb"/>
+    <text x="352" y="255" font-size="12" fill="#6b7280" text-anchor="end">Enter to add</text>
+    <text x="24" y="290" font-size="11" fill="#6b7280">◆ = no brand named: any brand, raw product first</text>
+
+    <!-- suggestions -->
+    <rect x="24" y="278" width="342" height="0"/>
+    <rect x="24" y="300" width="342" height="196" rx="12" fill="#ffffff" stroke="#d1d5db"/>
+    <text x="38" y="322" font-size="11" fill="#6b7280" font-weight="700">FROM YOUR SAVED PRICES</text>
+    <g font-size="13.5">
+      <rect x="28" y="330" width="334" height="48" rx="8" fill="#eff6ff"/>
+      <text x="40" y="351" fill="#111827" font-weight="600">2x amul taaza toned milk 500ml</text><text x="40" y="369" fill="#6b7280" font-size="11.5">7 sites · best ₹27 at Zepto · 19 Nov</text>
+      <text x="40" y="401" fill="#111827" font-weight="600">milk powder</text><text x="40" y="419" fill="#6b7280" font-size="11.5">5 sites · best ₹1.0/g at KPN · 19 Nov</text>
+      <text x="40" y="451" fill="#111827" font-weight="600">condensed milk</text><text x="40" y="469" fill="#6b7280" font-size="11.5">6 sites · best ₹0.4/g at JioMart · 18 Nov</text>
+    </g>
+    <text x="38" y="490" font-size="11" fill="#2563eb">+ add "mil" as typed</text>
+
+    <rect x="12" y="512" width="366" height="64" rx="14" fill="#ffffff" stroke="#e5e7eb"/>
+    <text x="26" y="538" font-size="13" fill="#374151">Paste a whole list? It still works: one item per line</text>
+    <text x="26" y="560" font-size="12" fill="#2563eb" font-weight="600">Switch to text box ⇄</text>
+
+    <rect x="12" y="590" width="366" height="166" rx="14" fill="#fffbeb" stroke="#fcd34d"/>
+    <text x="26" y="616" font-size="13" font-weight="700" fill="#92400e">What changes</text>
+    <g font-size="12" fill="#78350f">
+      <text x="26" y="638">• Each line is a chip; tap the 2× bubble for qty</text>
+      <text x="26" y="658">• Suggestions come from saved items (best price + date),</text>
+      <text x="38" y="676">so a known line is reused instead of searched again</text>
+      <text x="26" y="696">• The list text box and basket.txt format stay the same</text>
+      <text x="26" y="716">• Chips are 40 px tall; ✕ hit area 44 × 44 px</text>
+      <text x="26" y="736">• Enter adds; Backspace on empty edits the last chip</text>
+    </g>
+
+    <use href="#tabs" x="0" y="780" width="390" height="64"/>
+  </g>
+
+  <!-- ============ Phone 2: undo + 44 px targets ============ -->
+  <g transform="translate(470,96)">
+    <rect width="390" height="844" rx="34" fill="#f9fafb" stroke="#d1d5db" stroke-width="2"/>
+    <use href="#bag" x="16" y="18" width="28" height="28"/>
+    <text x="52" y="40" font-size="22" font-weight="800" fill="#14532d">jhola</text>
+    <text x="374" y="38" font-size="12" fill="#6b7280" text-anchor="end">5 items</text>
+
+    <rect x="12" y="62" width="366" height="338" rx="14" fill="#ffffff" stroke="#e5e7eb"/>
+    <text x="26" y="90" font-size="15" font-weight="700" fill="#111827">ghee</text>
+    <g font-size="13">
+      <rect x="20" y="102" width="350" height="64" rx="8" fill="#166534"/>
+      <text x="32" y="126" fill="#fff" font-weight="700">KPN Fresh</text><text x="32" y="146" fill="#dcfce7" font-size="11.5">KPN Fresh Cow Ghee 500 ml</text>
+      <text x="272" y="140" fill="#fff" font-weight="800" text-anchor="end">₹357</text>
+      <!-- 44 px targets -->
+      <circle cx="304" cy="134" r="22" fill="none" stroke="#bbf7d0" stroke-dasharray="3 3"/><circle cx="304" cy="134" r="12" fill="none" stroke="#fff" stroke-width="1.8"/><text x="304" y="139" fill="#fff" font-size="13" font-style="italic" font-weight="700" text-anchor="middle">i</text>
+      <circle cx="348" cy="134" r="22" fill="none" stroke="#bbf7d0" stroke-dasharray="3 3"/><text x="348" y="139" fill="#fff" font-size="15" font-weight="700" text-anchor="middle">✕</text>
+
+      <rect x="20" y="172" width="350" height="64" rx="8" fill="#bbf7d0"/>
+      <text x="32" y="196" fill="#14532d" font-weight="700">Zepto</text><text x="32" y="216" fill="#166534" font-size="11.5">Godrej Jersey Cow Ghee 1 L</text>
+      <text x="272" y="210" fill="#14532d" font-weight="800" text-anchor="end">₹670</text>
+      <circle cx="304" cy="204" r="12" fill="none" stroke="#14532d" stroke-width="1.8"/><text x="304" y="209" fill="#14532d" font-size="13" font-style="italic" font-weight="700" text-anchor="middle">i</text>
+      <text x="348" y="209" fill="#14532d" font-size="15" font-weight="700" text-anchor="middle">✕</text>
+
+      <!-- removed row, collapsed -->
+      <rect x="20" y="242" width="350" height="44" rx="8" fill="#f9fafb" stroke="#d1d5db" stroke-dasharray="4 3"/>
+      <text x="32" y="269" fill="#9ca3af" font-size="12.5"><tspan text-decoration="line-through">Instamart · Ghee Roast Masala Paste ₹30</tspan></text>
+      <text x="358" y="269" fill="#9ca3af" font-size="12" text-anchor="end">removed</text>
+
+      <rect x="20" y="292" width="350" height="64" rx="8" fill="#ffffff" stroke="#e5e7eb"/>
+      <text x="32" y="316" fill="#111827" font-weight="700">Instamart</text><text x="32" y="336" fill="#6b7280" font-size="11.5">next pick: Supreme Harvest Ghee</text>
+      <text x="272" y="330" fill="#111827" font-weight="800" text-anchor="end">₹689</text>
+      <circle cx="304" cy="324" r="12" fill="none" stroke="#374151" stroke-width="1.8"/><text x="304" y="329" fill="#374151" font-size="13" font-style="italic" font-weight="700" text-anchor="middle">i</text>
+      <text x="348" y="329" fill="#374151" font-size="15" font-weight="700" text-anchor="middle">✕</text>
+    </g>
+    <text x="26" y="384" font-size="11" fill="#6b7280">Dashed circles: the real 44 × 44 px tap areas around (i) and ✕.</text>
+
+    <rect x="12" y="414" width="366" height="200" rx="14" fill="#fffbeb" stroke="#fcd34d"/>
+    <text x="26" y="440" font-size="13" font-weight="700" fill="#92400e">What changes</text>
+    <g font-size="12" fill="#78350f">
+      <text x="26" y="462">• ✕ no longer asks "are you sure?": it acts at once</text>
+      <text x="38" y="480">and shows Undo for 10 s (bar below)</text>
+      <text x="26" y="502">• Undo clears the mark: the row was only set hidden,</text>
+      <text x="38" y="520">never deleted, so nothing is lost either way</text>
+      <text x="26" y="542">• The site's next-best product moves up in its place</text>
+      <text x="26" y="564">• (i) and ✕ keep their look but get 44 px tap areas,</text>
+      <text x="38" y="582">spaced so a thumb can't hit both</text>
+      <text x="26" y="604">• "Removed matches" list in Settings to restore later</text>
+    </g>
+
+    <!-- snackbar -->
+    <rect x="16" y="700" width="358" height="60" rx="12" fill="#111827"/>
+    <text x="32" y="726" font-size="13" fill="#f9fafb" font-weight="600">Removed from Instamart</text>
+    <text x="32" y="745" font-size="11.5" fill="#9ca3af">Masala Paste · not picked again</text>
+    <rect x="290" y="712" width="72" height="36" rx="8" fill="#f59e0b"/><text x="326" y="736" font-size="14" font-weight="800" fill="#111827" text-anchor="middle">Undo</text>
+
+    <use href="#tabs" x="0" y="780" width="390" height="64"/>
+  </g>
+</svg>

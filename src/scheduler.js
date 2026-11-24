@@ -38,7 +38,7 @@ export function wallClock(date, timeZone) {
 }
 
 /** The instant `HH:MM` occurs on the wall-clock day of `wc`. */
-function instantOf(wc, hhmm) {
+export function instantOf(wc, hhmm) {
   const m = /^(\d{1,2}):(\d{2})$/.exec(String(hhmm).trim());
   if (!m) return null;
   return Date.UTC(wc.y, wc.mo - 1, wc.d, Number(m[1]), Number(m[2])) - wc.offset;

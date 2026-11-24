@@ -2,304 +2,326 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#F4F7F2">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jhola · one list, every app, the cheapest bag</title>
+<link rel="icon" href="/ui/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/ui/apple-touch-icon.png">
+<link rel="manifest" href="/ui/manifest.webmanifest">
+<meta name="theme-color" content="#14532d">
 <meta name="apple-mobile-web-app-title" content="Jhola">
-<title>Jhola — the cheapest grocery basket near you</title>
-<link rel="icon" href="/icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="manifest" href="/manifest.webmanifest">
-<link rel="stylesheet" href="/theme.css">
+<script src="/ui/theme.js"></script>
 <style>
-  .wrap { max-width: 1320px; margin: 0 auto; padding: 0 clamp(.75rem, 2.5vw, 1.5rem) 2.5rem; }
-
-  /* hero: title, location, saved-price search */
-  .hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 460px); gap: 1rem 1.5rem; align-items: end; margin: .5rem 0 1rem; }
-  .hero h1 { font-size: clamp(1.9rem, 4vw, 2.9rem); line-height: 1.02; letter-spacing: -.04em; margin: 0; font-weight: 800; }
-  .hero .sub { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .6rem; margin: .5rem 0 0; color: var(--muted); font-weight: 600; }
-  .hero .sub .ico { width: 16px; height: 16px; color: var(--g); }
-  .tools { display: flex; gap: .5rem; align-items: center; }
-  .grow { flex: 1 1 auto; position: relative; min-width: 0; }
-  .search { position: relative; }
-  .search .ico { position: absolute; left: .9rem; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
-  .search input { padding-left: 2.6rem; border-radius: 999px; background: rgba(255, 255, 255, .9); min-height: 48px; }
-  .sug { position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 30; background: #fff; border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 18px 40px rgba(11, 27, 20, .14); max-height: 300px; overflow: auto; padding: 6px; }
-  .sug div { padding: .6rem .75rem; min-height: 44px; border-radius: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: .6rem; font-weight: 600; }
-  .sug div:hover, .sug div[aria-selected=true] { background: #EFFAF4; }
-  .sug small { color: var(--faint); font-weight: 500; }
-
-  /* the list */
-  .listbox { border-radius: var(--radius); padding: 0; margin-bottom: .9rem; }
-  .listbox > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: .6rem; min-height: 56px; padding: .5rem 1.1rem; font-weight: 800; }
-  .listbox > summary::-webkit-details-marker { display: none; }
-  .listbox > summary .ico.chev { margin-left: auto; transition: transform .2s var(--ease); color: var(--muted); }
-  .listbox[open] > summary .ico.chev { transform: rotate(180deg); }
-  .listbody { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 1rem 1.25rem; padding: 0 1.1rem 1.1rem; }
-  .listbody textarea { min-height: 190px; background: rgba(255, 255, 255, .95); }
-  .listbody h2 { font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: .2rem 0 .55rem; }
-  .listbody .tip { margin: .8rem 0 0; font-size: .88rem; color: var(--muted); }
-  #sites label.skipped { opacity: .65; }
-  .beta { font-size: .68rem; font-weight: 800; color: var(--amber); background: var(--amber-bg); border-radius: 999px; padding: .05rem .45rem; }
-
-  /* run actions */
-  .actions { display: flex; flex-wrap: wrap; align-items: center; gap: .55rem; border-radius: 999px; padding: .45rem; margin-bottom: 1rem; }
-  .actions .note { margin-left: auto; padding-right: .7rem; font-size: .85rem; color: var(--muted); }
-  #go { min-height: 48px; padding: 0 1.4rem; }
-  #fresh { min-height: 48px; }
-  .actions button, #signin { white-space: nowrap; }
-  .actions .short { display: none; }
-
-  /* banners, chips, toast */
-  .banner { display: flex; flex-wrap: wrap; gap: .6rem 1rem; align-items: center; border-radius: 18px; padding: .75rem 1rem; margin-bottom: .9rem; background: var(--amber-bg); border: 1px solid #F3D3A6; }
-  .banner p { margin: 0; flex: 1 1 300px; }
-  .banner.live { background: #EFFAF4; border-color: #A9DCC0; }
-  .banner.wait { background: #EEF3FF; border-color: #BFD0FA; }
-  .progress { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .9rem; }
-  .progress:empty { display: none; }
-  .toast { position: fixed; left: 50%; bottom: 1.25rem; transform: translateX(-50%); z-index: 60; max-width: min(92vw, 520px); background: var(--ink); color: #fff; border-radius: 16px; padding: .75rem 1rem; font-weight: 600; box-shadow: 0 18px 40px rgba(11, 27, 20, .3); }
-  .toast.err { background: var(--bad); }
-
-  /* empty state */
-  .empty { border-radius: var(--radius); padding: clamp(1.25rem, 4vw, 2.5rem); display: grid; grid-template-columns: auto 1fr; gap: 1.25rem; align-items: center; margin-bottom: 1rem; }
-  .empty .big { width: 64px; height: 64px; border-radius: 18px; overflow: hidden; box-shadow: 0 6px 16px rgba(11, 27, 20, .18); }
-  .empty .big img { display: block; width: 100%; height: 100%; }
-  .empty h2 { margin: 0 0 .25rem; font-size: 1.35rem; letter-spacing: -.02em; }
-  .empty p { margin: 0; color: var(--muted); }
-  .empty ol { margin: .6rem 0 0; padding-left: 1.2rem; color: var(--muted); }
-
-  /* verdicts */
-  .verdicts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .8rem; margin-bottom: .9rem; }
-  .verdict { border-radius: 20px; padding: .9rem 1.1rem; background: var(--surface); border: 1px solid var(--rim); box-shadow: var(--shadow); }
-  .verdict.win { background: var(--ink); color: #fff; border-color: var(--ink); }
-  .verdict .k { font-size: .74rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--faint); }
-  .verdict.win .k { color: #7FE0AE; }
-  .verdict b { display: block; font-size: clamp(1.2rem, 2.2vw, 1.55rem); letter-spacing: -.02em; margin-top: .15rem; }
-  .verdict .s { font-size: .85rem; color: var(--muted); }
-  .verdict.win .s { color: #C7D6CE; }
-
-  /* comparison table */
-  .tablewrap { padding: .6rem; border-radius: var(--radius); }
-  table.cmp { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 4px; font-size: .84rem; }
-  table.cmp th, table.cmp td { padding: .55rem .6rem; vertical-align: top; overflow-wrap: anywhere; border-radius: 12px; text-align: left; }
-  table.cmp thead th { position: sticky; top: 5rem; z-index: 2; background: rgba(255, 255, 255, .95); font-size: .85rem; box-shadow: 0 1px 0 var(--line); }
-  table.cmp th.item { width: 15%; }
-  table.cmp th.down { width: 9%; color: var(--bad); }
-  table.cmp tbody td { background: #F4F8F5; }
-  td.item { background: transparent !important; font-weight: 800; font-size: .9rem; }
-  td.item .qty { color: var(--faint); font-weight: 600; }
-  .aka { display: block; color: var(--faint); font-weight: 600; font-size: .75rem; margin-top: .1rem; }
-  .p { font-size: 1rem; font-weight: 800; letter-spacing: -.01em; }
-  .n { color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-weight: 600; margin-top: .1rem; }
-  .u { color: var(--faint); font-size: .78rem; }
-  .asof { color: var(--amber); font-size: .74rem; font-weight: 700; }
-  td.best { background: var(--g) !important; color: #fff; }
-  td.best .n { color: #E4F7EC; } td.best .u { color: #CDEBDB; } td.best .asof { color: #FDE68A; }
-  td.second { background: var(--g2) !important; }
-  td.miss { color: var(--faint); background: transparent !important; border: 1.5px dashed var(--line); font-weight: 600; }
-  td.dimmed { background: #F1F1EE !important; color: var(--faint); }
-  td.dimmed .p { color: var(--faint); font-size: .9rem; }
-  .badge { display: inline-block; font-size: .66rem; font-weight: 800; padding: .08rem .45rem; border-radius: 999px; margin-left: .25rem; vertical-align: 2px; letter-spacing: .01em; }
-  .low { background: #DCFCE7; color: #065F46; } .above { background: #EEF2EF; color: #334155; } .atlow { background: #DBEAFE; color: #1E3A8A; }
-  .flag { color: var(--amber); font-size: .76rem; font-weight: 700; }
-  td.best .flag { color: #FDE68A; }
-  tfoot td { font-weight: 800; font-size: .95rem; background: rgba(255, 255, 255, .95); }
-  tfoot td.win { background: var(--ink); color: #7FE0AE; }
-  .legend { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem .9rem; font-size: .8rem; color: var(--muted); margin: .6rem .3rem .2rem; }
-  .sw { display: inline-block; width: 12px; height: 12px; border-radius: 4px; vertical-align: -1px; margin-right: .3rem; }
-
-  /* phones: one card per item */
-  .cards { display: none; }
-  .card { background: var(--surface); border: 1px solid var(--rim); box-shadow: var(--shadow); border-radius: 20px; padding: .8rem; }
-  .card h3 { margin: 0 0 .4rem; font-size: 1.05rem; letter-spacing: -.01em; }
-  .card .row { display: grid; grid-template-columns: 84px minmax(0, 1fr) auto; gap: .5rem; padding: .6rem .65rem; border-radius: 14px; align-items: start; min-height: 48px; margin-top: .3rem; background: #F4F8F5; }
-  .card .row.best { background: var(--g); color: #fff; } .card .row.best .u { color: #CDEBDB; }
-  .card .row.second { background: var(--g2); }
-
-  /* saved-price lookup */
-  .look { border-radius: var(--radius); padding: 1rem 1.1rem; margin-bottom: .9rem; }
-  .look h3 { margin: 0 0 .6rem; font-size: 1.1rem; }
-  .look table { width: 100%; border-collapse: collapse; font-size: .9rem; table-layout: fixed; }
-  .look th, .look td { text-align: left; padding: .5rem .55rem; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
-  .look th { font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); }
-  .look tr.cheap td { background: #EFFAF4; }
-  .look tr.cheap td:first-child { box-shadow: inset 3px 0 0 var(--g); }
-  .opts { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; }
-  .opts button { min-height: 36px; padding: 0 .8rem; font-size: .85rem; }
-
-  /* after the result */
-  .panel { border-radius: 18px; padding: .8rem 1rem; margin-top: .9rem; }
-  .panel > summary { cursor: pointer; font-weight: 800; min-height: 32px; display: flex; align-items: center; }
-  .errors { margin: .4rem 0 0; padding-left: 1.2rem; } .errors li { margin: .3rem 0; }
-  .errors .kind { font: 600 .82em var(--mono); color: var(--bad); background: var(--bad-bg); border-radius: 6px; padding: .02rem .35rem; }
-  .strip { font-size: .88rem; color: var(--ink); background: var(--amber-bg); border: 1px solid #F3D3A6; border-radius: 16px; padding: .7rem 1rem; margin-top: .9rem; }
-  #footnote { margin: .8rem .2rem 0; font-size: .85rem; }
-  .jobs { width: 100%; border-collapse: collapse; font-size: .88rem; margin-top: .4rem; }
-  .jobs td, .jobs th { text-align: left; padding: .45rem .5rem; border-bottom: 1px solid var(--line); }
-  .jobs th { font-size: .76rem; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); }
-
-  /* sign-in dialog */
-  dialog { border: 1px solid var(--rim); border-radius: 24px; padding: 1.3rem; width: min(460px, 94vw); background: rgba(255, 255, 255, .96); color: var(--ink); box-shadow: 0 30px 80px rgba(11, 27, 20, .25); }
-  dialog::backdrop { background: rgba(11, 27, 20, .35); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
-  dialog h2 { margin: 0 0 .3rem; font-size: 1.3rem; letter-spacing: -.02em; }
-  dialog label { display: block; margin: .9rem 0 .35rem; }
-  dialog .row2 { display: flex; gap: .5rem; margin-top: 1rem; justify-content: flex-end; }
-  #lotp { font: 700 1.3rem var(--mono); letter-spacing: .35em; text-align: center; }
-  .msg { min-height: 1.4em; margin-top: .6rem; font-size: .9rem; font-weight: 600; } .msg.err { color: var(--bad); } .msg.ok { color: var(--g-ink); }
-  .acct { font-size: .88rem; padding: .55rem 0; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: .6rem; }
-  .signed { color: var(--g-ink); font-weight: 700; }
-
-  @media (max-width: 900px) {
-    .hero { grid-template-columns: 1fr; }
-    .listbody { grid-template-columns: 1fr; }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin:0; background:var(--bg); color:var(--text); font:14px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  a { color:var(--accent); }
+  .wrap { max-width:1280px; margin:0 auto; padding:16px; }
+  header { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 16px; margin-bottom:10px; }
+  header h1 { font-size:18px; margin:0; }
+  header h1.brand { display:flex; align-items:center; gap:8px; align-self:center; font-size:22px; font-weight:800; letter-spacing:-.5px; color:var(--brand); }
+  header h1.brand img { border-radius:7px; flex:none; }
+  header .title { font-weight:600; }
+  header .title:empty { display:none; }
+  header .sub { color:var(--dim); font-size:12px; }
+  header nav { margin-left:auto; }
+  .bar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:10px; }
+  .bar .grow { flex:1 1 260px; min-width:200px; position:relative; }
+  button { background:var(--btn); color:var(--btn-ink); border:1px solid var(--btn-border); border-radius:8px; padding:7px 14px; font-weight:600; cursor:pointer; font-size:14px; }
+  button.secondary { background:var(--panel2); border-color:var(--line); color:var(--text); }
+  button:disabled { opacity:.55; cursor:not-allowed; }
+  :focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  input[type=text], input[type=tel], input[type=search], input[type=password] { width:100%; background:var(--bg); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:7px 10px; font:inherit; }
+  details.panel, .panel { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:10px; }
+  details.panel > summary { cursor:pointer; font-weight:600; }
+  textarea { width:100%; min-height:130px; background:var(--bg); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:8px; font:13px/1.5 ui-monospace,Menlo,monospace; resize:vertical; margin-top:8px; }
+  .sites { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:3px 10px; margin-top:8px; }
+  .sites label { display:flex; gap:6px; align-items:center; }
+  .sites label.skipped { opacity:.55; }
+  .beta { font-size:10px; color:var(--warn); border:1px solid var(--warn); border-radius:4px; padding:0 4px; }
+  .progress { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; font-size:12px; }
+  .chip { padding:4px 9px; border-radius:12px; background:var(--panel); border:1px solid var(--line); }
+  .chip.ok { border-color:var(--ok); color:var(--ok); } .chip.run { border-color:var(--warn); color:var(--warn); }
+  /* Mockup A (2026-11-20): run panel, freshness, age dots, phone tabs. */
+  .run { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-bottom:10px; }
+  .run .rh { display:flex; justify-content:space-between; align-items:baseline; gap:8px; flex-wrap:wrap; }
+  .run .rh b { font-size:14px; } .run .rh .eta { color:var(--dim); font-size:12px; }
+  .run .rbar { height:8px; border-radius:4px; background:var(--bar-empty); margin:8px 0 10px; overflow:hidden; }
+  .run .rbar i { display:block; height:100%; width:0; background:var(--ok); border-radius:4px; transition:width .4s; }
+  .run .rchips { display:flex; flex-wrap:wrap; gap:6px; }
+  .run .rc { display:inline-flex; align-items:center; gap:6px; min-height:34px; padding:4px 12px; border-radius:17px; font-size:12.5px; border:1px solid var(--line); background:var(--panel2); color:var(--dim); }
+  .run .rc.ok { background:var(--banner-ok); border-color:transparent; color:var(--ok-ink); }
+  .run .rc.run { background:var(--banner-warn); border-color:var(--warn); color:var(--warn); font-weight:600; }
+  .run .rc.err { border-color:var(--bad); color:var(--bad-ink); }
+  .run .spin { width:12px; height:12px; border-radius:50%; border:2px solid currentColor; border-right-color:transparent; animation:spin .9s linear infinite; flex:none; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .run .spin { animation:none; border-right-color:currentColor; opacity:.6; } .run .rbar i { transition:none; } }
+  .run .rfoot { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:8px; font-size:11.5px; color:var(--dim); flex-wrap:wrap; }
+  .run .rfoot button { min-height:36px; }
+  #result.updating table.cmp td, #result.updating .cards .row { opacity:.6; }
+  .fresh { display:grid; grid-template-columns:auto 1fr auto; gap:4px 8px; align-items:center; font-size:12.5px; }
+  .fresh .d, .age { display:inline-block; width:9px; height:9px; border-radius:50%; flex:none; }
+  .age { width:7px; height:7px; margin-right:3px; vertical-align:middle; }
+  .a0 { background:var(--ok); } .a1 { background:var(--warn); } .a2 { background:var(--bad); }
+  .fresh .t { text-align:right; font-weight:600; } .fresh .t.a0t { color:var(--ok-ink); } .fresh .t.a1t { color:var(--warn); } .fresh .t.a2t { color:var(--bad-ink); }
+  .freshbox h3 { margin:0 0 8px; font-size:14px; }
+  .freshbox .linkbtn { margin-top:8px; font-size:12.5px; }
+  .tabbar { display:none; }
+  @media (max-width:700px) {
+    body { padding-bottom:calc(64px + env(safe-area-inset-bottom)); }
+    header nav a[href="/settings"] { display:none; }
+    .tabbar { display:grid; grid-template-columns:repeat(4,1fr); position:fixed; left:0; right:0; bottom:0; z-index:40; background:var(--panel); border-top:1px solid var(--line); padding:4px 6px calc(4px + env(safe-area-inset-bottom)); }
+    .tabbar a, .tabbar button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; min-height:52px; background:none; border:0; border-radius:12px; color:var(--dim); font:600 11px/1.2 system-ui,sans-serif; text-decoration:none; padding:4px 0; cursor:pointer; }
+    .tabbar svg { width:22px; height:22px; }
+    .tabbar [aria-current="page"] { color:var(--brand); background:var(--banner-ok); }
   }
-  @media (max-width: 700px) {
-    table.cmp { display: none; }
-    .cards { display: grid; gap: .7rem; }
-    .tablewrap { padding: 0; background: none; border: 0; box-shadow: none; }
-    .verdicts { grid-template-columns: 1fr 1fr; gap: .55rem; }
-    .verdict.win { grid-column: 1 / -1; }
-    .verdict { padding: .75rem .85rem; }
-    .look .opt-col { display: none; }
-    .card .row { grid-template-columns: 74px minmax(0, 1fr) auto; }
-    .empty { grid-template-columns: 1fr; }
-    /* the two main actions sit in the thumb zone */
-    body { padding-bottom: calc(92px + env(safe-area-inset-bottom)); }
-    .actions { position: fixed; left: .6rem; right: .6rem; bottom: calc(.6rem + env(safe-area-inset-bottom)); z-index: 40; margin: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 48px; border-radius: 22px; }
-    .actions .note { display: none; }
-    .actions button { width: 100%; padding: 0 .7rem; font-size: .92rem; gap: .35rem; }
-    .actions .long, #stop span, #signin .lbl { display: none; }
-    .actions .short { display: inline; }
-    #stop { width: 48px; padding: 0; }
-    #signin { width: 48px; padding: 0; flex: none; }
-    .toast { bottom: calc(100px + env(safe-area-inset-bottom)); }
-    .topnav { top: .5rem; }
-  }
+  .chip.err { border-color:var(--bad); color:var(--bad-ink); white-space:normal; }
+  .banner { display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; background:var(--banner-warn); border:1px solid var(--warn); border-radius:10px; padding:8px 12px; margin-bottom:10px; }
+  .banner.live { background:var(--banner-ok); border-color:var(--ok); } .banner.wait { background:var(--banner-info); border-color:var(--accent); }
+  .banner p { margin:0; flex:1 1 300px; }
+  .verdicts { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-bottom:10px; }
+  .verdict { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:9px 12px; }
+  .verdict.win { border-color:var(--ok); }
+  .verdict .k { color:var(--dim); font-size:11px; text-transform:uppercase; letter-spacing:.04em; }
+  .verdict b { display:block; font-size:19px; margin-top:1px; } .verdict .s { color:var(--dim); font-size:12px; }
+  table.cmp { width:100%; table-layout:fixed; border-collapse:collapse; font-size:12px; }
+  table.cmp th, table.cmp td { border:1px solid var(--line); padding:6px; vertical-align:top; overflow-wrap:anywhere; }
+  table.cmp thead th { background:var(--panel); text-align:left; position:sticky; top:0; z-index:1; }
+  table.cmp th.item { width:15%; } table.cmp th.down { width:9%; color:var(--bad-ink); }
+  td.item { font-weight:600; } td.item .qty { color:var(--dim); font-weight:400; }
+  .p { font-size:15px; font-weight:700; }
+  .n { color:var(--n-ink); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .u { color:var(--dim); } .asof { color:var(--asof); font-size:11px; }
+  td.best { background:var(--best); color:var(--best-ink); } td.best .p { color:var(--best-ink); } td.best .n { color:var(--best-sub); } td.best .u, td.best .asof { color:var(--best-dim); }
+  td.second { background:var(--second); color:var(--second-ink); } td.second .p, td.second .n { color:var(--second-ink); } td.second .u { color:var(--second-dim); }
+  td.miss { color:var(--faint); } td.dimmed { color:var(--dim); background:var(--dimmed); }
+  td.dimmed .p { color:var(--dim); font-size:13px; }
+  .badge { display:inline-block; font-size:10px; padding:1px 5px; border-radius:8px; margin-left:4px; font-weight:600; vertical-align:2px; }
+  .low { background:var(--badge-low); color:var(--badge-low-ink); } .above { background:var(--badge-above); color:var(--badge-above-ink); } .atlow { background:var(--accent-strong); color:#ffffff; }
+  .flag { color:var(--warn); font-size:11px; }
+  tfoot td { font-weight:700; background:var(--panel); } tfoot td.win { color:var(--ok-ink); }
+  .legend { font-size:11px; color:var(--dim); margin-top:8px; }
+  .sw { display:inline-block; width:10px; height:10px; vertical-align:middle; margin:0 3px 0 10px; }
+  .strip { font-size:12px; color:var(--dim); background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:6px 10px; margin-top:8px; }
+  .cards { display:none; }
+  @media (max-width:700px) { table.cmp { display:none; } .cards { display:grid; gap:10px; } .verdicts { grid-template-columns:1fr; } }
+  .card { background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:10px; }
+  .card h3 { margin:0 0 6px; font-size:15px; }
+  .card .row { display:grid; grid-template-columns:90px 1fr auto; gap:6px; padding:6px; border-radius:6px; align-items:start; }
+  .card .row.best { background:var(--best); } .card .row.second { background:var(--second); }
+  .look { border-color:var(--accent-strong); }
+  .look h3 { margin:0 0 6px; font-size:15px; }
+  .legend .chg { margin:0 2px; }
+  .look table { width:100%; border-collapse:collapse; font-size:13px; table-layout:fixed; }
+  .look td, .look th { overflow-wrap:anywhere; }
+  @media (max-width:700px) { .look .opt-col, .look .pk-col { display:none; } .bar .grow { flex-basis:100%; } .card .row { grid-template-columns:76px minmax(0,1fr) auto; } }
+  .look th, .look td { text-align:left; padding:4px 6px; border-bottom:1px solid var(--line); }
+  .look tr.cheap td { background:var(--best); color:var(--best-ink); }
+  .look tr.cheap td .muted, .look tr.cheap td .tr { color:var(--best-dim); }
+  .look .tr { color:var(--dim); font-size:12px; white-space:normal; }
+  .spark { display:inline-flex; gap:3px; align-items:flex-end; height:18px; vertical-align:middle; margin-right:6px; }
+  .spark i { display:block; width:7px; background:var(--bar); border-radius:2px; }
+  .spark i.none { background:var(--bar-empty); height:2px !important; }
+  .chg { font-size:11px; font-weight:700; margin-left:4px; white-space:nowrap; }
+  .chg.down { color:var(--dn); } .chg.up { color:var(--up); }
+  td.best .chg.down, tr.cheap .chg.down { color:var(--dn-on-best); } td.best .chg.up, tr.cheap .chg.up { color:var(--up-on-best); }
+  .otpfor { display:flex; justify-content:space-between; gap:8px; align-items:center; font-size:13px; }
+  .linkbtn { background:none; border:0; color:var(--accent); padding:0; font-weight:600; font-size:13px; cursor:pointer; }
+  .linkbtn:disabled { color:var(--dim); cursor:not-allowed; }
+  #lotp { font-size:20px; letter-spacing:6px; text-align:center; }
+  .acct .st { white-space:nowrap; }
+  /* Deals (80%+ off): compact table grouped by site (option 1, 2026-11-19). */
+  .deals { margin-top:12px; }
+  .dealhead { display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; }
+  .dealhead h3 { margin:0; font-size:15px; }
+  .dealsite { display:flex; gap:10px; align-items:baseline; flex-wrap:wrap; margin:10px 0 2px; font-weight:700; font-size:13px; border-bottom:1px solid var(--line); padding-bottom:4px; }
+  .dealsite .cond { color:var(--warn); font-weight:600; font-size:12px; }
+  .dealrow { display:grid; grid-template-columns:minmax(0,1fr) auto auto auto; gap:4px 10px; align-items:center; font-size:13px; padding:4px 0; border-bottom:1px solid var(--line); }
+  .dealrow .dn { overflow-wrap:anywhere; }
+  .dealrow .dp { font-weight:700; color:var(--dn); }
+  .dealrow .dm { color:var(--dim); text-decoration:line-through; font-size:12px; }
+  .pill { background:var(--best); color:var(--best-ink); border-radius:999px; padding:1px 8px; font-size:11px; font-weight:700; white-space:nowrap; }
+  .dealrow:focus { outline:2px solid var(--accent); outline-offset:1px; }
+  .dealmore { background:none; border:0; color:var(--accent); padding:4px 0; font-size:12px; cursor:pointer; font-weight:600; }
+  .dealnote { font-size:12px; color:var(--dim); padding:4px 0; }
+  .dealerr { font-size:12px; color:var(--bad-ink); padding:2px 0; }
+  .aprow { display:grid; grid-template-columns:1fr 1fr 1.3fr; gap:8px; }
+  .aprow input { width:100%; }
+  #apdlg input[type=date] { background:var(--bg); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:6px 8px; font:inherit; }
+  .entry { display:flex; justify-content:space-between; gap:8px; font-size:12px; padding:4px 0; border-bottom:1px solid var(--line); }
+  @media (max-width:520px) { .aprow { grid-template-columns:1fr 1fr; } }
+  .alt { margin-top:4px; padding:2px 6px; border:1px solid var(--warn); border-radius:5px; color:var(--warn); background:var(--bg); font-size:11px; line-height:1.3; overflow-wrap:anywhere; }
+  .rej { float:right; background:none; border:0; color:inherit; opacity:.55; padding:0 0 0 6px; margin:-2px -2px 0 0; font-size:13px; font-weight:700; cursor:pointer; line-height:1.2; }
+  .rej:hover, .rej:focus-visible { opacity:1; }
+  tfoot tr.free td { font-size:12px; font-weight:400; color:var(--dim); }
+  tfoot tr.free td .ok { color:var(--ok-ink); font-weight:600; }
+  .acctag { font-size:10px; font-weight:600; border:1px solid currentColor; border-radius:6px; padding:0 4px; margin-left:4px; opacity:.85; }
+  @media (max-width:700px) { .dealrow { grid-template-columns:minmax(0,1fr) auto auto; } .dealrow .dn { grid-column:1 / -1; } }
+  /* Sign-in popup: accounts listed under each site (layout A, 2026-11-19). */
+  .site { padding:8px 0; border-bottom:1px solid var(--line); }
+  .site .sh { font-size:13px; }
+  .arow { display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; font-size:13px; margin-top:6px; padding:5px 8px; border:1px solid var(--line); border-radius:6px; background:var(--bg); }
+  .arow .acts { display:flex; gap:10px; }
+  .addacct { margin-top:6px; }
+  .opts button { margin:2px 4px 0 0; padding:2px 8px; font-size:12px; }
+  .sug { position:absolute; left:0; right:0; top:100%; z-index:5; background:var(--panel2); border:1px solid var(--line); border-radius:8px; margin-top:2px; max-height:260px; overflow:auto; }
+  .sug div { padding:6px 10px; cursor:pointer; display:flex; justify-content:space-between; gap:8px; }
+  .sug div:hover, .sug div[aria-selected=true] { background:var(--hover); } .sug small { color:var(--dim); }
+  .errors li { margin:4px 0; } .errors .kind { font-family:ui-monospace,monospace; color:var(--bad); }
+  .jobs { width:100%; border-collapse:collapse; font-size:13px; } .jobs td, .jobs th { text-align:left; padding:4px 6px; border-bottom:1px solid var(--line); }
+  .muted { color:var(--dim); } .sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+  dialog { background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:12px; padding:16px; width:min(440px,92vw); }
+  dialog::backdrop { background:rgba(0,0,0,.6); }
+  dialog h2 { margin:0 0 4px; font-size:17px; } dialog label { display:block; font-weight:600; margin:10px 0 4px; }
+  dialog .row2 { display:flex; gap:8px; margin-top:12px; justify-content:flex-end; }
+  .msg { min-height:1.4em; margin-top:8px; font-size:13px; } .msg.err { color:var(--bad-ink); } .msg.ok { color:var(--ok-ink); }
+  .acct { font-size:13px; padding:6px 0; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; gap:8px; }
+  /* Tap tips (2026-11-20): every hover text also opens on tap; (i) where the thing is a link or button. */
+  .info { float:right; width:24px; height:24px; margin:-3px -3px 0 4px; padding:0; border-radius:50%; border:1.5px solid currentColor; background:none; color:inherit;
+          font:italic 700 13px/20px Georgia, serif; text-align:center; cursor:pointer; opacity:.8; }
+  .info:hover, .info:focus-visible, .info[aria-expanded="true"] { opacity:1; outline:2px solid var(--accent); outline-offset:1px; }
+  #tip { position:fixed; z-index:50; max-width:min(320px, calc(100vw - 16px)); padding:8px 28px 8px 10px; border-radius:8px; background:#111827; color:#f9fafb;
+         font-size:12.5px; line-height:1.45; white-space:pre-line; overflow-wrap:anywhere; box-shadow:0 6px 20px rgba(0,0,0,.3); }
+  #tip[hidden] { display:none; }
+  #tip .x { position:absolute; top:2px; right:2px; width:24px; height:24px; background:none; border:0; color:#9ca3af; font-size:15px; cursor:pointer; padding:0; }
+  .tr .info, .look td .info { float:none; display:inline-block; vertical-align:middle; margin:0 0 0 4px; }
+  /* Phones: site names and "Now" (with its (i)) get room, so words don't split mid-word. */
+  @media (max-width:700px) { .look colgroup col:nth-child(1) { width:23% !important; } .look colgroup col:nth-child(4) { width:30% !important; } .look td:first-child { overflow-wrap:normal; } }
 </style>
+<!-- After the page's own styles: the Liquid Glass theme overrides them (see the note at the top of theme.css). -->
+<link rel="stylesheet" href="/ui/theme.css">
 </head>
-<body>
-<div class="blobs" aria-hidden="true"><i></i><i></i><i></i></div>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <symbol id="i-basket" viewBox="0 0 24 24"><path d="m15 11-1 9"/><path d="m19 11-4-7"/><path d="M2 11h20"/><path d="m3.5 11 1.6 7.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6l1.7-7.4"/><path d="M4.5 15.5h15"/><path d="m5 11 4-7"/><path d="m9 11 1 9"/></symbol>
-  <symbol id="i-scale" viewBox="0 0 24 24"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></symbol>
-  <symbol id="i-gear" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></symbol>
-  <symbol id="i-book" viewBox="0 0 24 24"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></symbol>
-  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
-  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></symbol>
-  <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
-  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
-  <symbol id="i-zap" viewBox="0 0 24 24"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></symbol>
-  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
-  <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></symbol>
-  <symbol id="i-key" viewBox="0 0 24 24"><path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4"/><path d="m21 2-9.6 9.6"/><circle cx="7.5" cy="15.5" r="5.5"/></symbol>
-</svg>
-
+<body class="app">
+<div id="tip" role="status" hidden><span class="t"></span><button type="button" class="x" aria-label="Close details">✕</button></div>
+<nav class="tabbar" aria-label="Sections">
+  <button type="button" data-tab="compare" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 8h18l-2 12H5z"/><path d="M8 8a4 4 0 0 1 8 0"/></svg>Compare</button>
+  <button type="button" data-tab="prices"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>Prices</button>
+  <button type="button" data-tab="deals"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12V3h9l9 9-9 9z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>Deals</button>
+  <a href="/settings" data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>Settings</a>
+</nav>
 <div class="wrap">
-  <header class="topnav glass">
-    <a class="brand" href="/"><span class="mark"><img src="/icon.svg" alt="" width="34" height="34"></span>Jhola</a>
-    <nav aria-label="Main">
-      <a href="/" aria-current="page"><svg class="ico"><use href="#i-scale"/></svg><span>Compare</span></a>
-      <a href="/settings"><svg class="ico"><use href="#i-gear"/></svg><span>Settings</span></a>
-      <a href="/guide"><svg class="ico"><use href="#i-book"/></svg><span>Guide</span></a>
-    </nav>
+  <header>
+    <h1 class="brand"><img src="/ui/icon.svg" alt="" width="30" height="30"><span>Jhola</span></h1>
+    <span class="title" id="title"></span>
+    <span class="sub" id="sub">…</span>
+    <nav style="display:flex;gap:12px;align-items:center"><span id="themetoggle"></span><a href="/guide">Guide</a><a href="/settings">Settings &amp; schedule</a></nav>
   </header>
 
-  <section class="hero">
-    <div>
-      <h1 id="title">Basket</h1>
-      <p class="sub"><svg class="ico"><use href="#i-pin"/></svg><span id="sub">…</span></p>
+  <div class="bar">
+    <button type="button" id="go">Find the cheapest</button>
+    <button type="button" id="fresh" class="secondary">Get fresh prices</button>
+    <button type="button" id="missing" class="secondary" hidden title="Search only the items and sites that have no saved price">Get for missing only</button>
+    <button type="button" id="stop" class="secondary" disabled>Stop</button>
+    <button type="button" id="signin" class="secondary">Sign in…</button>
+    <button type="button" id="addprice" class="secondary" title="A price you paid or saw elsewhere (a shop, a bill); shown as “Others”">Add a price</button>
+    <div class="grow">
+      <label for="q" class="sr">Check a saved price</label>
+      <input id="q" type="search" placeholder="Check a saved price: type an item, e.g. onion" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="sug">
+      <div class="sug" id="sug" role="listbox" hidden></div>
     </div>
-    <div class="tools">
-      <div class="grow search">
-        <label for="q" class="sr">Check a saved price</label>
-        <svg class="ico"><use href="#i-search"/></svg>
-        <input id="q" type="search" placeholder="Check a saved price: onion…" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="sug">
-        <div class="sug" id="sug" role="listbox" hidden></div>
-      </div>
-      <button type="button" id="signin" class="secondary" title="Sign in to a site that needs it" aria-label="Sign in to a site"><svg class="ico"><use href="#i-key"/></svg><span class="lbl">Sign in</span></button>
-    </div>
-  </section>
-
-  <details class="listbox glass" id="listbox" open>
-    <summary><svg class="ico"><use href="#i-list"/></svg><span id="listsum">Your list</span><svg class="ico chev"><use href="#i-chev"/></svg></summary>
-    <div class="listbody">
-      <div>
-        <h2>One item per line</h2>
-        <textarea id="items" spellcheck="false" aria-label="Your list, one item per line" placeholder="2x toor dal 1kg&#10;moong dal 500g&#10;amul butter 100g&#10;kismis 500g"></textarea>
-      </div>
-      <div>
-        <h2>Sites to check</h2>
-        <div class="toggles" id="sites"></div>
-        <p class="tip">A line with no brand ("moong dal") matches any brand, never moong-dal namkeen. Other names for a product work too: kismis, kishmish and dry grapes are all <b>raisins</b>.</p>
-      </div>
-    </div>
-  </details>
-
-  <div class="actions glass" role="toolbar" aria-label="Run the list">
-    <button type="button" id="go" class="green"><svg class="ico"><use href="#i-zap"/></svg><span class="long">Find the cheapest</span><span class="short" aria-hidden="true">Find cheapest</span></button>
-    <button type="button" id="fresh" class="secondary"><svg class="ico"><use href="#i-refresh"/></svg><span class="long">Get fresh prices</span><span class="short" aria-hidden="true">Fresh prices</span></button>
-    <button type="button" id="stop" class="ghost" disabled aria-label="Stop the run"><svg class="ico"><use href="#i-stop"/></svg><span>Stop</span></button>
-    <span class="note"><b>Find the cheapest</b> uses saved prices and contacts no site.</span>
   </div>
 
-  <div class="banner wait" id="waitbar" hidden role="status" aria-live="polite"></div>
-  <div class="look surface" id="lookup" hidden></div>
-  <div class="progress" id="chips" aria-live="polite"></div>
+  <details class="panel" id="listbox">
+    <summary id="listsum">Your list</summary>
+    <textarea id="items" spellcheck="false" aria-label="Your list, one item per line" placeholder="2x toor dal 1kg&#10;moong dal 500g&#10;amul butter 100g"></textarea>
+    <div class="sites" id="sites"></div>
+    <p class="muted" style="margin:8px 0 0"><b>Find the cheapest</b> uses your saved prices (no site is contacted). <b>Get fresh prices</b> checks the sites live. A line with no brand ("moong dal") matches any brand, never moong-dal namkeen.</p>
+  </details>
 
-  <section class="empty glass" id="empty">
-    <span class="big"><img src="/icon.svg" alt="" width="64" height="64"></span>
-    <div>
-      <h2>Your cheapest basket shows up here</h2>
-      <p>Three steps:</p>
-      <ol><li>Type or paste your list above.</li><li>Tick the sites.</li><li>Press <b>Find the cheapest</b>. Saved prices show at once, each with its date. Press <b>Get fresh prices</b> to check the sites live.</li></ol>
-      <p style="margin-top:.6rem">New here? <a href="/guide">Read the two-minute guide</a>.</p>
-    </div>
-  </section>
+  <div class="banner wait" id="waitbar" hidden role="status" aria-live="polite"></div>
+  <div class="panel look" id="lookup" hidden></div>
+  <div class="run" id="run" hidden>
+    <div class="rh"><b id="runhead" aria-live="polite"></b><span class="eta" id="runeta"></span></div>
+    <div class="rbar" role="progressbar" aria-label="Searches done" aria-valuemin="0" aria-valuemax="100" id="runbar"><i></i></div>
+    <div class="rchips" id="chips"></div>
+    <div class="rfoot"><span id="runnote">Tap a site for its last step.</span><button type="button" class="secondary" id="stop2">Stop</button></div>
+  </div>
 
   <section id="result" hidden>
     <div class="banner" id="banner" role="status"></div>
+    <div class="panel freshbox" id="freshness" hidden></div>
     <div class="verdicts" id="verdicts"></div>
-    <div class="tablewrap surface">
+    <div class="panel" style="padding:8px">
       <table class="cmp" id="table"></table>
       <div class="cards" id="cards"></div>
       <div class="legend">
-        <span><span class="sw" style="background:var(--g)"></span>cheapest for the item</span>
-        <span><span class="sw" style="background:var(--g2)"></span>second cheapest</span>
-        <span>badge = vs the lowest price seen so far</span><span>greyed = shown, not counted</span>
+        <span class="sw" style="background:var(--best)"></span>cheapest per 100 g / 100 ml / piece <span class="sw" style="background:var(--second)"></span>second cheapest · ✕ = wrong product, never use it for this item again
+        · <span class="chg down">▼</span>/<span class="chg up">▲</span> = cheaper/dearer than the last saved price (hover for when) · badge = vs the lowest price seen so far · names wrap to 2 lines (full name on hover) · greyed = shown but not counted
       </div>
     </div>
-    <details class="panel glass" id="leftout" hidden><summary id="leftsum"></summary><ul class="errors" id="leftlist"></ul></details>
+    <details class="panel" id="leftout" hidden><summary id="leftsum"></summary><ul class="errors" id="leftlist"></ul></details>
     <div class="strip" id="problems" hidden></div>
-    <p class="muted" id="footnote"></p>
+    <p class="muted" id="footnote" style="margin:8px 0 0"></p>
   </section>
 
-  <details class="panel glass">
+  <section class="panel deals" id="deals" aria-labelledby="dealsh" hidden>
+    <div class="dealhead">
+      <h3 id="dealsh">Deals · 80%+ off <span class="muted" id="dealsub"></span></h3>
+      <button type="button" class="secondary" id="checkoffers">Check offers</button>
+    </div>
+    <div id="dealbody"></div>
+  </section>
+
+  <details class="panel" style="margin-top:12px">
     <summary>Recent runs</summary>
     <table class="jobs"><thead><tr><th>#</th><th>When</th><th>Trigger</th><th>Sites</th><th>Status</th></tr></thead><tbody id="jobs"></tbody></table>
   </details>
 </div>
 
-<div class="toast" id="toast" role="status" aria-live="assertive" hidden></div>
+<dialog id="apdlg" aria-labelledby="apt">
+  <h2 id="apt">Add a price</h2>
+  <p class="muted" style="margin:0 0 8px">A price from somewhere else (a local shop, a bill). It shows as <b>Others</b> in the table and in saved-price lookups, and counts in "Best per item". It is never searched and has no basket total.</p>
+  <form id="apform" novalidate>
+    <label for="apitem">Item (as in your list)</label>
+    <input id="apitem" type="text" maxlength="80" placeholder="e.g. tata salt 1kg" autocomplete="off">
+    <label for="approd">Product (optional)</label>
+    <input id="approd" type="text" maxlength="160" placeholder="e.g. Tata Salt 1 kg" autocomplete="off">
+    <div class="aprow">
+      <div><label for="apprice">Price ₹</label><input id="apprice" type="text" inputmode="decimal" maxlength="9" placeholder="18"></div>
+      <div><label for="appack">Pack</label><input id="appack" type="text" maxlength="20" placeholder="1 kg"></div>
+      <div><label for="apdate">Date</label><input id="apdate" type="date"></div>
+    </div>
+    <label for="apsrc">Bought from</label>
+    <input id="apsrc" type="text" maxlength="120" placeholder="e.g. Murugan Stores, Krishna Nagar" autocomplete="off">
+    <div class="msg" id="apmsg" role="status" aria-live="polite"></div>
+    <div class="row2">
+      <button type="button" class="secondary" id="apclose">Close</button>
+      <button type="submit" id="apsave">Save</button>
+    </div>
+  </form>
+  <div id="aplist" style="margin-top:10px"></div>
+</dialog>
 
 <dialog id="dlg" aria-labelledby="dlgt">
   <h2 id="dlgt">Sign in to a site</h2>
-  <p class="muted" style="margin:0 0 .6rem">Enter your mobile number, then the OTP the site sends. The session is kept in this service's browser, like a phone app, so you won't need another OTP until the site signs you out.</p>
+  <p class="muted" style="margin:0 0 8px">Enter your mobile number (Amazon also takes the account email), then the OTP or password the site asks for. The session is kept in this service's browser (like a phone app), so you won't need to sign in again until the site signs you out.</p>
   <div id="accts"></div>
   <form id="loginform" novalidate>
     <div id="step1">
+      <div id="lnamebox" hidden>
+        <label for="lname">Account name (shown on hover)</label>
+        <input id="lname" type="text" maxlength="24" autocomplete="off" placeholder="e.g. Amma">
+      </div>
       <label for="lsite">Site</label>
-      <select id="lsite"></select>
-      <label for="lphone">Mobile number</label>
-      <input id="lphone" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="10-digit number">
+      <select id="lsite" style="width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:7px 10px"></select>
+      <label for="lphone" id="lphonelbl">Mobile number</label>
+      <input id="lphone" type="tel" inputmode="numeric" autocomplete="tel-national" maxlength="14" placeholder="10-digit number">
     </div>
     <div id="step2" hidden>
-      <label for="lotp">OTP</label>
-      <input id="lotp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="••••••">
+      <div class="otpfor"><span id="otpfor"></span><button type="button" class="linkbtn" id="lchange">Change number</button></div>
+      <div id="otpbox">
+        <label for="lotp">OTP</label>
+        <input id="lotp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="• • • •">
+      </div>
+      <div id="passbox" hidden>
+        <label for="lpass">Password</label>
+        <input id="lpass" type="password" autocomplete="current-password" maxlength="128">
+        <p class="muted" style="margin:4px 0 0;font-size:12px">Typed into the site's own sign-in page. It isn't saved or logged here.</p>
+      </div>
     </div>
     <div class="msg" id="lmsg" role="status" aria-live="polite"></div>
     <div class="row2">
       <button type="button" class="secondary" id="lclose">Close</button>
+      <button type="button" class="secondary" id="lresend" hidden>Resend OTP</button>
       <button type="submit" id="lgo">Send OTP</button>
     </div>
   </form>
@@ -312,17 +334,24 @@ const rs = (n) => n == null ? '—' : '₹' + Number(n).toLocaleString('en-IN', 
 const when = (iso) => iso ? new Date(iso).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
 const ddmmyy = (iso) => iso ? new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'Asia/Kolkata' }) : '';
 const day = (iso) => iso ? new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '';
-let META = { labels: {} }, currentJob = null, countdown = null, toastTimer = null;
-const chipState = new Map();
-const label = (p) => META.labels?.[p] ?? p;
-const narrow = () => matchMedia('(max-width: 700px)').matches;
-
-/** A short message near the bottom of the screen, instead of a blocking alert(). */
-function notify(text, kind = '') {
-  const t = $('toast');
-  t.textContent = text; t.className = 'toast ' + kind; t.hidden = false;
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 5000);
+// Price age (mockup A): green under 6 h, amber under 2 days, red older.
+const FRESH_MS = 6 * 3_600_000, AGING_MS = 48 * 3_600_000;
+const ageBand = (iso) => { const a = Date.now() - new Date(iso).getTime(); return a < FRESH_MS ? 0 : a < AGING_MS ? 1 : 2; };
+function ageText(iso) {
+  const m = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60_000));
+  if (m < 2) return 'just now';
+  if (m < 60) return `${m} min ago`;
+  if (m < 24 * 60) return `${Math.round(m / 60)} h ago`;
+  if (m < 48 * 60) return 'yesterday';
+  return `${Math.round(m / 1440)} days ago`;
 }
+let META = { labels: {} }, currentJob = null, countdown = null;
+// Free-delivery facts per site (GET /api/siteinfo), the missing pairs of the
+// view, sites never searched, and the job id of a "missing only" run.
+let SITE_INFO = {}, MISSING = {}, missingJob = null;
+const SKIPPED = new Set();
+const chipState = new Map();
+const label = (p) => META.labels?.[p] ?? (p === 'others' ? 'Others' : p);
 
 /** 1000g -> "1 kg", 500ml -> "500 ml", 6piece -> "6 pcs". */
 function fmtPack(size, unit) {
@@ -353,8 +382,7 @@ async function loadMeta() {
 function listItems() { return $('items').value.split('\n').map((l) => l.trim()).filter((l) => l && !l.startsWith('#')); }
 function updateListSummary() {
   const n = document.querySelectorAll('input[name=site]:checked').length;
-  const k = listItems().length;
-  $('listsum').textContent = `Your list · ${k} item${k === 1 ? '' : 's'} · ${n} site${n === 1 ? '' : 's'}`;
+  $('listsum').textContent = `Your list · ${listItems().length} items · ${n} sites (click to edit)`;
 }
 $('items').addEventListener('input', updateListSummary);
 $('sites').addEventListener('change', updateListSummary);
@@ -362,8 +390,8 @@ $('sites').addEventListener('change', updateListSummary);
 function formInput() {
   const items = $('items').value.trim();
   const platforms = [...document.querySelectorAll('input[name=site]:checked')].map((i) => i.value);
-  if (!items) { $('listbox').open = true; $('items').focus(); notify('Add at least one item to your list.'); return null; }
-  if (!platforms.length) { $('listbox').open = true; notify('Pick at least one site.'); return null; }
+  if (!items) { $('listbox').open = true; $('items').focus(); return null; }
+  if (!platforms.length) { $('listbox').open = true; alert('Pick at least one site.'); return null; }
   return { items, platforms };
 }
 
@@ -373,9 +401,19 @@ const akaHtml = (item) => item.typed ? `<span class="aka" title="Searched and sa
 const lineFor = (p, q) => (p.lines || []).find((l) => l.query === q);
 const counted = (l) => l && l.lineTotal != null && l.status === 'ok';
 
+/**
+ * Dark / light green: ranked by rate (₹ per g, ml or piece) when every priced
+ * cell of the item has one in the same unit, so a bigger, cheaper-per-100 g
+ * pack wins; otherwise by what you pay (decision 2026-11-19).
+ */
+const rateOf = (l) => (Number.isFinite(l?.product?.pricePerUnit) && l.product.pricePerUnit > 0 ? l.product.pricePerUnit : null);
 function rankFor(r, q) {
-  const prices = [...new Set(r.platforms.filter((p) => !p.failed).map((p) => lineFor(p, q)).filter(counted).map((l) => l.lineTotal))].sort((a, b) => a - b);
-  return (v) => (v === prices[0] ? 'best' : v === prices[1] ? 'second' : '');
+  const lines = r.platforms.filter((p) => !p.failed).map((p) => lineFor(p, q)).filter(counted);
+  const units = new Set(lines.map((l) => l.product?.packUnit));
+  const byRate = lines.length > 0 && lines.every((l) => rateOf(l) != null) && units.size === 1;
+  const key = (l) => (byRate ? Math.round(rateOf(l) * 1e6) / 1e6 : l.lineTotal);
+  const vals = [...new Set(lines.map(key))].sort((a, b) => a - b);
+  return (l) => (!counted(l) ? '' : key(l) === vals[0] ? 'best' : key(l) === vals[1] ? 'second' : '');
 }
 
 function badge(h) {
@@ -383,6 +421,25 @@ function badge(h) {
   if (h.tag === 'new-low') return `<span class="badge low" title="was ${esc(fmtRate(h.low, h.unit))} on ${esc(day(h.lowSeenAt))}">new low</span>`;
   if (h.tag === 'at-low') return `<span class="badge atlow">at lowest · ${esc(day(h.lowSeenAt))}</span>`;
   return `<span class="badge above" title="lowest seen ${esc(day(h.lowSeenAt))}">low ${esc(fmtRate(h.low, h.unit))} · ${esc(day(h.lowSeenAt))}</span>`;
+}
+
+/** "was ₹22 for 1kg (₹2.20/100g) · 19 Nov", or '' (the ▼/▲ hover, for the tap tip). */
+const wasText = (h) => (h?.prev && h.change && h.change !== 'same' ? `was ${rs(h.prev.price)}${h.prev.pack ? ' for ' + h.prev.pack : ''} (${fmtRate(h.prev.unitPrice, h.unit)}) · ${when(h.prev.seenAt)}` : '');
+const acctText = (l, pr) => ['Cheapest from account: ' + ((l.accountPrices || []).find((a) => a.account === pr.account)?.name || pr.account || 'Main'), ...(l.accountPrices || []).filter((a) => a.account !== pr.account).map((a) => `${a.name}: ${rs(a.price)}`)].join('\n');
+/** The (i) button: opens the tip on tap or click, on every device. */
+const infoBtn = (lines) => {
+  const text = lines.filter(Boolean).join('\n');
+  return text ? `<button type="button" class="info" aria-label="Show details" aria-expanded="false" data-tip="${esc(text)}">i</button>` : '';
+};
+
+/** ▼/▲ against the latest earlier saved price (any run). Nothing when unchanged or new. */
+function arrow(h) {
+  if (!h || !h.change || h.change === 'same' || !h.prev) return '';
+  const pct = Math.abs(h.changePct);
+  const was = `was ${rs(h.prev.price)}${h.prev.pack ? ' for ' + h.prev.pack : ''} (${fmtRate(h.prev.unitPrice, h.unit)}) · ${when(h.prev.seenAt)}`;
+  return h.change === 'down'
+    ? `<span class="chg down" title="${esc(was)}" aria-label="cheaper by ${pct}% than last time">▼${pct}%</span>`
+    : `<span class="chg up" title="${esc(was)}" aria-label="dearer by ${pct}% than last time">▲${pct}%</span>`;
 }
 
 function unitLine(l) {
@@ -409,11 +466,42 @@ function cellHtml(p, l, cls) {
     return `<td class="miss">${why}</td>`;
   }
   const weak = l.status !== 'ok';
+  // Sites searched per account (Instamart): which account showed this price, and the others'.
+  const acctTip = l.accountPrices?.length > 1 || pr.account
+    ? ` title="${esc(['Cheapest from account: ' + ((l.accountPrices || []).find((a) => a.account === pr.account)?.name || pr.account || 'Main'), ...(l.accountPrices || []).filter((a) => a.account !== pr.account).map((a) => `${a.name}: ${rs(a.price)}`)].join('\n'))}"`
+    : '';
+  const acctTag = l.accountPrices?.length > 1 ? ` <span class="acctag">${esc((l.accountPrices.find((a) => a.account === pr.account) || {}).name || '')}</span>` : '';
   const skipped = l.dropped?.length ? `<div class="flag" title="${esc(l.dropped.map((d) => `${d.name} ${rs(d.price)}: ${d.reason}`).join('\n'))}">⚠ skipped ${l.dropped.length} odd price${l.dropped.length > 1 ? 's' : ''}</div>` : '';
-  return `<td class="${weak ? 'dimmed' : cls(l.lineTotal)}"><div class="p">${rs(l.lineTotal)}${weak ? ' <span class="flag" title="weak name match: check it">?</span>' : ''} ${badge(l.history)}</div>
+  // ✕ sits on the price line, floated to the cell's top-right corner, so a long
+  // (2-line clamped) product name can never hide it.
+  // Option A (2026-11-20): a cheaper same-kind other brand on this site. A hint; the total is unchanged.
+  const alt = l.alternative;
+  const altBox = alt ? `<div class="alt" title="${esc(`${alt.product}${alt.pack ? ' · ' + fmtPack(...packParts(alt.pack)) : ''}\n${rs(alt.price)} = ${perLabel(alt.pricePerUnit, alt.unit)} · ${alt.savingPct}% less per unit than ${pr.name}`)}">cheaper: ${esc(shortName(alt.product))} ${rs(alt.price)} · ${esc(perLabel(alt.pricePerUnit, alt.unit))}</div>` : '';
+  // "Others": the user's own entry: where it was bought, on hover; no ✕ (edit it in "Add a price").
+  if (p.others) {
+    return `<td class="${cls(l)}" title="${esc(`${pr.name}\nBought from ${l.source || '(not given)'} · ${day(l.cachedAt)}`)}"><div class="p">${rs(l.lineTotal)} <span class="acctag">entered</span></div>
+      <div class="n">${esc(pr.name)}</div><div class="u">${esc(unitLine(l))}</div>
+      <div class="asof">${esc(l.source ? l.source + ' · ' : '')}${esc(ddmmyy(l.cachedAt))}</div></td>`;
+  }
+  const info = infoBtn([
+    pr.name,
+    l.savedFrom ? `saved for “${l.savedFrom}”` : '',
+    l.cachedAt ? `saved ${when(l.cachedAt)}` : '',
+    wasText(l.history),
+    l.history?.low != null ? `lowest seen ${fmtRate(l.history.low, l.history.unit)} · ${day(l.history.lowSeenAt)}` : '',
+    acctTip ? acctText(l, pr) : '',
+    l.dropped?.length ? l.dropped.map((d) => `skipped ${d.name} ${rs(d.price)}: ${d.reason}`).join('\n') : '',
+    alt ? `cheaper: ${alt.product} ${rs(alt.price)} (${alt.savingPct}% less per unit)` : '',
+  ]);
+  const rej = `<button type="button" class="rej" data-rej-site="${esc(p.platform)}" data-rej-q="${esc(l.query)}" data-rej-p="${esc(pr.name)}" title="Wrong product for “${esc(l.query)}”? Remove it and never use it for this item on ${esc(label(p.platform))} again" aria-label="Remove wrong match ${esc(pr.name)}">✕</button>`;
+  return `<td class="${weak ? 'dimmed' : cls(l)}"${acctTip}><div class="p">${rej}${info}${rs(l.lineTotal)}${weak ? ' <span class="flag" title="weak name match: check it">?</span>' : ''}${arrow(l.history)} ${badge(l.history)}${acctTag}</div>
     <div class="n" title="${esc(pr.name)}">${esc(pr.name)}</div><div class="u">${esc(unitLine(l))}</div>
-    ${l.cachedAt ? `<div class="asof" title="saved ${esc(when(l.cachedAt))}">as of ${esc(ddmmyy(l.cachedAt))}</div>` : ''}${skipped}</td>`;
+    ${l.cachedAt ? `<div class="asof" title="saved ${esc(when(l.cachedAt))} · ${esc(ageText(l.cachedAt))}"><span class="age a${ageBand(l.cachedAt)}" aria-hidden="true"></span>as of ${esc(ddmmyy(l.cachedAt))}${l.savedFrom ? ` · saved for “${esc(l.savedFrom)}”` : ''}</div>` : ''}${skipped}${altBox}</td>`;
 }
+/** ₹ per 100 g / 100 ml / pc from a per-unit price (per g, ml or piece). */
+const perLabel = (ppu, unit) => (unit === 'piece' ? `₹${(+ppu).toFixed(2)}/pc` : `₹${(+ppu * 100).toFixed(2)}/100${unit === 'ml' ? 'ml' : 'g'}`);
+/** "Aashirvaad Iodised Salt 1 kg" -> "Aashirvaad Iodised Salt" (pack is shown separately). */
+const shortName = (n) => String(n || '').replace(/\s*[\d.]+\s*(kg|g|gm|l|ml|ltr|pcs?|pack)\b.*$/i, '').slice(0, 40);
 
 function renderBanner(r) {
   const b = $('banner');
@@ -422,7 +510,7 @@ function renderBanner(r) {
     const span = rg ? (ddmmyy(rg.oldest) === ddmmyy(rg.newest) ? ddmmyy(rg.oldest) : `${ddmmyy(rg.oldest)} – ${ddmmyy(rg.newest)}`) : '';
     const missing = (r.uncached || []).length;
     b.className = 'banner';
-    b.innerHTML = `<p>${rg ? `<b>Saved prices from ${span}</b>. No site was contacted.` : '<b>No saved prices for this list yet.</b>'}${missing ? ` ${missing} item/site pair${missing > 1 ? 's have' : ' has'} no saved price.` : ''} Prices may have changed since.</p><button type="button" id="fresh2">Get fresh prices</button>`;
+    b.innerHTML = `<p>${rg ? `<b>Saved prices from ${span}</b> — no site was contacted.` : '<b>No saved prices for this list yet.</b>'}${missing ? ` ${missing} item/site pair${missing > 1 ? 's have' : ' has'} no saved price.` : ''} Prices may have changed since.</p><button type="button" id="fresh2">Get fresh prices</button>`;
     $('fresh2').addEventListener('click', fetchFresh);
   } else {
     b.className = 'banner live';
@@ -430,11 +518,47 @@ function renderBanner(r) {
   }
 }
 
+/** Saved-price view: how old each site's prices are, and refresh only the old ones. */
+let STALE = {};
+function renderFreshness(r) {
+  const box = $('freshness');
+  STALE = {};
+  if (r.source !== 'history') { box.hidden = true; return; }
+  const groups = [[], [], [], []]; // fresh, aging, old, none
+  const oldest = {};
+  for (const p of r.platforms) {
+    if (p.failed || p.others) continue;
+    const ats = (p.lines || []).map((l) => l.cachedAt).filter(Boolean).sort();
+    for (const item of r.basket) {
+      const l = lineFor(p, item.query);
+      if (!l?.cachedAt || ageBand(l.cachedAt) > 0 || l.status === 'not-cached') (STALE[p.platform] ??= []).push(item.raw || item.query);
+    }
+    if (!ats.length) { groups[3].push(p.platform); continue; }
+    oldest[p.platform] = ats[0];
+    groups[ageBand(ats[0])].push(p.platform);
+  }
+  const names = (list) => list.map((s) => esc(label(s))).join(', ');
+  const age = (list) => { const o = list.map((s) => oldest[s]).sort()[0]; return esc(ageText(o)); };
+  const rows = [
+    groups[0].length ? `<span class="d a0"></span><span>${names(groups[0])}</span><span class="t a0t">${age(groups[0])}</span>` : '',
+    groups[1].length ? `<span class="d a1"></span><span>${names(groups[1])}</span><span class="t a1t">${age(groups[1])}</span>` : '',
+    groups[2].length ? `<span class="d a2"></span><span>${names(groups[2])}</span><span class="t a2t">${age(groups[2])}</span>` : '',
+    groups[3].length ? `<span class="d" style="border:1.5px solid var(--faint)"></span><span>${names(groups[3])}</span><span class="t" style="color:var(--dim)">no saved price</span>` : '',
+  ].join('');
+  const n = Object.values(STALE).flat().length;
+  const sites = Object.keys(STALE).length;
+  box.innerHTML = `<h3>How fresh are these prices?</h3><div class="fresh" title="Age of the oldest saved price of each site in this list">${rows}</div>`
+    + (n ? `<button type="button" class="linkbtn" id="refreshold">Refresh only the old ones (${n} search${n === 1 ? '' : 'es'} on ${sites} site${sites === 1 ? '' : 's'})</button>` : '<p class="muted" style="margin:8px 0 0;font-size:12.5px">All saved prices here are under 6 h old.</p>');
+  box.hidden = false;
+  $('refreshold')?.addEventListener('click', () => fetchOnly(STALE, 'old'));
+}
+
 function render(r) {
   $('result').hidden = false;
-  $('empty').hidden = true;
-  $('title').textContent = `Basket · ${r.basket.length} item${r.basket.length === 1 ? '' : 's'}`;
+  $('title').textContent = `${r.basket.length} item${r.basket.length === 1 ? '' : 's'}`;
   renderBanner(r);
+  renderFreshness(r);
+  $('result').classList.toggle('updating', false);
   const plats = r.platforms;
   const up = plats.filter((p) => !p.failed);
   const down = plats.filter((p) => p.failed);
@@ -454,7 +578,7 @@ function render(r) {
     <div class="verdict"><div class="k">Best per item (mix)</div><b>${mixN ? rs(Math.round(mix * 100) / 100) : '—'}</b>
       <div class="s">${mixN}/${r.basket.length} items across ${mixSites.size} site${mixSites.size === 1 ? '' : 's'}${mixSites.size > 1 ? ' · several orders' : ''}</div></div>`;
 
-  const head = up.map((p) => `<th scope="col">${esc(label(p.platform))}<div class="u" style="font-weight:600">${p.fulfilledLines}/${p.totalLines} found</div></th>`).join('')
+  const head = up.map((p) => `<th scope="col">${esc(label(p.platform))}<div class="u" style="font-weight:400">${p.fulfilledLines}/${p.totalLines} found</div></th>`).join('')
     + (down.length ? `<th scope="col" class="down" title="${esc(down.map((p) => `${label(p.platform)}: ${p.errorKind || 'error'}: ${p.error}`).join('\n'))}">${down.length} down ⓘ</th>` : '');
   const rows = r.basket.map((item) => {
     const cls = rankFor(r, item.query);
@@ -462,9 +586,30 @@ function render(r) {
     const downCell = down.length ? `<td class="miss">${down.map((p) => esc(label(p.platform))).join(', ')}</td>` : '';
     return `<tr><td class="item">${item.qty > 1 ? `<span class="qty">${item.qty}× </span>` : ''}${esc(item.query)}${akaHtml(item)}</td>${cells}${downCell}</tr>`;
   }).join('');
-  // A site with nothing found has no total, not a ₹0 one.
-  const foot = up.map((p) => `<td class="${w && w.platform === p.platform ? 'win' : ''}">${p.fulfilledLines ? rs(p.total) : '<span class="u">—</span>'}</td>`).join('') + (down.length ? '<td>—</td>' : '');
-  $('table').innerHTML = `<thead><tr><th class="item" scope="col">Item</th>${head}</tr></thead><tbody>${rows}</tbody><tfoot><tr><td>Total</td>${foot}</tr></tfoot>`;
+  const foot = up.map((p) => `<td class="${w && w.platform === p.platform ? 'win' : ''}">${rs(p.total)}</td>`).join('') + (down.length ? '<td>—</td>' : '');
+  // Free delivery from (what the site itself states; from the offer check), vs this column's total.
+  const freeCell = (p) => {
+    const f = SITE_INFO[p.platform];
+    if (!f?.freeDeliveryAbove) return '<td>—</td>';
+    const gap = Math.round((f.freeDeliveryAbove - (p.total || 0)) * 100) / 100;
+    const fee = f.feeBelow ? ` (else ₹${f.feeBelow} ${esc(f.feeName || 'fee').toLowerCase()})` : '';
+    return `<td title="${esc(`${label(p.platform)} says: free delivery on orders of ₹${f.freeDeliveryAbove}+${f.feeBelow ? `; below that a ₹${f.feeBelow} ${f.feeName || 'fee'}` : ''} · read ${when(f.seenAt)}`)}">₹${f.freeDeliveryAbove}+${fee} · ${gap <= 0 ? '<span class="ok">✓ free</span>' : `${rs(gap)} more`}</td>`;
+  };
+  const anyFree = up.some((p) => SITE_INFO[p.platform]?.freeDeliveryAbove);
+  const freeRow = anyFree ? `<tr class="free"><td>Free delivery</td>${up.map(freeCell).join('')}${down.length ? '<td></td>' : ''}</tr>` : '';
+  $('table').innerHTML = `<thead><tr><th class="item" scope="col">Item</th>${head}</tr></thead><tbody>${rows}</tbody><tfoot><tr><td>Total</td>${foot}</tr>${freeRow}</tfoot>`;
+  // "Get for missing only": item/site pairs with no counted price in this view.
+  MISSING = {};
+  for (const p of r.platforms) {
+    if (SKIPPED.has(p.platform) || p.others) continue;
+    for (const item of r.basket) {
+      const l = lineFor(p, item.query);
+      if (!counted(l) && l?.status !== 'bigger-pack') (MISSING[p.platform] ??= []).push(item.raw || item.query);
+    }
+  }
+  const nMissing = Object.values(MISSING).flat().length;
+  $('missing').hidden = nMissing === 0;
+  $('missing').textContent = `Get for missing only (${nMissing})`;
 
   // Phones: one card per item, sites sorted by what you'd pay.
   $('cards').innerHTML = r.basket.map((item) => {
@@ -475,13 +620,14 @@ function render(r) {
         const why = !l ? '—' : l.status === 'not-cached' ? 'no saved price' : l.status === 'bigger-pack' ? `bigger pack (${fmtPack(l.product.packSize, l.product.packUnit)}, ${rs(l.product.price)})` : l.status === 'suspect' ? 'price looked wrong, left out' : l.status === 'no-match' ? 'no matching product' : l.status === 'out-of-stock' ? 'out of stock' : l.lineTotal != null ? `${rs(l.lineTotal)} ? (weak match)` : 'not found';
         return `<div class="row"><b>${esc(label(p.platform))}</b><span class="muted">${esc(why)}</span><span></span></div>`;
       }
-      return `<div class="row ${cls(l.lineTotal)}"><b>${esc(label(p.platform))}</b><span>${esc(l.product.name)}<div class="u">${esc(unitLine(l))} ${l.cachedAt ? '· as of ' + esc(ddmmyy(l.cachedAt)) : ''} ${badge(l.history)}</div></span><b>${rs(l.lineTotal)}</b></div>`;
+      const tip = infoBtn([l.product.name, l.savedFrom ? `saved for “${l.savedFrom}”` : '', l.cachedAt ? `saved ${when(l.cachedAt)}` : '', wasText(l.history), l.accountPrices?.length > 1 ? acctText(l, l.product) : '']);
+      return `<div class="row ${cls(l)}"><b>${esc(label(p.platform))}</b><span>${esc(l.product.name)}<div class="u">${esc(unitLine(l))} ${l.cachedAt ? `· <span class="age a${ageBand(l.cachedAt)}" aria-hidden="true"></span>${esc(ageText(l.cachedAt))}` : ''}${l.savedFrom ? ` · saved for “${esc(l.savedFrom)}”` : ''} ${badge(l.history)}</div></span><b>${rs(l.lineTotal)}${arrow(l.history)}${tip}</b></div>`;
     }).join('')}</div>`;
   }).join('');
 
   // What the price check left out, and why.
   const left = [];
-  for (const p of up) for (const l of p.lines || []) for (const d of l.dropped || []) left.push(`<li><b>${esc(label(p.platform))}</b> · ${esc(l.query)}: <i>${esc(d.name)}</i> ${rs(d.price)}: ${esc(d.reason)}</li>`);
+  for (const p of up) for (const l of p.lines || []) for (const d of l.dropped || []) left.push(`<li><b>${esc(label(p.platform))}</b> · ${esc(l.query)}: <i>${esc(d.name)}</i> ${rs(d.price)} — ${esc(d.reason)}</li>`);
   $('leftout').hidden = left.length === 0;
   $('leftsum').textContent = `Price check: ${left.length} odd price${left.length === 1 ? '' : 's'} left out`;
   $('leftlist').innerHTML = left.join('');
@@ -491,16 +637,13 @@ function render(r) {
   for (const p of down) probs.push(`<b>${esc(label(p.platform))}</b> <span class="kind">${esc(p.errorKind || 'error')}</span>: ${esc(String(p.error).replace(/^[^:]*: /, ''))}`);
   for (const p of up) for (const f of p.failures || []) probs.push(`<b>${esc(label(p.platform))}</b> “${esc(f.query)}” <span class="kind">${esc(f.kind)}</span>: ${esc(f.message)}`);
   $('problems').hidden = probs.length === 0;
-  $('problems').innerHTML = probs.length ? `<b>Site problems (${probs.length}).</b> <a href="/guide#fix">What these mean</a><ul class="errors">${probs.map((x) => `<li>${x}</li>`).join('')}</ul>` : '';
+  $('problems').innerHTML = probs.length ? `⚠ <b>Site problems (${probs.length}):</b><ul class="errors">${probs.map((x) => `<li>${x}</li>`).join('')}</ul>` : '';
   $('footnote').textContent = `${r.locationLabel ? r.locationLabel + ', ' : ''}${r.pincode} · prices are goods only${r.feesKnown ? '' : '; delivery/handling not included'}`;
 }
 
-/** @returns {Promise<boolean>} whether a result was shown */
 async function loadResult(jobId) {
   const res = await fetch('/api/result' + (jobId != null ? `?jobId=${jobId}` : ''));
-  if (res.status !== 200) return false;
-  render(await res.json());
-  return true;
+  if (res.status === 200) render(await res.json());
 }
 
 // ───────────────────────── actions ─────────────────────────
@@ -512,10 +655,9 @@ $('go').addEventListener('click', async () => {
     const res = await fetch('/api/compare', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...input, mode: 'cached' }) });
     const body = await res.json();
     if (res.status !== 200) throw new Error(body.error || res.status);
-    currentJob = null; $('chips').innerHTML = ''; render(body);
-    if (narrow()) $('listbox').open = false; // on a phone, make room for the answer
+    currentJob = null; chipState.clear(); renderChips(); render(body);
     $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  } catch (e) { notify('Could not load saved prices: ' + e.message, 'err'); } finally { $('go').disabled = false; }
+  } catch (e) { alert('Could not load saved prices: ' + e.message); } finally { $('go').disabled = false; }
 });
 
 // Count down "wait 9s…", then run `again`.
@@ -523,7 +665,7 @@ function startWait(ms, text, again) {
   clearInterval(countdown);
   const bar = $('waitbar'); bar.hidden = false;
   let left = Math.ceil(ms / 1000);
-  const paint = () => { bar.innerHTML = `<p><span class="spin" aria-hidden="true"></span> ${esc(text)} <b>Wait ${left}s…</b> It will start again by itself.</p><button type="button" class="secondary" id="cancelwait">Cancel</button>`; $('cancelwait').onclick = () => { clearInterval(countdown); bar.hidden = true; }; };
+  const paint = () => { bar.innerHTML = `<p>⏳ ${esc(text)} <b>Wait ${left}s…</b> I'll start again automatically.</p><button type="button" class="secondary" id="cancelwait">Cancel</button>`; $('cancelwait').onclick = () => { clearInterval(countdown); bar.hidden = true; }; };
   paint();
   countdown = setInterval(() => { left -= 1; if (left <= 0) { clearInterval(countdown); bar.hidden = true; again(); } else paint(); }, 1000);
 }
@@ -537,38 +679,118 @@ async function fetchFresh() {
     if (res.status === 429) { startWait(body.waitMs, body.error, fetchFresh); return; }
     if (res.status !== 202) throw new Error(body.error || res.status);
     $('waitbar').hidden = true;
-    currentJob = body.jobId; chipState.clear();
-    input.platforms.forEach((p) => chipState.set(p, { text: body.queued ? 'waiting in queue' : 'starting' }));
+    currentJob = body.jobId;
+    startRun(input.platforms, input.platforms.length * listItems().length, body.queued, 'Getting fresh prices');
+    input.platforms.forEach((p) => chipState.set(p, { text: body.queued ? 'waiting in queue' : 'starting', cls: 'wait' }));
     renderChips(); loadJobs();
-    if (narrow()) $('listbox').open = false;
-  } catch (e) { notify('Could not start: ' + e.message, 'err'); } finally { $('fresh').disabled = false; }
+    // Saved prices show at once (dimmed) while the sites answer; the live result replaces them.
+    if ($('result').hidden) {
+      const cached = await fetch('/api/compare', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...input, mode: 'cached' }) }).then((x) => (x.ok ? x.json() : null)).catch(() => null);
+      if (cached && currentJob === body.jobId) render(cached);
+    }
+    if (!$('result').hidden) markUpdating();
+  } catch (e) { alert('Could not start: ' + e.message); } finally { $('fresh').disabled = false; }
 }
 $('fresh').addEventListener('click', fetchFresh);
+
+// "Get for missing only": search just the item/site pairs with no price in
+// this view; when it finishes, the view is rebuilt from saved prices.
+async function fetchMissing() { return fetchOnly(MISSING, 'missing'); }
+/** Search just some item/site pairs (missing ones, or old ones), then re-show the list from saved prices. */
+async function fetchOnly(pairs, why) {
+  const input = formInput(); if (!input) return;
+  const only = Object.fromEntries(Object.entries(pairs).filter(([site, list]) => input.platforms.includes(site) && list.length));
+  if (!Object.keys(only).length) return;
+  $('missing').disabled = true;
+  try {
+    const res = await fetch('/api/compare', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...input, mode: 'missing', only }) });
+    const body = await res.json();
+    if (res.status === 429) { startWait(body.waitMs, body.error, () => fetchOnly(pairs, why)); return; }
+    if (res.status !== 202) throw new Error(body.error || res.status);
+    $('waitbar').hidden = true;
+    currentJob = body.jobId; missingJob = body.jobId;
+    startRun(Object.keys(only), Object.values(only).reduce((a, l) => a + l.length, 0), body.queued, why === 'old' ? 'Refreshing old prices' : 'Getting missing prices');
+    Object.keys(only).forEach((p) => chipState.set(p, { text: `${only[p].length} ${why} · ${body.queued ? 'waiting in queue' : 'starting'}`, cls: 'wait' }));
+    renderChips(); loadJobs();
+  } catch (e) { alert('Could not start: ' + e.message); } finally { $('missing').disabled = false; }
+}
+$('missing').addEventListener('click', fetchMissing);
+
+// ✕ on a cell: wrong product for that item on that site. Remove and remember.
+$('table').addEventListener('click', async (ev) => {
+  const b = ev.target.closest('.rej');
+  if (!b) return;
+  const { rejSite: site, rejQ: query, rejP: product } = b.dataset;
+  if (!confirm(`Remove “${product}” as ${label(site)}'s match for “${query}”?\nIts saved prices for this item are deleted and it is never picked for this item on ${label(site)} again.`)) return;
+  const res = await fetch('/api/prices/reject', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ site, query, product }) });
+  const out = await res.json();
+  if (!res.ok) { alert(out.error || 'Could not remove it'); return; }
+  // Show the view again from saved prices (the next older match, or "no saved price").
+  $('go').click();
+});
+
+$('stop2').addEventListener('click', () => $('stop').click());
 $('stop').addEventListener('click', async () => {
   clearInterval(countdown); $('waitbar').hidden = true;
   await fetch('/api/stop', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(currentJob != null ? { jobId: currentJob } : {}) });
   loadJobs();
 });
 
+// Run panel (mockup A): one chip per site, a bar of searches done, a time estimate.
+const RUN = { title: '', total: 0, startedAt: 0, finished: null };
+function startRun(sites, total, queued, title) {
+  chipState.clear();
+  Object.assign(RUN, { title, total: Math.max(1, total), startedAt: Date.now(), finished: null, queued: Boolean(queued) });
+  $('stop2').disabled = false;
+}
+function markUpdating() {
+  $('result').classList.add('updating');
+  const b = $('banner');
+  if (b && !b.querySelector('.upd')) b.insertAdjacentHTML('beforeend', '<p class="upd" style="margin:4px 0 0;color:var(--ok-ink);font-weight:600">Updating… these are saved prices until the sites answer.</p>');
+}
 function renderChips() {
-  $('chips').innerHTML = [...chipState].map(([site, s]) => `<span class="chip ${s.cls || ''}">${s.cls === 'run' ? '<span class="spin" aria-hidden="true"></span>' : ''}${esc(label(site))} · ${esc(s.text)}</span>`).join('');
+  const run = $('run');
+  if (!chipState.size) { run.hidden = true; return; }
+  run.hidden = false;
+  const all = [...chipState.entries()].filter(([site]) => site !== 'run');
+  const done = all.reduce((a, [, s]) => a + (s.cls === 'ok' || s.cls === 'err' ? (s.total ?? 0) : (s.done ?? 0)), 0);
+  const sitesDone = all.filter(([, s]) => s.cls === 'ok' || s.cls === 'err').length;
+  const pct = RUN.finished ? 100 : Math.min(99, Math.round((100 * done) / RUN.total));
+  const bar = $('runbar');
+  bar.firstElementChild.style.width = `${pct}%`;
+  bar.setAttribute('aria-valuenow', String(pct));
+  const runErr = chipState.get('run');
+  $('runhead').textContent = runErr ? 'The run failed' : RUN.finished ? `Done · ${sitesDone} of ${all.length} sites` : `${RUN.title} · ${sitesDone} of ${all.length} sites`;
+  const secs = Math.round((Date.now() - RUN.startedAt) / 1000);
+  let eta = '';
+  if (RUN.finished) eta = `took ${Math.round((RUN.finished - RUN.startedAt) / 1000)} s`;
+  else if (done > 0 && done < RUN.total) eta = `~${Math.max(5, Math.round(((Date.now() - RUN.startedAt) / done) * (RUN.total - done) / 1000))} s left`;
+  else if (done >= RUN.total) eta = 'finishing…';
+  else eta = `${secs} s`;
+  $('runeta').textContent = eta;
+  const icon = (s) => (s.cls === 'ok' ? '✓' : s.cls === 'err' ? '✖' : s.cls === 'run' ? '<span class="spin" aria-hidden="true"></span>' : '⏱');
+  $('chips').innerHTML = all.map(([site, s]) => `<span class="rc ${s.cls || 'wait'}" title="${esc(`${label(site)}: ${s.log || s.text}`)}">${icon(s)} ${esc(label(site))} ${esc(s.short ?? s.text)}</span>`).join('')
+    + (runErr ? `<span class="rc err">✖ ${esc(runErr.text)}</span>` : '');
+  $('runnote').textContent = RUN.finished || runErr ? '' : 'Tap a site for its last step. Prices are saved when every site has answered.';
+  $('stop2').hidden = Boolean(RUN.finished || runErr);
 }
 function onProgress({ jobId, event: e }) {
   if (currentJob != null && jobId !== currentJob) return;
-  const s = chipState.get(e.site) || { text: 'starting' };
-  if (e.type === 'site-start') Object.assign(s, { text: `0/${e.total}`, cls: 'run' });
-  if (e.type === 'query') Object.assign(s, { text: `${e.index}/${e.total} · ${e.query}`, cls: 'run' });
-  if (e.type === 'wait') Object.assign(s, { text: `pausing ${Math.ceil(e.waitMs / 1000)}s (${e.reason})`, cls: 'run' });
-  if (e.type === 'retry') Object.assign(s, { text: `retrying (${e.kind})`, cls: 'run' });
-  if (e.type === 'fallback') Object.assign(s, { text: 'trying the page view', cls: 'run' });
-  if (e.type === 'site-done') Object.assign(s, e.ok ? { text: '✓ done', cls: 'ok' } : { text: `✖ ${e.error}`, cls: 'err' });
+  if (!e.site) return;
+  const s = chipState.get(e.site) || { text: 'starting', cls: 'wait' };
+  if (e.type === 'site-start') Object.assign(s, { total: e.total, done: 0, text: `0/${e.total}`, short: `0/${e.total}`, cls: 'run', log: 'started' });
+  if (e.type === 'query') Object.assign(s, { total: e.total, done: e.index - 1, text: `${e.index}/${e.total} · ${e.query}`, short: `${e.index - 1}/${e.total}`, cls: 'run', log: `searching “${e.query}”` });
+  if (e.type === 'wait') Object.assign(s, { short: `· in ${Math.ceil(e.waitMs / 1000)} s`, cls: 'wait', log: `pausing ${Math.ceil(e.waitMs / 1000)} s (${e.reason})` });
+  if (e.type === 'retry') Object.assign(s, { short: '· retrying', cls: 'run', log: `retrying after ${e.kind}: ${e.message || ''}` });
+  if (e.type === 'fallback') Object.assign(s, { short: '· page view', cls: 'run', log: 'trying the page view' });
+  if (e.type === 'site-done') Object.assign(s, e.ok ? { done: s.total ?? 0, short: s.total ? `${s.total}/${s.total}` : 'done', cls: 'ok', log: 'done' } : { short: 'failed', cls: 'err', log: e.error });
   chipState.set(e.site, s); renderChips();
 }
 
 async function loadJobs() {
   const j = await (await fetch('/api/jobs?limit=10')).json();
   $('stop').disabled = !j.current;
-  $('jobs').innerHTML = (j.jobs || []).map((x) => `<tr><td>${x.id}</td><td>${when(x.createdAt)}</td><td>${esc(x.trigger)}</td><td>${esc((x.sites || []).map(label).join(', ') || 'default')}</td><td>${esc(x.status)}${x.error ? ': ' + esc(x.error) : ''}</td></tr>`).join('') || '<tr><td colspan="5" class="muted">No runs yet</td></tr>';
+  $('jobs').innerHTML = (j.jobs || []).map((x) => `<tr><td>${esc(x.id)}</td><td>${esc(when(x.createdAt))}</td><td>${esc(x.trigger)}</td><td>${esc((x.sites || []).map(label).join(', ') || 'default')}</td><td>${esc(x.status)}${x.error ? ' — ' + esc(x.error) : ''}</td></tr>`).join('') || '<tr><td colspan="5" class="muted">No runs yet</td></tr>';
 }
 
 function connect() {
@@ -576,8 +798,15 @@ function connect() {
   es.addEventListener('progress', (m) => onProgress(JSON.parse(m.data)));
   es.addEventListener('done', (m) => {
     const d = JSON.parse(m.data); loadJobs();
+    // Any finished job may have found deals (offer checks and searches alike).
+    loadDeals();
+    if (d.kind === 'offers') { loadSiteInfo(); return; }
+    // A "missing only" run fills gaps: show the whole list again from saved prices.
+    const mine = currentJob != null && d.jobId === currentJob;
+    if (mine && d.ok) { RUN.finished = Date.now(); renderChips(); }
+    if (d.ok && missingJob != null && d.jobId === missingJob) { missingJob = null; currentJob = null; $('go').click(); return; }
     if (currentJob == null || d.jobId === currentJob) {
-      if (d.ok) loadResult(d.jobId); else { chipState.set('run', { text: `✖ ${d.error}`, cls: 'err' }); renderChips(); }
+      if (d.ok) loadResult(d.jobId); else { chipState.set('run', { text: d.error === 'cancelled' ? 'stopped, nothing saved' : d.error, cls: 'err' }); $('result').classList.remove('updating'); renderChips(); }
     }
   });
   es.addEventListener('job', () => loadJobs());
@@ -591,7 +820,8 @@ async function fetchSug() {
   const q = $('q').value.trim();
   if (!q) { hideSug(); return; }
   sugItems = await (await fetch('/api/suggest?q=' + encodeURIComponent(q))).json();
-  $('sug').innerHTML = sugItems.map((s, i) => `<div role="option" data-i="${i}">${esc(s.query)} <small>${s.sites} site${s.sites === 1 ? '' : 's'} · ${esc(ddmmyy(s.seenAt))}</small></div>`).join('') || '<div class="muted">No saved item matches</div>';
+  const dmy = (d) => (d ? d.split('-').reverse().map((x, i) => (i === 2 ? x.slice(2) : x)).join('/') : '');
+  $('sug').innerHTML = sugItems.map((s, i) => `<div role="option" data-i="${i}"><span><b>${esc(s.query)}</b> · ${s.sites} site${s.sites === 1 ? '' : 's'}</span><small>${s.best ? `best ${rs(s.best.rate)}/${esc(s.best.per.replace(/^100 /, '100'))} ${esc(label(s.best.site))} · ${esc(dmy(s.best.date))}` : esc(ddmmyy(s.seenAt))}</small></div>`).join('') || '<div class="muted">No saved item matches</div>';
   $('sug').hidden = false; $('q').setAttribute('aria-expanded', 'true');
 }
 $('q').addEventListener('input', () => { clearTimeout(sugTimer); sugTimer = setTimeout(fetchSug, 150); });
@@ -613,52 +843,418 @@ async function doLookup(q) {
   const res = await fetch('/api/lookup?q=' + encodeURIComponent(q));
   const b = await res.json();
   if (res.status !== 200) { box.innerHTML = `<p style="margin:0">${esc(b.error)}</p>`; return; }
-  const unit = b.per;
-  box.innerHTML = `<h3>${esc(b.query)}: saved prices <span class="muted" style="font-weight:600">(rate per ${esc(unit)})</span></h3>
-    <table><thead><tr><th>Site</th><th>Rate</th><th>Last price</th><th class="opt-col">Pack</th><th>As of</th><th class="opt-col">Lowest rate seen</th></tr></thead><tbody>
-    ${b.sites.map((s, i) => `<tr class="${i === 0 ? 'cheap' : ''}"><td>${esc(label(s.site))}</td><td><b>${rs(s.rate)}</b></td><td>${rs(s.lastPrice)} <span class="muted" title="${esc(s.product)}">${esc((s.product || '').slice(0, 28))}</span></td><td class="opt-col">${esc(s.pack || '')}</td><td>${esc(ddmmyy(s.seenAt))}</td><td class="opt-col">${rs(s.lowRate)} · ${esc(day(s.lowSeenAt))}</td></tr>`).join('')}
+  // Option B (approved 2026-11-19): one line per vendor, a 3-date trend, now, lowest ever.
+  const dm = (d) => (d ? d.split('-').reverse().slice(0, 2).join('/') : '');
+  const per = b.per.replace(/^100 /, '100');
+  const base = b.per === 'piece' ? 'pc' : b.per === '100 ml' ? 'L' : 'kg';
+  const all = b.sites.flatMap((x) => (x.trend || []).filter(Boolean).map((c) => c.rate));
+  const lo = Math.min(...all), hi = Math.max(...all);
+  const bar = (c) => (c ? `<i style="height:${Math.round(6 + (hi > lo ? (c.rate - lo) / (hi - lo) : 0.5) * 12)}px"></i>` : '<i class="none"></i>');
+  const val = (c, i) => (c ? `<span title="${esc(`${c.product || ''}\n${rs(c.price)}${c.pack ? ' for ' + fmtPack(...packParts(c.pack)) : ''} · ${when(c.seenAt)}`)}">${(+c.rate).toFixed(2)}</span>` : `<span title="no price on ${esc(dm(b.dates[i]))}">—</span>`);
+  const nowArrow = (x) => arrow({ change: x.change, changePct: x.changePct, prev: x.prev, unit: base });
+  // Pack price behind each rate (what was paid, for which pack), product on hover.
+  const how = (c) => `${c.product || ''}\n${rs(c.price)}${c.pack ? ` for ${fmtPack(...packParts(c.pack))}` : ''} = ${rs(c.rate)} per ${b.per} · ${when(c.seenAt)}`;
+  const pk = (c, i) => (c ? `<span title="${esc(how(c))}">${rs(c.price)}</span>` : `<span title="no price on ${esc(dm(b.dates[i]))}">—</span>`);
+  const lastPack = (cells) => { const c = [...cells].reverse().find(Boolean); return c?.pack ? ` · ${esc(fmtPack(...packParts(c.pack)))}` : ''; };
+  const siteName = (x) => (x.site === 'others' ? `Others${x.source ? `<div class="muted" style="font-size:11px">${esc(x.source)}</div>` : ''}` : esc(label(x.site)));
+  box.innerHTML = `<h3>${esc(b.query)} <span class="muted" style="font-weight:400">· rate per ${esc(b.per)} · ${esc(b.dates.map(dm).join(' → '))}</span></h3>
+    <table><colgroup><col style="width:15%"><col><col class="pk-col" style="width:21%"><col style="width:16%"><col class="opt-col" style="width:16%"></colgroup>
+    <thead><tr><th>Site</th><th>Trend (${b.dates.length} date${b.dates.length === 1 ? '' : 's'})</th><th class="pk-col">Pack price</th><th>Now</th><th class="opt-col">Lowest ever</th></tr></thead><tbody>
+    ${b.sites.map((x, i) => {
+      const cells = b.dates.map((_, k) => (x.trend || [])[k] ?? null);
+      return `<tr class="${i === 0 ? 'cheap' : ''}"><td${x.source ? ` title="${esc(`Bought from ${x.source}`)}"` : ''}>${siteName(x)}</td>
+        <td><span class="spark" aria-hidden="true">${cells.map(bar).join('')}</span><span class="tr">${cells.map(val).join(' → ')}</span></td>
+        <td class="pk-col"><span class="tr">${cells.map(pk).join(' → ')}${lastPack(cells)}</span></td>
+        <td><b title="${esc(`${rs(x.lastPrice)} · ${x.product || ''} · ${when(x.seenAt)}`)}">${rs(x.rate)}</b>${nowArrow(x)}${infoBtn([x.product, `${rs(x.lastPrice)}${x.pack ? ' for ' + fmtPack(...packParts(x.pack)) : ''} · ${rs(x.rate)} per ${b.per}`, `seen ${when(x.seenAt)}`, x.source ? `bought from ${x.source}` : '', x.lowRate != null ? `lowest ${rs(x.lowRate)} · ${day(x.lowSeenAt)}` : ''])}<div class="muted" style="font-size:11px">${esc(per.replace('piece', 'pc'))} · ${esc(ddmmyy(x.seenAt))}</div></td>
+        <td class="opt-col">${rs(x.lowRate)} · ${esc(day(x.lowSeenAt))}</td></tr>`;
+    }).join('')}
     </tbody></table>
-    ${b.options?.length ? `<div class="opts muted" style="margin-top:.6rem">Also saved: ${b.options.map((o) => `<button type="button" class="secondary" data-q="${esc(o.query)}">${esc(o.query)}</button>`).join('')}</div>` : ''}`;
+    ${b.options?.length ? `<div class="opts muted" style="margin-top:6px">Also saved: ${b.options.map((o) => `<button type="button" class="secondary" data-q="${esc(o.query)}">${esc(o.query)}</button>`).join('')}</div>` : ''}`;
   box.querySelectorAll('[data-q]').forEach((btn) => btn.addEventListener('click', () => { $('q').value = btn.dataset.q; doLookup(btn.dataset.q); }));
 }
 
-// ───────────────────────── sign-in popup ─────────────────────────
-let loginSite = null, loginStep = 1;
-async function refreshAccounts() {
-  const list = await (await fetch('/api/login')).json();
-  $('accts').innerHTML = list.map((a) => `<div class="acct"><span><b>${esc(a.label)}</b> <span class="muted">· ${esc(a.why)}</span></span><span>${a.loggedIn ? `<span class="signed">signed in ${esc(day(a.since))} ${esc(a.phoneHint || '')}</span>` : '<span class="muted">not signed in</span>'}</span></div>`).join('');
-  $('lsite').innerHTML = list.map((a) => `<option value="${esc(a.id)}">${esc(a.label)}</option>`).join('');
-}
-function setStep(n) { loginStep = n; $('step1').hidden = n !== 1; $('step2').hidden = n !== 2; $('lgo').textContent = n === 1 ? 'Send OTP' : 'Verify'; }
-function lmsg(text, kind) { $('lmsg').textContent = text; $('lmsg').className = 'msg ' + (kind || ''); }
-$('signin').addEventListener('click', async () => {
-  setStep(1); lmsg(''); $('lotp').value = '';
-  $('lphone').value ||= (await (await fetch('/api/config')).json()).phone || '';
-  await refreshAccounts(); $('dlg').showModal(); $('lphone').focus();
-});
-$('lclose').addEventListener('click', () => $('dlg').close());
-$('loginform').addEventListener('submit', async (ev) => {
-  ev.preventDefault();
-  const go = $('lgo'); go.disabled = true;
-  try {
-    if (loginStep === 1) {
-      loginSite = $('lsite').value; lmsg('Asking the site to send an OTP… (about 15 s)');
-      const res = await fetch('/api/login/start', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ site: loginSite, phone: $('lphone').value }) });
-      const b = await res.json();
-      if (!res.ok) throw new Error(b.error);
-      setStep(2); lmsg(b.message, 'ok'); $('lotp').focus();
-    } else {
-      lmsg('Checking the OTP…');
-      const res = await fetch('/api/login/verify', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ site: loginSite, otp: $('lotp').value }) });
-      const b = await res.json();
-      if (!res.ok) throw new Error(b.error);
-      lmsg('Signed in. The session is saved for future searches.', 'ok'); setStep(1); await refreshAccounts();
-    }
-  } catch (e) { lmsg(e.message, 'err'); } finally { go.disabled = false; }
+// ───────────────────────── phone tabs (mockup A) ─────────────────────────
+// Phones only (CSS): Compare / Prices / Deals / Settings at the bottom.
+document.querySelector('.tabbar').addEventListener('click', (e) => {
+  const t = e.target.closest('[data-tab]');
+  if (!t || t.dataset.tab === 'settings') return;
+  document.querySelectorAll('.tabbar [data-tab]').forEach((x) => x.removeAttribute('aria-current'));
+  t.setAttribute('aria-current', 'page');
+  if (t.dataset.tab === 'compare') scrollTo({ top: 0, behavior: 'smooth' });
+  if (t.dataset.tab === 'prices') { $('q').scrollIntoView({ behavior: 'smooth', block: 'center' }); $('q').focus({ preventScroll: true }); }
+  if (t.dataset.tab === 'deals') {
+    const d = $('deals');
+    if (d.hidden) { showTip(t, 'No deals (80%+ off) right now. They show here after the offer check.'); return; }
+    d.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 });
 
-// A saved result on load: show it, and fold the list away so the answer is in view.
-loadMeta().then(async () => { if (await loadResult()) $('listbox').open = false; loadJobs(); connect(); });
+// ───────────────────────── tap tips (2026-11-20) ─────────────────────────
+// Hover text doesn't exist on a phone. There, tapping anything with a tooltip
+// opens it in a bubble; the (i) buttons open it on every device (and are the
+// way in where the thing itself is a link or a button). One bubble at a time.
+const TIP = $('tip');
+const coarse = matchMedia('(pointer: coarse)');
+let tipFor = null;
+function hideTip() {
+  if (TIP.hidden) return;
+  TIP.hidden = true;
+  if (tipFor?.classList?.contains('info')) tipFor.setAttribute('aria-expanded', 'false');
+  tipFor = null;
+}
+function showTip(anchor, text) {
+  if (!text) return;
+  if (tipFor === anchor) { hideTip(); return; }
+  hideTip();
+  TIP.querySelector('.t').textContent = text;
+  TIP.hidden = false;
+  const r = anchor.getBoundingClientRect();
+  const w = TIP.offsetWidth, h = TIP.offsetHeight;
+  const left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), innerWidth - w - 8);
+  const top = r.bottom + 6 + h > innerHeight - 8 ? Math.max(8, r.top - h - 6) : r.bottom + 6;
+  TIP.style.left = `${left}px`;
+  TIP.style.top = `${top}px`;
+  tipFor = anchor;
+  if (anchor.classList.contains('info')) anchor.setAttribute('aria-expanded', 'true');
+}
+document.addEventListener('click', (e) => {
+  if (e.target.closest('#tip .x')) { hideTip(); return; }
+  if (e.target.closest('#tip')) return;
+  const info = e.target.closest('.info');
+  if (info) { e.preventDefault(); e.stopPropagation(); showTip(info, info.dataset.tip); return; }
+  if (coarse.matches) {
+    const t = e.target.closest('[title]');
+    if (t?.title && !e.target.closest('a, button, input, select, textarea, label, summary, dialog')) { showTip(t, t.title); return; }
+  }
+  hideTip();
+}, true);
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hideTip(); });
+addEventListener('scroll', hideTip, { passive: true, capture: true });
+addEventListener('resize', hideTip);
+
+// ───────────────────────── deals (80%+ off) ─────────────────────────
+// Option 1 (approved 2026-11-19): compact table grouped by site, first rows then
+// "+ N more"; hover/focus a row for the accounts that saw it. Never in totals.
+const DEAL_ROWS = 5;
+const dealOpen = new Set();
+const hhmm = (iso) => (iso ? new Date(iso).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Kolkata' }) : '—');
+const condText = (c) => [c?.maxQty ? `max ${c.maxQty} item${c.maxQty > 1 ? 's' : ''}` : '', c?.minBasket ? `basket ₹${c.minBasket}+` : ''].filter(Boolean).join(' · ');
+function dealRow(d, showSite) {
+  const who = d.seenBy.map((s) => `${s.name}${s.hint ? ` (${s.hint})` : ''} · ${hhmm(s.seenAt)}`).join('\n');
+  const own = condText(d.conditions);
+  return `<div class="dealrow" tabindex="0" title="${esc(`Seen by:\n${who}${d.source === 'feed' ? '\nfrom the site\'s deal list' : '\nfound while searching'}`)}">
+    <span class="dn">${showSite ? `<b>${esc(label(d.site))}</b> · ` : ''}${esc(d.product)}${d.pack ? ` · ${esc(fmtPack(...packParts(d.pack)))}` : ''}${own && showSite ? ` <span class="muted">· ${esc(own)}</span>` : ''}</span>
+    <span class="dp">${rs(d.price)}</span><span class="dm">${rs(d.mrp)}</span><span class="pill">${Math.round(d.pct)}% off</span></div>`;
+}
+const packParts = (p) => { const m = /^([\d.]+)\s*([a-z]+)$/i.exec(String(p || '')); return m ? [Number(m[1]), m[2]] : [null, null]; };
+function dealGroup(key, title, cond, deals, empty, showSite) {
+  const open = dealOpen.has(key);
+  const shown = open ? deals : deals.slice(0, DEAL_ROWS);
+  const more = deals.length - shown.length;
+  return `<div class="dealsite"><span>${title}</span>${cond ? `<span class="cond">${esc(cond)}</span>` : ''}</div>
+    ${deals.length ? shown.map((d) => dealRow(d, showSite)).join('') : `<div class="dealnote">${esc(empty)}</div>`}
+    ${more > 0 ? `<button type="button" class="dealmore" data-more="${esc(key)}">+ ${more} more</button>` : open && deals.length > DEAL_ROWS ? `<button type="button" class="dealmore" data-more="${esc(key)}">show fewer</button>` : ''}`;
+}
+async function loadDeals() {
+  let d;
+  try { d = await (await fetch('/api/deals')).json(); } catch { return; }
+  const pct = d.minDiscountPct ?? 80;
+  const any = d.groups.length || d.fromSearches.length || d.errors.length;
+  $('deals').hidden = false;
+  $('dealsh').firstChild.textContent = `Deals · ${pct}%+ off `;
+  const last = Object.values(d.checkedAt || {}).sort().at(-1);
+  $('dealsub').textContent = `· not in totals${last ? ` · checked ${hhmm(last)}` : ''}`;
+  const html = d.groups.map((g) => dealGroup(g.site, esc(label(g.site)), condText(g.conditions), g.deals, `No ${pct}%+ deals in the last check (${hhmm(g.checkedAt)}).`, false)).join('')
+    + (d.fromSearches.length ? dealGroup('search', 'From searches', '', d.fromSearches, '', true) : '')
+    + d.errors.map((e) => `<div class="dealerr">${esc(label(e.site))} · ${esc(e.name)}: ${esc(e.error)}</div>`).join('');
+  $('dealbody').innerHTML = any ? html : `<div class="dealnote">No offer check yet. It runs at 07:00 and 18:00 (unless changed in config), or press Check offers.</div>`;
+  $('dealbody').querySelectorAll('[data-more]').forEach((b) => b.addEventListener('click', () => {
+    const k = b.dataset.more; if (dealOpen.has(k)) dealOpen.delete(k); else dealOpen.add(k); loadDeals();
+  }));
+}
+$('checkoffers').addEventListener('click', async () => {
+  $('checkoffers').disabled = true;
+  try {
+    const res = await fetch('/api/offers/run', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
+    const b = await res.json();
+    $('dealsub').textContent = res.ok ? `· checking offers (job ${b.jobId})…` : `· ${b.error || 'could not start'}`;
+  } finally {
+    setTimeout(() => { $('checkoffers').disabled = false; }, 5000);
+  }
+});
+
+// ───────────────────────── sign-in popup ─────────────────────────
+// Step 1: site + number -> "Send OTP". The popup moves to step 2 at once (OTP
+// box + "Verify"); the server drives the site's page in the background and we
+// poll its state: sending -> otp_sent (Verify enabled) | error (Resend).
+let loginSite = null, loginStep = 1, pollTimer = null, accounts = [];
+// What step 2 asks for: 'otp' (code box), 'password', 'approve' (no box,
+// "Check" after approving on the phone), or 'wait' while the page loads.
+let loginKind = 'wait';
+const STATE_TEXT = {
+  sending: 'Opening the site and asking for the next step… (about 15 s)',
+  otp_sent: '✓ Code sent. Enter it above and press Verify.',
+  password_needed: 'Enter the account password above and press Sign in.',
+  approve_needed: 'Approve the sign-in on your phone, then press Check.',
+  verifying: 'Checking…',
+  signed_in: '✓ Signed in. The session is saved for future searches.',
+};
+const KIND_OF = { otp_sent: 'otp', password_needed: 'password', approve_needed: 'approve' };
+const READY = ['otp_sent', 'password_needed', 'approve_needed'];
+
+// Layout A (approved 2026-11-19): each site lists its accounts; multi-account
+// sites (Instamart, Milkbasket) have "+ Add account". `loginAccount` is the
+// account being signed in, or null while adding a new one (its name is typed).
+let loginAccount = 'main';
+const siteOf = (id) => accounts.find((x) => x.id === id);
+const acctOf = (site, id) => siteOf(site)?.accounts?.find((a) => a.id === id) ?? null;
+function acctStatus(a) {
+  return a.loggedIn ? `<span style="color:var(--ok-ink)">signed in ${esc(day(a.since))}</span>`
+    : a.state === 'error' ? '<span style="color:var(--bad-ink)">last try failed</span>'
+    : a.pending ? '<span style="color:var(--warn)">in progress</span>' : '<span class="muted">not signed in</span>';
+}
+async function refreshAccounts() {
+  accounts = await (await fetch('/api/login')).json();
+  $('accts').innerHTML = accounts.map((s) => {
+    const rows = (s.accounts || []).map((a) => `<div class="arow"><span><b>${esc(a.name)}</b>${a.hint ? ` · ${esc(a.hint)}` : ''}</span>
+      <span class="st">${acctStatus(a)}</span>
+      <span class="acts">${a.loggedIn ? '' : `<button type="button" class="linkbtn" data-act="signin" data-site="${esc(s.id)}" data-acc="${esc(a.id)}">Sign in</button>`}
+      ${a.loggedIn || a.id !== 'main' ? `<button type="button" class="linkbtn" data-act="signout" data-site="${esc(s.id)}" data-acc="${esc(a.id)}">${a.id === 'main' ? 'Sign out' : 'Remove'}</button>` : ''}</span></div>`).join('');
+    const add = s.canAdd ? `<button type="button" class="linkbtn addacct" data-act="add" data-site="${esc(s.id)}">+ Add account</button> <span class="muted" style="font-size:12px">${s.id === 'instamart' ? 'prices are searched for each account' : 'extra accounts: deals only, no product search'}</span>` : '';
+    return `<div class="site"><div class="sh"><b>${esc(s.label)}</b> <span class="muted">— ${esc(s.why)}</span></div>${rows}${add ? `<div>${add}</div>` : ''}</div>`;
+  }).join('');
+  const keep = $('lsite').value;
+  $('lsite').innerHTML = accounts.map((a) => `<option value="${esc(a.id)}">${esc(a.label)}</option>`).join('');
+  if (keep) $('lsite').value = keep;
+  siteChanged();
+  return accounts;
+}
+/** Pick a site + account (or a new account) for step 1. */
+function chooseAccount(site, account) {
+  $('lsite').value = site;
+  loginAccount = account;
+  $('lnamebox').hidden = account !== null;
+  if (account === null) $('lname').value = '';
+  setStep(1); lmsg('');
+  siteChanged();
+  (account === null ? $('lname') : $('lphone')).focus();
+}
+$('accts').addEventListener('click', async (ev) => {
+  const b = ev.target.closest('[data-act]');
+  if (!b) return;
+  const site = b.dataset.site, acc = b.dataset.acc;
+  if (b.dataset.act === 'signin') return chooseAccount(site, acc);
+  if (b.dataset.act === 'add') return chooseAccount(site, null);
+  if (b.dataset.act === 'signout') {
+    const a = acctOf(site, acc);
+    const what = acc === 'main' ? `Sign out of ${label(site)}? Other sites stay signed in.` : `Remove the ${label(site)} account "${a?.name}"? Its browser profile is deleted.`;
+    if (!confirm(what)) return;
+    const res = await fetch('/api/login/signout', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ site, account: acc }) });
+    const out = await res.json();
+    lmsg(res.ok ? (out.removed ? `Removed "${a?.name}".` : `Signed out of ${label(site)}.`) : out.error, res.ok ? 'ok' : 'err');
+    await refreshAccounts();
+  }
+});
+/** Amazon takes a number or an email; the others a mobile number only. */
+function siteChanged() {
+  const a = accounts.find((x) => x.id === $('lsite').value);
+  const email = Boolean(a?.acceptsEmail);
+  $('lphonelbl').textContent = email ? 'Mobile number or email' : 'Mobile number';
+  $('lphone').type = email ? 'text' : 'tel';
+  $('lphone').inputMode = email ? 'email' : 'numeric';
+  $('lphone').maxLength = email ? 254 : 14;
+  $('lphone').placeholder = email ? '10-digit number or email' : '10-digit number';
+  $('lphone').autocomplete = email ? 'username' : 'tel-national';
+  if (loginStep === 1) $('lgo').textContent = a?.method === 'password' ? 'Continue' : 'Send OTP';
+}
+function lmsg(text, kind) { $('lmsg').textContent = text || ''; $('lmsg').className = 'msg ' + (kind || ''); }
+function setKind(kind) {
+  loginKind = kind;
+  $('otpbox').hidden = kind !== 'otp';
+  $('passbox').hidden = kind !== 'password';
+  $('lgo').textContent = kind === 'password' ? 'Sign in' : kind === 'approve' ? 'Check' : 'Verify';
+  // Resend asks the site for a new OTP; it makes no sense for a password.
+  const site = siteOf(loginSite);
+  $('lresend').hidden = loginStep !== 2 || site?.method === 'password';
+}
+function setStep(n) {
+  loginStep = n;
+  $('step1').hidden = n !== 1;
+  $('step2').hidden = n !== 2;
+  $('lpass').value = '';
+  if (n === 1) { stopPoll(); $('lgo').disabled = false; $('lresend').hidden = true; siteChanged(); }
+  else setKind('wait');
+}
+function stopPoll() { clearInterval(pollTimer); pollTimer = null; }
+
+/** Reflect the server's state for the current site in step 2. */
+function showState(a) {
+  if (!a) return;
+  if (KIND_OF[a.state] && KIND_OF[a.state] !== loginKind) {
+    setKind(KIND_OF[a.state]);
+    (loginKind === 'password' ? $('lpass') : loginKind === 'otp' ? $('lotp') : $('lgo')).focus();
+  }
+  const wait = Math.ceil((a.resendInMs || 0) / 1000);
+  $('lresend').disabled = wait > 0 || a.state === 'sending' || a.state === 'verifying';
+  $('lresend').textContent = wait > 0 ? `Resend in ${wait}s` : 'Resend OTP';
+  $('lgo').disabled = !READY.includes(a.state);
+  if (a.message && READY.includes(a.state) && !a.error) $('otpfor').textContent = a.message;
+  if (a.state === 'error' || (READY.includes(a.state) && a.error)) lmsg(a.error, 'err');
+  else lmsg(STATE_TEXT[a.state] || '', READY.includes(a.state) || a.state === 'signed_in' ? 'ok' : '');
+}
+function startPoll() {
+  stopPoll();
+  pollTimer = setInterval(async () => {
+    const list = await refreshAccounts().catch(() => null);
+    const a = list ? acctOf(loginSite, loginAccount) : null;
+    showState(a);
+    // Keep ticking while there is a countdown or work in flight.
+    if (a && !['sending', 'verifying'].includes(a.state) && !(a.resendInMs > 0)) stopPoll();
+  }, 1000);
+}
+
+async function startSignIn() {
+  loginSite = $('lsite').value;
+  const site = siteOf(loginSite);
+  const adding = loginAccount === null;
+  const name = $('lname').value.trim();
+  if (adding && !name) { lmsg('Give the account a name, e.g. "Amma".', 'err'); $('lname').focus(); return; }
+  const raw = $('lphone').value.trim();
+  const isEmail = site?.acceptsEmail && raw.includes('@');
+  const id = isEmail ? raw : raw.replace(/\D/g, '').slice(-10);
+  if (isEmail ? !/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(id) : id.length !== 10) {
+    lmsg(site?.acceptsEmail ? 'Enter a 10-digit mobile number or the account email.' : 'Enter a 10-digit mobile number.', 'err');
+    $('lphone').focus();
+    return;
+  }
+  const res = await fetch('/api/login/start', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ site: loginSite, id, ...(adding ? { name } : { account: loginAccount }) }) });
+  const b = await res.json();
+  if (!res.ok) { lmsg(b.error, 'err'); return; }
+  loginAccount = b.account || loginAccount || 'main';
+  $('lnamebox').hidden = true;
+  // Move on now; the state poll shows the code box, the password box, or the exact error.
+  const hint = isEmail ? `${id.slice(0, 1)}•••@${id.split('@')[1]}` : `••••••${id.slice(-4)}`;
+  const who = loginAccount === 'main' ? '' : ` · ${adding ? name : acctOf(loginSite, loginAccount)?.name || ''}`;
+  $('otpfor').textContent = `${label(loginSite)}${who} · ${hint}`;
+  $('lotp').value = '';
+  setStep(2);
+  $('lgo').disabled = true;
+  lmsg(STATE_TEXT.sending);
+  startPoll();
+}
+
+async function verifyStep() {
+  let body;
+  if (loginKind === 'password') {
+    const password = $('lpass').value;
+    if (!password) { lmsg('Enter the password.', 'err'); $('lpass').focus(); return; }
+    body = { site: loginSite, account: loginAccount, password };
+    // Not kept in the page any longer than the request.
+    $('lpass').value = '';
+  } else if (loginKind === 'approve') {
+    body = { site: loginSite, account: loginAccount };
+  } else {
+    const otp = $('lotp').value.replace(/\s+/g, '');
+    if (!/^\d{4,8}$/.test(otp)) { lmsg('The code is 4 to 8 digits.', 'err'); $('lotp').focus(); return; }
+    body = { site: loginSite, account: loginAccount, otp };
+  }
+  $('lgo').disabled = true;
+  lmsg(STATE_TEXT.verifying);
+  const res = await fetch('/api/login/verify', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  const b = await res.json();
+  await refreshAccounts();
+  const a = acctOf(loginSite, loginAccount);
+  if (!res.ok) {
+    $('lotp').value = '';
+    showState(a);
+    lmsg(b.error, 'err');
+    if (loginKind === 'password') $('lpass').focus(); else if (loginKind === 'otp') $('lotp').focus();
+    startPoll();
+    return;
+  }
+  if (!b.loggedIn) { showState(a); return; } // a second step: code or approval
+  lmsg(STATE_TEXT.signed_in, 'ok');
+  setTimeout(() => { setStep(1); lmsg(''); }, 1800);
+}
+
+$('signin').addEventListener('click', async () => {
+  setStep(1); lmsg(''); $('lotp').value = '';
+  loginAccount = 'main'; $('lnamebox').hidden = true;
+  $('lphone').value ||= (await (await fetch('/api/config')).json()).phone || '';
+  await refreshAccounts();
+  // Re-open mid-flow: if any account is waiting for its next step, go straight to step 2.
+  let mid = null;
+  for (const s of accounts) for (const a of s.accounts || []) if (!mid && (READY.includes(a.state) || a.state === 'sending')) mid = { site: s, acc: a };
+  if (mid) {
+    loginSite = mid.site.id; loginAccount = mid.acc.id; $('lsite').value = mid.site.id;
+    $('otpfor').textContent = `${mid.site.label}${mid.acc.id === 'main' ? '' : ' · ' + mid.acc.name}${mid.acc.hint ? ' · ' + mid.acc.hint : ''}`;
+    setStep(2); showState(mid.acc); startPoll();
+  }
+  $('dlg').showModal();
+  (mid ? (loginKind === 'password' ? $('lpass') : $('lotp')) : $('lphone')).focus();
+});
+$('lsite').addEventListener('change', () => { loginAccount = 'main'; $('lnamebox').hidden = true; siteChanged(); });
+$('lclose').addEventListener('click', () => { stopPoll(); $('lpass').value = ''; $('dlg').close(); });
+$('lchange').addEventListener('click', () => { setStep(1); lmsg(''); $('lphone').focus(); });
+$('lresend').addEventListener('click', async () => { $('lresend').disabled = true; await startSignIn(); });
+$('lotp').addEventListener('input', () => { if (/^\d{4,8}$/.test($('lotp').value) && loginStep === 2) lmsg(''); });
+$('loginform').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  try { if (loginStep === 1) await startSignIn(); else await verifyStep(); }
+  catch (e) { lmsg(e.message, 'err'); $('lgo').disabled = false; }
+});
+
+// ───────────────────────── add a price ("Others") ─────────────────────────
+const todayIso = () => new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10); // IST date
+function apmsg(text, kind) { $('apmsg').textContent = text || ''; $('apmsg').className = 'msg ' + (kind || ''); }
+async function loadEntries() {
+  const list = await (await fetch('/api/entries?limit=10')).json().catch(() => []);
+  $('aplist').innerHTML = list.length
+    ? `<div class="muted" style="font-size:12px;margin-bottom:2px">Your recent entries</div>${list.map((e) => `<div class="entry"><span><b>${esc(e.query)}</b> · ${esc(e.product)} · ${rs(e.price)}${e.pack ? ' · ' + esc(fmtPack(...packParts(e.pack))) : ''} · ${esc(ddmmyy(e.seenAt))}${e.source ? ' · ' + esc(e.source) : ''}</span><button type="button" class="linkbtn" data-entry="${esc(e.id)}">Remove</button></div>`).join('')}`
+    : '';
+}
+$('addprice').addEventListener('click', async () => {
+  apmsg('');
+  $('apitem').value ||= $('q').value.trim();
+  $('apdate').value = todayIso();
+  $('apdate').max = todayIso();
+  await loadEntries();
+  $('apdlg').showModal();
+  ($('apitem').value ? $('apprice') : $('apitem')).focus();
+});
+$('apclose').addEventListener('click', () => $('apdlg').close());
+$('aplist').addEventListener('click', async (ev) => {
+  const b = ev.target.closest('[data-entry]');
+  if (!b || !confirm('Remove this entered price? (It is kept in the data, but no longer shown.)')) return;
+  await fetch('/api/entries?id=' + encodeURIComponent(b.dataset.entry), { method: 'DELETE' });
+  await loadEntries();
+  if (!$('result').hidden) $('go').click();
+});
+$('apform').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const body = { item: $('apitem').value.trim(), product: $('approd').value.trim(), price: $('apprice').value.replace(/[₹,\s]/g, ''), pack: $('appack').value.trim(), date: $('apdate').value || todayIso(), source: $('apsrc').value.trim() };
+  if (!body.item) { apmsg('Give the item, as in your list.', 'err'); $('apitem').focus(); return; }
+  if (!(Number(body.price) > 0)) { apmsg('Give the price paid.', 'err'); $('apprice').focus(); return; }
+  $('apsave').disabled = true;
+  try {
+    const res = await fetch('/api/entries', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    const out = await res.json();
+    if (!res.ok) { apmsg(out.error, 'err'); return; }
+    apmsg(`✓ Saved for “${body.item}”.`, 'ok');
+    $('approd').value = ''; $('apprice').value = ''; $('appack').value = '';
+    await loadEntries();
+    if (!$('result').hidden) $('go').click();
+  } finally { $('apsave').disabled = false; }
+});
+
+async function loadSiteInfo() {
+  try { SITE_INFO = await (await fetch('/api/siteinfo')).json(); } catch { SITE_INFO = {}; }
+}
+loadMeta().then(async () => {
+  for (const [p] of Object.entries(META.skipped || {})) SKIPPED.add(p);
+  await loadSiteInfo();
+  loadResult(); loadJobs(); loadDeals(); connect();
+});
 </script>
 </body>
 </html>

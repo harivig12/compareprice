@@ -232,7 +232,10 @@ const CATEGORY_TOKENS = [
   'chocolate', 'candy', 'wafer',
   // Snack forms of staples: "moong dal" must not buy Moong Dal Namkeen.
   'chips', 'namkeen', 'mixture', 'bhujia', 'snack', 'fried', 'crispy', 'papad',
-  'halwa', 'ladoo',
+  // Sweets made from a staple: "ghee" must not buy Ghee Besan Laddu.
+  'halwa', 'ladoo', 'barfi', 'peda',
+  // Not food: lamp ghee and pooja oil are sold next to the real thing.
+  'pooja',
   'oil', 'vanaspati',
   'atta', 'flour', 'maida', 'rice', 'dal', 'pulses', 'sugar', 'salt',
   'noodles', 'pasta', 'vermicelli', 'poha',
@@ -252,6 +255,9 @@ const PROCESSED_FORMS = new Set([
   'powder', 'paste', 'puree', 'chutney', 'soup', 'flakes', 'dried', 'dehydrated', 'granules',
   'ketchup', 'sauce', 'pickle', 'pickles', 'jam', 'chips', 'juice', 'squash', 'syrup', 'seeds',
   'spring', 'leaves',
+  // Sweets: "besan" is not Besan Laddu, "hing" is not Hing Peda. (Not halwa:
+  // JioMart rava names say "ideal for halwa".)
+  'ladoo', 'barfi', 'peda',
 ]);
 function tokens_forms(tokens) {
   return tokens.filter((t) => PROCESSED_FORMS.has(t));
@@ -259,6 +265,40 @@ function tokens_forms(tokens) {
 
 function categoriesIn(tokens) {
   return new Set(tokens.filter((t) => CATEGORY_TOKENS.includes(t)));
+}
+
+/**
+ * The query without its brand: "tata salt 1kg" -> "salt 1kg", or null when it
+ * names no brand. Used for the "cheaper: other brand" hint (option A, 2026-11-20).
+ */
+export function withoutBrand(query) {
+  const found = brandsIn(tokenizeRaw(query));
+  if (!found.size) return null;
+  // Cut the brand out of the original text, so pack sizes and numbers stay.
+  let text = ` ${String(query).toLowerCase()} `;
+  for (const b of found) text = text.replace(new RegExp(`(^|[^a-z])${b.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=[^a-z]|$)`, 'g'), '$1');
+  const out = text.replace(/\s+/g, ' ').trim();
+  return out && tokenizeRaw(out).length ? out : null;
+}
+
+/**
+ * Words that make a product a different kind of the same thing: rock / black
+ * salt aren't table salt, full cream isn't toned milk. An "other brand" hint
+ * may not add one that neither the search nor the chosen product has.
+ */
+const KIND_WORDS = new Set([
+  'rock', 'pink', 'black', 'himalayan', 'sendha', 'kala', 'sea', 'lite', 'light', 'low', 'sodium',
+  'flavoured', 'flavored', 'masala', 'spicy', 'organic', 'sugarfree', 'diet', 'zero',
+  'full', 'cream', 'skimmed', 'double', 'toned', 'slim', 'buffalo', 'cow', 'a2',
+  'cold', 'pressed', 'blended', 'filtered', 'virgin', 'extra',
+  'brown', 'white', 'multigrain', 'wholewheat', 'whole', 'split', 'broken', 'unpolished', 'polished',
+  'roasted', 'salted', 'unsalted', 'instant', 'kids', 'baby',
+]);
+
+/** Does `alt` add a kind word that neither `query` nor `chosen` has? */
+export function addsKind(query, chosen, alt) {
+  const have = new Set([...tokenizeRaw(query), ...tokenizeRaw(chosen)]);
+  return tokenizeRaw(alt).some((w) => KIND_WORDS.has(w) && !have.has(w));
 }
 
 /** Find brand names present in a token list (phrases allowed). */
@@ -289,6 +329,11 @@ const SYNONYMS = Object.fromEntries(
     tomato: ['thakkali', 'tamatar'],
     atta: ['aata'],
     jaggery: ['gur', 'vellam', 'bella'],
+    // Sites spell sweets every way; KPN's "Laddu" slipped past "ladoo".
+    ladoo: ['laddu', 'laddoo', 'ladu', 'laadu', 'ladoos', 'laddus', 'laddoos'],
+    barfi: ['burfi', 'barfis', 'burfis'],
+    peda: ['pedha', 'pedas', 'pedhas'],
+    pooja: ['puja', 'poojai', 'pujai'],
   }).flatMap(([canon, alts]) => [[canon, canon], ...alts.map((a) => [a, canon])]),
 );
 
@@ -300,6 +345,11 @@ function canonical(t) {
 
 function tokenize(text) {
   return tokenizeRaw(text).map(canonical);
+}
+
+/** A line's words without pack sizes, spellings folded ("Tata Salt 1 kg" -> ["tata", "salt"]). */
+export function queryWords(text) {
+  return tokenize(text);
 }
 
 function tokenizeRaw(text) {

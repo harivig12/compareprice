@@ -1,19 +1,60 @@
 /*
- * Jhola · Liquid Glass theme (served at /theme.css)
+ * Jhola · Liquid Glass theme (served at /theme.css and /ui/theme.css)
  *
- * Shared by the compare page, settings and the guide. A soft mesh gradient
- * drifts behind frosted-glass chrome. Data (prices, tables, forms) sits on
- * near-opaque white so it always reads at full contrast: glass is for
- * navigation and framing, never for numbers.
+ * One file for every page:
+ *   - the compare page and settings (<body class="app">), light and dark;
+ *   - the guide / landing page (<body class="guide">), light.
+ *
+ * A soft mesh gradient sits behind frosted-glass chrome (header, toolbar,
+ * panels, phone tab bar). Data (prices, tables, deal rows, dialogs) sits on
+ * near-opaque surfaces so numbers always read at full contrast: glass frames
+ * the data, it never sits under a number.
+ *
+ * theme.js sets <html data-theme="light|dark"> before first paint (choice
+ * per browser, "Auto" follows the system). :root is light; dark overrides.
+ *
+ * The app pages link this file AFTER their own <style>, so a rule here with
+ * the same selector wins, and their more specific rules (.linkbtn, .tabbar
+ * button, td.best ...) still win where they should. Page rules are scoped
+ * with :where(.app) / :where(.guide), which adds no specificity, so the
+ * guide's rules never reach the app and the other way round.
+ *
+ * Meaning is the same in both themes: --best = cheapest (green, white text),
+ * --second = second cheapest (pale green), --dn = cheaper, --up = dearer.
+ * Colour is never the only signal: cells also carry badges and words.
  */
+
+/* ───────────────────────── tokens: light ───────────────────────── */
 :root {
+  color-scheme: light;
+  /* shared */
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', 'Helvetica Neue', Arial, sans-serif;
+  --mono: ui-monospace, 'SF Mono', 'Cascadia Mono', 'Segoe UI Mono', Menlo, Consolas, 'Roboto Mono', monospace;
+  --ease: cubic-bezier(.16, 1, .3, 1);
+  --mesh:
+    radial-gradient(60% 50% at 8% 6%, #BFF0D4 0, transparent 60%),
+    radial-gradient(45% 45% at 96% 10%, #FFD9C2 0, transparent 60%),
+    radial-gradient(60% 60% at 75% 100%, #DCD3FF 0, transparent 60%),
+    #F4F7F2;
+  --surface: rgba(255, 255, 255, .9);
+  --glass: rgba(255, 255, 255, .55);
+  --glass-strong: rgba(255, 255, 255, .78);
+  --rim: rgba(255, 255, 255, .78);
+  --shadow: 0 10px 30px rgba(11, 27, 20, .08), inset 0 1px 0 rgba(255, 255, 255, .7);
+  --shadow-lg: 0 18px 44px rgba(11, 27, 20, .16);
+  --field: #FFFFFF;
+  --wash: rgba(255, 255, 255, .7);
+  --line-strong: rgba(11, 27, 20, .22);
+  --cell: #F4F8F5;
+  --ring: rgba(14, 122, 75, .18);
+  --focus: #1D4ED8;
+  --win-bg: #0B1B14; --win-line: #0B1B14; --win-k: #FFD54A; --win-s: #C7D6CE;
+
+  /* guide names */
   --ink: #0B1B14;
   --muted: #3E5148;          /* 8.6:1 on white */
   --faint: #5C6E65;          /* 5.4:1 on white, for small print */
   --line: #D9E4DD;
-  --surface: rgba(255, 255, 255, .88);
-  --glass: rgba(255, 255, 255, .55);
-  --rim: rgba(255, 255, 255, .78);
   --g: #0E7A4B;              /* cheapest: white text 5.6:1 */
   --g-ink: #06492C;
   --g2: #D5F2E3;             /* second cheapest */
@@ -24,124 +65,303 @@
   --blue: #1D4ED8;
   --radius: 22px;
   --radius-s: 14px;
-  --shadow: 0 10px 30px rgba(11, 27, 20, .08), inset 0 1px 0 rgba(255, 255, 255, .7);
-  /* The device's own fonts: nothing is fetched, works offline, and reads
-     like the rest of the phone or desktop (SF on Apple, Segoe on Windows,
-     Roboto on Android). */
-  --font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', 'Helvetica Neue', Arial, sans-serif;
-  --mono: ui-monospace, 'SF Mono', 'Cascadia Mono', 'Segoe UI Mono', Menlo, Consolas, 'Roboto Mono', monospace;
-  --ease: cubic-bezier(.2, .7, .2, 1);
-  color-scheme: light;
+
+  /* app names (basket.html, settings.html) */
+  --brand: #0B1B14;
+  --bg: #FFFFFF; --panel: #FBFDFB; --panel2: #F4F8F5;
+  --text: #0B1B14; --dim: #3E5148; --n-ink: #1F3329;
+  --best: #0E7A4B; --best-ink: #FFFFFF; --best-sub: #EAF8F0; --best-dim: #DDF3E7;
+  --second: #D5F2E3; --second-ink: #06492C; --second-dim: #2F5E45;
+  --warn: #9A4A06; --bad-ink: #9F1D14; --ok: #0E7A4B; --ok-ink: #06492C;
+  --accent: #0B6B41; --accent-strong: #1D4ED8; --hover: #EAF5EE;
+  --btn: #0E7A4B; --btn-border: #0E7A4B; --btn-ink: #FFFFFF;
+  --banner-warn: #FFF3E3; --banner-ok: #E6F6EE; --banner-info: #EAF0FF;
+  --asof: #9A4A06; --dimmed: #F1F1EE;
+  --badge-low: #DCFCE7; --badge-low-ink: #065F46; --badge-above: #EEF2EF; --badge-above-ink: #334155;
+  --dn: #0E7A4B; --up: #B42318; --dn-on-best: #EAFFF2; --up-on-best: #FFEAE6;
+  --bar: #0E7A4B; --bar-empty: #D9E4DD;
 }
 
+/* ───────────────────────── tokens: dark ───────────────────────── */
+/* A deep green-black mesh; glass is darker and the rim a faint white line. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --mesh:
+    radial-gradient(60% 50% at 8% 6%, #0F3B27 0, transparent 60%),
+    radial-gradient(45% 45% at 96% 10%, #3A2A0B 0, transparent 60%),
+    radial-gradient(60% 60% at 75% 100%, #211A3D 0, transparent 60%),
+    #08110D;
+  --surface: rgba(19, 30, 25, .92);
+  --glass: rgba(22, 36, 30, .55);
+  --glass-strong: rgba(16, 28, 22, .8);
+  --rim: rgba(255, 255, 255, .09);
+  --shadow: 0 10px 30px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(255, 255, 255, .05);
+  --shadow-lg: 0 18px 44px rgba(0, 0, 0, .5);
+  --field: #0F1A15;
+  --wash: rgba(255, 255, 255, .06);
+  --line-strong: rgba(232, 241, 236, .24);
+  --cell: #16241E;
+  --ring: rgba(126, 226, 174, .2);
+  --focus: #8AB4FF;
+  --win-bg: #0E2A1D; --win-line: #1E5B3E; --win-k: #FFD54A; --win-s: #C7D6CE;
+
+  --ink: #E8F1EC; --muted: #A9BDB2; --faint: #8FA69A; --line: #24362D;
+  --g: #137A4A; --g-ink: #7EE2AE; --g2: #143A28;
+  --amber: #F6C25B; --amber-bg: #2A2210; --bad: #FF8A80; --bad-bg: #2E1513; --blue: #8AB4FF;
+
+  --brand: #E8F1EC;
+  --bg: #0F1A15; --panel: #131E19; --panel2: #16241E;
+  --text: #E8F1EC; --dim: #A9BDB2; --n-ink: #D3E2DA;
+  --best: #137A4A; --best-ink: #FFFFFF; --best-sub: #EAF8F0; --best-dim: #DDF3E7;
+  --second: #143A28; --second-ink: #E8F1EC; --second-dim: #A9CDB9;
+  --warn: #F6C25B; --bad-ink: #FFB4AD; --ok: #4CC38A; --ok-ink: #7EE2AE;
+  --accent: #7EE2AE; --accent-strong: #2F5FD0; --hover: #1C2E25;
+  --btn: #137A4A; --btn-border: #1C8F58; --btn-ink: #FFFFFF;
+  --banner-warn: #2A2210; --banner-ok: #10281C; --banner-info: #141C30;
+  --asof: #F6C25B; --dimmed: #121A16;
+  --badge-low: #14532D; --badge-low-ink: #BBF7D0; --badge-above: #22302A; --badge-above-ink: #C9D6CF;
+  --dn: #5FD08F; --up: #FF8A80; --dn-on-best: #EAFFF2; --up-on-best: #FFEAE6;
+  --bar: #4CC38A; --bar-empty: #24362D;
+}
+
+/* ───────────────────────── shared base ───────────────────────── */
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 html { -webkit-text-size-adjust: 100%; }
 body {
-  margin: 0; min-height: 100vh; color: var(--ink); font: 15px/1.5 var(--font);
-  background:
-    radial-gradient(60% 50% at 8% 6%, #BFF0D4 0, transparent 60%),
-    radial-gradient(45% 45% at 96% 10%, #FFD9C2 0, transparent 60%),
-    radial-gradient(60% 60% at 75% 100%, #DCD3FF 0, transparent 60%),
-    #F4F7F2;
-  background-attachment: fixed;
+  margin: 0; min-height: 100vh; color: var(--text); font: 15px/1.5 var(--font);
+  background: var(--mesh); background-attachment: fixed;
 }
-a { color: var(--g-ink); text-underline-offset: 2px; }
-a:hover { color: var(--g); }
-code, kbd { font: 600 .86em var(--mono); background: rgba(255, 255, 255, .8); border: 1px solid var(--line); border-radius: 6px; padding: .05rem .35rem; }
-:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; border-radius: 6px; }
 .sr { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.muted { color: var(--muted); }
-.ico { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
-/* drifting colour, purely decorative */
-.blobs { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
-.blobs i { position: absolute; border-radius: 50%; filter: blur(50px); opacity: .5; animation: drift 22s ease-in-out infinite alternate; }
-.blobs i:nth-child(1) { width: 380px; height: 380px; background: #7FE0AE; left: -100px; top: 140px; }
-.blobs i:nth-child(2) { width: 300px; height: 300px; background: #FFB48F; right: -80px; top: 40px; animation-delay: -7s; }
-.blobs i:nth-child(3) { width: 340px; height: 340px; background: #C9BCFF; right: 20%; bottom: -120px; animation-delay: -14s; }
+/* The ☀ / ☾ / Auto switch (rendered by theme.js into #themetoggle). */
+.themetoggle { display: inline-flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--wash); border: 1px solid var(--line); vertical-align: middle; }
+.themetoggle button { background: transparent; border: 0; color: var(--dim); min-height: 30px; padding: 0 10px; border-radius: 999px; font: 700 12px/1 var(--font); cursor: pointer; }
+.themetoggle button:hover { color: var(--text); }
+.themetoggle button[aria-pressed="true"] { background: var(--btn); color: var(--btn-ink); }
+
+@keyframes spin { to { transform: rotate(360deg); } }
 @keyframes drift { to { transform: translate(60px, 40px) scale(1.15); } }
 
-/* glass + surfaces */
-.glass {
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
+/* ═════════════════ the app: compare page and settings ═════════════════ */
+body:where(.app) { font-size: 14px; line-height: 1.45; }
+:where(.app) a { color: var(--accent); text-underline-offset: 2px; }
+:where(.app) :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+:where(.app) .muted { color: var(--dim); }
+
+/* glass chrome: header, toolbar, panels */
+:where(.app) header,
+:where(.app) .bar,
+:where(.app) details.panel, :where(.app) .panel,
+:where(.app) .run {
   background: var(--glass);
   -webkit-backdrop-filter: blur(18px) saturate(1.4); backdrop-filter: blur(18px) saturate(1.4);
   border: 1px solid var(--rim); box-shadow: var(--shadow);
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .glass { background: rgba(255, 255, 255, .86); }
+  :where(.app) header, :where(.app) .bar, :where(.app) details.panel, :where(.app) .panel, :where(.app) .run { background: var(--surface); }
 }
-.surface { background: var(--surface); border: 1px solid var(--rim); box-shadow: var(--shadow); border-radius: var(--radius); }
+
+:where(.app) header { flex-wrap: wrap; align-items: center; row-gap: 6px; padding: 6px 8px 6px 8px; border-radius: 22px; margin-bottom: 10px; }
+:where(.app) header nav { flex-wrap: wrap; justify-content: flex-end; }
+:where(.app) header h1.brand { font-size: 19px; color: var(--brand); letter-spacing: -.02em; }
+:where(.app) header h1.brand img, :where(.app) header h1 img { border-radius: 9px; box-shadow: 0 2px 6px rgba(0, 0, 0, .18); }
+:where(.app) header .sub { color: var(--dim); }
+:where(.app) header nav a { display: inline-flex; align-items: center; min-height: 36px; padding: 0 12px; border-radius: 999px; font-weight: 700; font-size: 13px; color: var(--dim); text-decoration: none; background: var(--wash); transition: background .15s, color .15s; }
+:where(.app) header nav a:hover { background: var(--surface); color: var(--text); }
+
+:where(.app) .bar { border-radius: 20px; padding: 6px; }
+
+:where(.app) details.panel, :where(.app) .panel { border-radius: 18px; padding: 10px 14px; }
+:where(.app) .run { border-radius: 18px; }
+:where(.app) .run .rbar { border-radius: 999px; }
+:where(.app) .run .rbar i { border-radius: 999px; }
+:where(.app) .run .rc { border-radius: 999px; }
+
+/* data sits on solid surfaces */
+:where(.app) .panel.look { background: var(--surface); border-color: var(--line); }
+:where(.app) .verdict { background: var(--surface); border: 1px solid var(--rim); border-radius: 16px; padding: 9px 13px; box-shadow: var(--shadow); }
+:where(.app) .verdict .k { color: var(--faint); font-weight: 800; letter-spacing: .07em; }
+:where(.app) .verdict b { letter-spacing: -.02em; }
+:where(.app) .verdict.win { background: var(--win-bg); border-color: var(--win-line); color: #FFFFFF; }
+:where(.app) .verdict.win .k { color: var(--win-k); }
+:where(.app) .verdict.win b { color: #FFFFFF; }
+:where(.app) .verdict.win .s { color: var(--win-s); }
+:where(.app) .verdict.win a { color: var(--win-k); }
+
+/* buttons */
+:where(.app) button {
+  background: var(--btn); color: var(--btn-ink); border: 1.5px solid var(--btn-border); border-radius: 999px;
+  padding: 7px 15px; font: 700 14px/1.2 var(--font); cursor: pointer;
+  transition: background .15s, border-color .15s, box-shadow .2s var(--ease), opacity .15s;
+}
+:where(.app) button.secondary { background: var(--wash); border-color: var(--line-strong); color: var(--text); }
+:where(.app) button.secondary:hover:not(:disabled) { background: var(--surface); border-color: var(--text); }
+:where(.app) button.danger { background: transparent; border-color: var(--bad); color: var(--bad-ink); }
+:where(.app) button:disabled { opacity: .45; cursor: not-allowed; }
+:where(.app) .bar button { min-height: 40px; }
+:where(.app) .bar button:not(.secondary):not(:disabled):hover,
+:where(.app) dialog .row2 button:not(.secondary):not(:disabled):hover { box-shadow: 0 6px 16px var(--ring); }
+
+/* fields */
+:where(.app) input[type=text], :where(.app) input[type=tel], :where(.app) input[type=search],
+:where(.app) input[type=password], :where(.app) input[type=number], :where(.app) select {
+  background: var(--field); color: var(--text); border: 1.5px solid var(--line); border-radius: 12px; padding: 8px 11px; font: 500 14px var(--font);
+  transition: border-color .15s, box-shadow .15s;
+}
+:where(.app) textarea { background: var(--field); color: var(--text); border: 1.5px solid var(--line); border-radius: 12px; }
+:where(.app) #q { border-radius: 999px; padding: 9px 16px; min-height: 40px; }
+:where(.app) input:focus, :where(.app) select:focus, :where(.app) textarea:focus { border-color: var(--btn); box-shadow: 0 0 0 4px var(--ring); }
+:where(.app) input[type=checkbox], :where(.app) input[type=radio] { accent-color: var(--btn); }
+
+/* suggestions, chips, banners, strips */
+:where(.app) .sug { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow-lg); margin-top: 4px; padding: 4px; }
+:where(.app) .sug div { border-radius: 10px; }
+:where(.app) .chip { border-radius: 999px; background: var(--surface); }
+:where(.app) .banner { border-radius: 14px; border-color: color-mix(in srgb, var(--warn) 45%, transparent); }
+:where(.app) .strip { background: var(--surface); border-color: var(--rim); border-radius: 12px; }
+:where(.app) .badge { border-radius: 999px; padding: 1px 6px; font-weight: 800; }
+:where(.app) .alt { background: var(--banner-warn); border-color: color-mix(in srgb, var(--warn) 55%, transparent); border-radius: 8px; padding: 3px 6px; }
+:where(.app) .sw { border-radius: 3px; }
+
+/* the comparison table: separated rounded cells on the glass panel */
+:where(.app) table.cmp { border-collapse: separate; border-spacing: 3px; }
+:where(.app) table.cmp th, :where(.app) table.cmp td { border: 0; border-radius: 10px; padding: 6px 7px; }
+:where(.app table.cmp) td { background: var(--cell); }   /* no specificity: td.best, td.second, tfoot td still win */
+:where(.app) table.cmp thead th { background: var(--surface); }
+:where(.app) td.item { background: transparent; font-weight: 800; }
+:where(.app) td.item .qty { color: var(--faint); font-weight: 600; }
+:where(.app) table.cmp td.miss { background: transparent; border: 1.5px dashed var(--line); }
+:where(.app) .p { font-weight: 800; letter-spacing: -.01em; }
+.aka { display: block; color: var(--faint); font-weight: 600; font-size: 11px; margin-top: 1px; }
+:where(.app) td.best .aka, :where(.app) .card .row.best .aka { color: var(--best-dim); }
+
+/* phone cards */
+:where(.app) .card { background: var(--surface); border: 1px solid var(--rim); border-radius: 16px; box-shadow: var(--shadow); }
+:where(.app) .card .row { background: var(--cell); border-radius: 10px; margin-top: 4px; }
+
+/* lookup table, deals, accounts, settings blocks */
+:where(.app) .look tr.cheap td:first-child { border-radius: 10px 0 0 10px; }
+:where(.app) .look tr.cheap td:last-child { border-radius: 0 10px 10px 0; }
+:where(.app) .dealsite { border-bottom: 0; }
+:where(.app) .dealsite .cond { background: var(--banner-warn); border-radius: 999px; padding: 1px 8px; font-weight: 800; }
+:where(.app) .dealrow { border-bottom: 0; background: var(--cell); border-radius: 10px; padding: 5px 9px; margin-bottom: 3px; }
+:where(.app) .arow { background: var(--field); border-radius: 10px; }
+:where(.app) .sched { background: var(--cell); border-color: var(--line); border-radius: 14px; }
+:where(.app) .jobs td, :where(.app) .jobs th { border-bottom-color: var(--line); }
+
+/* dialogs (sign in, add a price) */
+:where(.app) dialog { background: var(--panel); border: 1px solid var(--rim); border-radius: 22px; padding: 18px; box-shadow: var(--shadow-lg); }
+:where(.app) dialog::backdrop { background: rgba(8, 17, 13, .45); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+:where(.app) #tip { border-radius: 10px; }
+
+/* phones: the tab bar floats as a glass pill */
+@media (max-width: 700px) {
+  body:where(.app) { padding-bottom: calc(82px + env(safe-area-inset-bottom)); }
+  :where(.app) .tabbar {
+    left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); gap: 3px; padding: 5px;
+    border: 1px solid var(--rim); border-radius: 22px; background: var(--glass-strong);
+    -webkit-backdrop-filter: blur(18px) saturate(1.4); backdrop-filter: blur(18px) saturate(1.4); box-shadow: var(--shadow-lg);
+  }
+  :where(.app) .tabbar a, :where(.app) .tabbar button { min-height: 50px; border-radius: 16px; font-weight: 800; }
+  :where(.app) .tabbar [aria-current="page"] { color: var(--btn-ink); background: var(--btn); }
+  :where(.app) header { border-radius: 18px; }
+}
+
+/* ═════════════════ the guide / landing page ═════════════════ */
+:where(.guide) a { color: var(--g-ink); text-underline-offset: 2px; }
+:where(.guide) a:hover { color: var(--g); }
+:where(.guide) code, :where(.guide) kbd { font: 600 .86em var(--mono); background: rgba(255, 255, 255, .8); border: 1px solid var(--line); border-radius: 6px; padding: .05rem .35rem; }
+:where(.guide) :focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; border-radius: 6px; }
+:where(.guide) .muted { color: var(--muted); }
+:where(.guide) .ico { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* drifting colour, purely decorative */
+:where(.guide) .blobs { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+:where(.guide) .blobs i { position: absolute; border-radius: 50%; filter: blur(50px); opacity: .5; animation: drift 22s ease-in-out infinite alternate; }
+:where(.guide) .blobs i:nth-child(1) { width: 380px; height: 380px; background: #7FE0AE; left: -100px; top: 140px; }
+:where(.guide) .blobs i:nth-child(2) { width: 300px; height: 300px; background: #FFB48F; right: -80px; top: 40px; animation-delay: -7s; }
+:where(.guide) .blobs i:nth-child(3) { width: 340px; height: 340px; background: #C9BCFF; right: 20%; bottom: -120px; animation-delay: -14s; }
+
+/* glass + surfaces */
+:where(.guide) .glass {
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4); backdrop-filter: blur(18px) saturate(1.4);
+  border: 1px solid var(--rim); box-shadow: var(--shadow);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :where(.guide) .glass { background: rgba(255, 255, 255, .86); }
+}
+:where(.guide) .surface { background: var(--surface); border: 1px solid var(--rim); box-shadow: var(--shadow); border-radius: var(--radius); }
 
 /* top navigation */
-.topnav {
+:where(.guide) .topnav {
   position: sticky; top: .75rem; z-index: 20; display: flex; align-items: center; gap: .6rem;
   border-radius: 999px; padding: .4rem .45rem .4rem .55rem; margin: .75rem 0 1.25rem; font-weight: 800;
 }
-.topnav .brand { display: inline-flex; align-items: center; gap: .55rem; color: var(--ink); text-decoration: none; font-size: 1.02rem; letter-spacing: -.01em; }
+:where(.guide) .topnav .brand { display: inline-flex; align-items: center; gap: .55rem; color: var(--ink); text-decoration: none; font-size: 1.08rem; font-weight: 800; letter-spacing: -.01em; }
 /* The Jhola icon (src/ui/icon.svg, master in assets/brand/). */
-.topnav .mark { width: 34px; height: 34px; border-radius: 10px; overflow: hidden; flex: none; box-shadow: 0 2px 6px rgba(11, 27, 20, .18); }
-.topnav .mark img { display: block; width: 100%; height: 100%; }
-.topnav .brand { font-size: 1.08rem; font-weight: 800; }
-.topnav nav { margin-left: auto; display: flex; gap: 2px; border-radius: 999px; padding: 4px; background: rgba(255, 255, 255, .45); }
-.topnav nav a {
+:where(.guide) .topnav .mark { width: 34px; height: 34px; border-radius: 10px; overflow: hidden; flex: none; box-shadow: 0 2px 6px rgba(11, 27, 20, .18); }
+:where(.guide) .topnav .mark img { display: block; width: 100%; height: 100%; }
+:where(.guide) .topnav nav { margin-left: auto; display: flex; gap: 2px; border-radius: 999px; padding: 4px; background: rgba(255, 255, 255, .45); }
+:where(.guide) .topnav nav a {
   min-height: 40px; padding: 0 .95rem; border-radius: 999px; display: inline-flex; align-items: center; gap: .4rem;
   font-weight: 700; font-size: .92rem; color: var(--muted); text-decoration: none; transition: background .15s, color .15s;
 }
-.topnav nav a:hover { background: rgba(255, 255, 255, .8); color: var(--ink); }
-.topnav nav a[aria-current=page] { background: var(--ink); color: #fff; }
-@media (max-width: 560px) { .topnav nav a span { display: none; } .topnav nav a { padding: 0 .75rem; } }
+:where(.guide) .topnav nav a:hover { background: rgba(255, 255, 255, .8); color: var(--ink); }
+:where(.guide) .topnav nav a[aria-current=page] { background: var(--ink); color: #fff; }
+@media (max-width: 560px) { :where(.guide) .topnav nav a span { display: none; } :where(.guide) .topnav nav a { padding: 0 .75rem; } }
 
 /* buttons */
-.btn, button {
+:where(.guide) .btn, :where(.guide) button {
   font: 700 .95rem var(--font); min-height: 44px; padding: 0 1.15rem; border-radius: 999px; cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center; gap: .45rem;
   border: 1.5px solid var(--ink); background: var(--ink); color: #fff; text-decoration: none;
   transition: transform .15s var(--ease), background .15s, color .15s, border-color .15s, opacity .15s;
 }
-.btn:hover, button:hover { transform: translateY(-1px); }
-.btn:active, button:active { transform: translateY(1px); }
-button.secondary, .btn.secondary { background: rgba(255, 255, 255, .75); color: var(--ink); border-color: rgba(11, 27, 20, .22); }
-button.secondary:hover, .btn.secondary:hover { background: #fff; border-color: var(--ink); }
-button.ghost, .btn.ghost { background: transparent; color: var(--ink); border-color: transparent; }
-button.ghost:hover, .btn.ghost:hover { background: rgba(255, 255, 255, .7); }
-button.danger { background: transparent; color: var(--bad); border-color: rgba(180, 35, 24, .4); }
-button.danger:hover { background: var(--bad-bg); border-color: var(--bad); }
-button.green, .btn.green { background: var(--g); border-color: var(--g); }
-button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+:where(.guide) .btn:hover, :where(.guide) button:hover { transform: translateY(-1px); }
+:where(.guide) .btn:active, :where(.guide) button:active { transform: translateY(1px); }
+:where(.guide) button.secondary, :where(.guide) .btn.secondary { background: rgba(255, 255, 255, .75); color: var(--ink); border-color: rgba(11, 27, 20, .22); }
+:where(.guide) button.secondary:hover, :where(.guide) .btn.secondary:hover { background: #fff; border-color: var(--ink); }
+:where(.guide) button.ghost, :where(.guide) .btn.ghost { background: transparent; color: var(--ink); border-color: transparent; }
+:where(.guide) button.ghost:hover, :where(.guide) .btn.ghost:hover { background: rgba(255, 255, 255, .7); }
+:where(.guide) button.danger { background: transparent; color: var(--bad); border-color: rgba(180, 35, 24, .4); }
+:where(.guide) button.danger:hover { background: var(--bad-bg); border-color: var(--bad); }
+:where(.guide) button.green, :where(.guide) .btn.green { background: var(--g); border-color: var(--g); }
+:where(.guide) button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
 
 /* form controls */
-input[type=text], input[type=tel], input[type=number], input[type=search], select, textarea {
+:where(.guide) input[type=text], :where(.guide) input[type=tel], :where(.guide) input[type=number],
+:where(.guide) input[type=search], :where(.guide) select, :where(.guide) textarea {
   width: 100%; min-height: 44px; font: 500 1rem var(--font); color: var(--ink);
   background: #fff; border: 1.5px solid var(--line); border-radius: 12px; padding: .55rem .8rem;
   transition: border-color .15s, box-shadow .15s;
 }
-input:focus, select:focus, textarea:focus { outline: none; border-color: var(--g); box-shadow: 0 0 0 4px rgba(14, 122, 75, .15); }
-textarea { font: 500 .92rem/1.6 var(--mono); resize: vertical; }
-label { font-weight: 700; }
-.hint { color: var(--faint); font-size: .82rem; margin-top: .25rem; }
+:where(.guide) input:focus, :where(.guide) select:focus, :where(.guide) textarea:focus { outline: none; border-color: var(--g); box-shadow: 0 0 0 4px rgba(14, 122, 75, .15); }
+:where(.guide) textarea { font: 500 .92rem/1.6 var(--mono); resize: vertical; }
+:where(.guide) label { font-weight: 700; }
+:where(.guide) .hint { color: var(--faint); font-size: .82rem; margin-top: .25rem; }
 
 /* site toggles: a checkbox inside a pill */
-.toggles { display: flex; flex-wrap: wrap; gap: .45rem; }
-.toggles label {
+:where(.guide) .toggles { display: flex; flex-wrap: wrap; gap: .45rem; }
+:where(.guide) .toggles label {
   display: inline-flex; align-items: center; gap: .45rem; min-height: 40px; padding: 0 .85rem 0 .6rem;
   border-radius: 999px; border: 1.5px solid var(--line); background: #fff; font-weight: 600; font-size: .9rem; cursor: pointer;
   transition: border-color .15s, background .15s;
 }
-.toggles label:has(input:checked) { border-color: var(--g); background: #EFFAF4; }
-.toggles label:has(input:disabled) { opacity: .6; cursor: not-allowed; }
-.toggles input { width: 18px; height: 18px; accent-color: var(--g); margin: 0; }
+:where(.guide) .toggles label:has(input:checked) { border-color: var(--g); background: #EFFAF4; }
+:where(.guide) .toggles label:has(input:disabled) { opacity: .6; cursor: not-allowed; }
+:where(.guide) .toggles input { width: 18px; height: 18px; accent-color: var(--g); margin: 0; }
 
 /* chips and pills */
-.chip { display: inline-flex; align-items: center; gap: .35rem; min-height: 30px; padding: 0 .7rem; border-radius: 999px; font-size: .82rem; font-weight: 600; background: #fff; border: 1px solid var(--line); }
-.chip.ok { border-color: #8FCBA6; background: #EFFAF4; color: var(--g-ink); }
-.chip.run { border-color: #E7B66B; background: var(--amber-bg); color: var(--amber); }
-.chip.err { border-color: #F3A29A; background: var(--bad-bg); color: var(--bad); white-space: normal; }
-.pill { font-size: .75rem; font-weight: 700; border-radius: 999px; padding: .2rem .6rem; background: rgba(255, 255, 255, .7); color: var(--muted); }
+:where(.guide) .chip { display: inline-flex; align-items: center; gap: .35rem; min-height: 30px; padding: 0 .7rem; border-radius: 999px; font-size: .82rem; font-weight: 600; background: #fff; border: 1px solid var(--line); }
+:where(.guide) .chip.ok { border-color: #8FCBA6; background: #EFFAF4; color: var(--g-ink); }
+:where(.guide) .chip.run { border-color: #E7B66B; background: var(--amber-bg); color: var(--amber); }
+:where(.guide) .chip.err { border-color: #F3A29A; background: var(--bad-bg); color: var(--bad); white-space: normal; }
+:where(.guide) .pill { font-size: .75rem; font-weight: 700; border-radius: 999px; padding: .2rem .6rem; background: rgba(255, 255, 255, .7); color: var(--muted); }
 
-.spin { width: 16px; height: 16px; border-radius: 50%; border: 2.5px solid currentColor; border-right-color: transparent; display: inline-block; animation: spin .8s linear infinite; vertical-align: -3px; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
-}
+:where(.guide) .spin { width: 16px; height: 16px; border-radius: 50%; border: 2.5px solid currentColor; border-right-color: transparent; display: inline-block; animation: spin .8s linear infinite; vertical-align: -3px; }

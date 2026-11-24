@@ -1,0 +1,1005 @@
+{
+ "data": {
+  "getCatalogProductList": {
+   "products": [
+    {
+     "product": {
+      "id": 40490,
+      "name": "Best Farms Chana Dal",
+      "type": 1,
+      "badge": 0,
+      "kind": 1,
+      "recurrence": {
+       "type": "1",
+       "text": null,
+       "__typename": "ProductRecurrence"
+      },
+      "stickerType": null,
+      "category": {
+       "id": 55,
+       "name": "Rice & Pulses",
+       "subCategory": {
+        "id": 360,
+        "name": "Arhar & Chana dal",
+        "type": "Chana Dal",
+        "typeId": "437",
+        "pTypeId": "542",
+        "__typename": "ProductSubCategoryInfo"
+       },
+       "__typename": "ProductCategoryInfo"
+      },
+      "delivery": {
+       "type": null,
+       "slot": [
+        "5:00-7:00"
+       ],
+       "plusOne": false,
+       "__typename": "ProductDelivery"
+      },
+      "availability": {
+       "isOos": false,
+       "oos": false,
+       "forcedOos": false,
+       "schedule": true,
+       "maxQuantity": 6,
+       "cutOff": {
+        "time": "",
+        "text": "12 AM",
+        "__typename": "ProductCutOff"
+       },
+       "refill": {
+        "text": null,
+        "type": null,
+        "date": null,
+        "__typename": "ProductRefill"
+       },
+       "__typename": "ProductAvailability"
+      },
+      "assets": {
+       "image": {
+        "url": "https://file.milkbasket.com/x.png",
+        "type": 1,
+        "__typename": "ProductImageAssets"
+       },
+       "video": null,
+       "lottie": null,
+       "__typename": "ProductAssets"
+      },
+      "source": null,
+      "tag": null,
+      "weight": {
+       "text": "500 GM",
+       "value": null,
+       "unit": null,
+       "__typename": "ProductWeight"
+      },
+      "price": {
+       "currency": "₹",
+       "perUnit": null,
+       "discount": {
+        "amount": "18.00",
+        "value": 18,
+        "percent": 18,
+        "perUnit": 0,
+        "text": "",
+        "displayValue": "18.95%",
+        "__typename": "ProductDiscount"
+       },
+       "dealDiscount": {
+        "amount": "18.00",
+        "value": 18,
+        "percent": 18.95,
+        "perUnit": null,
+        "text": "*18.95% discount on this product",
+        "displayValue": null,
+        "__typename": "ProductDiscount"
+       },
+       "mbeyond": {
+        "amount": "77",
+        "value": 77,
+        "__typename": "ProductPricing"
+       },
+       "mrp": {
+        "amount": "95",
+        "value": 95,
+        "__typename": "ProductPricing"
+       },
+       "price": {
+        "amount": "77",
+        "value": 77,
+        "__typename": "ProductPricing"
+       },
+       "__typename": "ProductPrice"
+      },
+      "bundle": null,
+      "trends": null,
+      "token": null,
+      "offers": {
+       "count": 0,
+       "label": "",
+       "__typename": "ProductPromotionalOffers"
+      },
+      "__typename": "Product"
+     },
+     "variant": null,
+     "__typename": "ProductDossier"
+    },
+    {
+     "product": {
+      "id": 8529,
+      "name": "24 Mantra Organic Chana Dal",
+      "type": 1,
+      "badge": 0,
+      "kind": 1,
+      "recurrence": {
+       "type": "1",
+       "text": null,
+       "__typename": "ProductRecurrence"
+      },
+      "stickerType": null,
+      "category": {
+       "id": 55,
+       "name": "Rice & Pulses",
+       "subCategory": {
+        "id": 360,
+        "name": "Arhar & Chana dal",
+        "type": "Chana Dal",
+        "typeId": "437",
+        "pTypeId": "542",
+        "__typename": "ProductSubCategoryInfo"
+       },
+       "__typename": "ProductCategoryInfo"
+      },
+      "delivery": {
+       "type": null,
+       "slot": [
+        "5:00-7:00"
+       ],
+       "plusOne": false,
+       "__typename": "ProductDelivery"
+      },
+      "availability": {
+       "isOos": false,
+       "oos": false,
+       "forcedOos": false,
+       "schedule": true,
+       "maxQuantity": 4,
+       "cutOff": {
+        "time": "",
+        "text": "12 AM",
+        "__typename": "ProductCutOff"
+       },
+       "refill": {
+        "text": null,
+        "type": null,
+        "date": null,
+        "__typename": "ProductRefill"
+       },
+       "__typename": "ProductAvailability"
+      },
+      "assets": {
+       "image": {
+        "url": "https://file.milkbasket.com/x.png",
+        "type": 1,
+        "__typename": "ProductImageAssets"
+       },
+       "video": null,
+       "lottie": null,
+       "__typename": "ProductAssets"
+      },
+      "source": null,
+      "tag": null,
+      "weight": {
+       "text": "500 GM",
+       "value": null,
+       "unit": null,
+       "__typename": "ProductWeight"
+      },
+      "price": {
+       "currency": "₹",
+       "perUnit": null,
+       "discount": {
+        "amount": "32.00",
+        "value": 32,
+        "percent": 26,
+        "perUnit": 0,
+        "text": "",
+        "displayValue": "26.67%",
+        "__typename": "ProductDiscount"
+       },
+       "dealDiscount": {
+        "amount": "32.00",
+        "value": 32,
+        "percent": 26.67,
+        "perUnit": null,
+        "text": "*26.67% discount on this product",
+        "displayValue": null,
+        "__typename": "ProductDiscount"
+       },
+       "mbeyond": {
+        "amount": "88",
+        "value": 88,
+        "__typename": "ProductPricing"
+       },
+       "mrp": {
+        "amount": "120",
+        "value": 120,
+        "__typename": "ProductPricing"
+       },
+       "price": {
+        "amount": "88",
+        "value": 88,
+        "__typename": "ProductPricing"
+       },
+       "__typename": "ProductPrice"
+      },
+      "bundle": null,
+      "trends": null,
+      "token": null,
+      "offers": {
+       "count": 0,
+       "label": "",
+       "__typename": "ProductPromotionalOffers"
+      },
+      "__typename": "Product"
+     },
+     "variant": null,
+     "__typename": "ProductDossier"
+    },
+    {
+     "product": {
+      "id": 16438,
+      "name": "Pro Nature Roasted Channa Dal",
+      "type": 1,
+      "badge": 0,
+      "kind": 1,
+      "recurrence": {
+       "type": "1",
+       "text": null,
+       "__typename": "ProductRecurrence"
+      },
+      "stickerType": null,
+      "category": {
+       "id": 55,
+       "name": "Rice & Pulses",
+       "subCategory": {
+        "id": 360,
+        "name": "Arhar & Chana dal",
+        "type": "Chana Dal",
+        "typeId": "437",
+        "pTypeId": "2522",
+        "__typename": "ProductSubCategoryInfo"
+       },
+       "__typename": "ProductCategoryInfo"
+      },
+      "delivery": {
+       "type": null,
+       "slot": [
+        "5:00-7:00"
+       ],
+       "plusOne": false,
+       "__typename": "ProductDelivery"
+      },
+      "availability": {
+       "isOos": false,
+       "oos": false,
+       "forcedOos": false,
+       "schedule": true,
+       "maxQuantity": 6,
+       "cutOff": {
+        "time": "",
+        "text": "12 AM",
+        "__typename": "ProductCutOff"
+       },
+       "refill": {
+        "text": null,
+        "type": null,
+        "date": null,
+        "__typename": "ProductRefill"
+       },
+       "__typename": "ProductAvailability"
+      },
+      "assets": {
+       "image": {
+        "url": "https://file.milkbasket.com/x.png",
+        "type": 1,
+        "__typename": "ProductImageAssets"
+       },
+       "video": null,
+       "lottie": null,
+       "__typename": "ProductAssets"
+      },
+      "source": null,
+      "tag": null,
+      "weight": {
+       "text": "200 GM",
+       "value": null,
+       "unit": null,
+       "__typename": "ProductWeight"
+      },
+      "price": {
+       "currency": "₹",
+       "perUnit": null,
+       "discount": {
+        "amount": "1.00",
+        "value": 1,
+        "percent": 1,
+        "perUnit": 0,
+        "text": "",
+        "displayValue": "1.19%",
+        "__typename": "ProductDiscount"
+       },
+       "dealDiscount": {
+        "amount": "1.00",
+        "value": 1,
+        "percent": 1.19,
+        "perUnit": null,
+        "text": "*1.19% discount on this product",
+        "displayValue": null,
+        "__typename": "ProductDiscount"
+       },
+       "mbeyond": {
+        "amount": "83",
+        "value": 83,
+        "__typename": "ProductPricing"
+       },
+       "mrp": {
+        "amount": "84",
+        "value": 84,
+        "__typename": "ProductPricing"
+       },
+       "price": {
+        "amount": "83",
+        "value": 83,
+        "__typename": "ProductPricing"
+       },
+       "__typename": "ProductPrice"
+      },
+      "bundle": null,
+      "trends": null,
+      "token": null,
+      "offers": {
+       "count": 0,
+       "label": "",
+       "__typename": "ProductPromotionalOffers"
+      },
+      "__typename": "Product"
+     },
+     "variant": null,
+     "__typename": "ProductDossier"
+    },
+    {
+     "product": {
+      "id": 41109,
+      "name": "Udhaiyam Bengal Gram Dal",
+      "type": 1,
+      "badge": 0,
+      "kind": 1,
+      "recurrence": {
+       "type": "1",
+       "text": null,
+       "__typename": "ProductRecurrence"
+      },
+      "stickerType": null,
+      "category": {
+       "id": 55,
+       "name": "Rice & Pulses",
+       "subCategory": {
+        "id": 360,
+        "name": "Arhar & Chana dal",
+        "type": "Chana Dal",
+        "typeId": "437",
+        "pTypeId": "542",
+        "__typename": "ProductSubCategoryInfo"
+       },
+       "__typename": "ProductCategoryInfo"
+      },
+      "delivery": {
+       "type": null,
+       "slot": [
+        "5:00-7:00"
+       ],
+       "plusOne": false,
+       "__typename": "ProductDelivery"
+      },
+      "availability": {
+       "isOos": false,
+       "oos": false,
+       "forcedOos": false,
+       "schedule": true,
+       "maxQuantity": 3,
+       "cutOff": {
+        "time": "",
+        "text": "12 AM",
+        "__typename": "ProductCutOff"
+       },
+       "refill": {
+        "text": null,
+        "type": null,
+        "date": null,
+        "__typename": "ProductRefill"
+       },
+       "__typename": "ProductAvailability"
+      },
+      "assets": {
+       "image": {
+        "url": "https://file.milkbasket.com/x.png",
+        "type": 1,
+        "__typename": "ProductImageAssets"
+       },
+       "video": null,
+       "lottie": null,
+       "__typename": "ProductAssets"
+      },
+      "source": null,
+      "tag": null,
+      "weight": {
+       "text": "1 KG",
+       "value": null,
+       "unit": null,
+       "__typename": "ProductWeight"
+      },
+      "price": {
+       "currency": "₹",
+       "perUnit": null,
+       "discount": {
+        "amount": "5.00",
+        "value": 5,
+        "percent": 3,
+        "perUnit": 0,
+        "text": "",
+        "displayValue": "₹5",
+        "__typename": "ProductDiscount"
+       },
+       "dealDiscount": {
+        "amount": "5.00",
+        "value": 5,
+        "percent": 3.07,
+        "perUnit": null,
+        "text": "*3.07% discount on this product",
+        "displayValue": null,
+        "__typename": "ProductDiscount"
+       },
+       "mbeyond": {
+        "amount": "158",
+        "value": 158,
+        "__typename": "ProductPricing"
+       },
+       "mrp": {
+        "amount": "163",
+        "value": 163,
+        "__typename": "ProductPricing"
+       },
+       "price": {
+        "amount": "158",
+        "value": 158,
+        "__typename": "ProductPricing"
+       },
+       "__typename": "ProductPrice"
+      },
+      "bundle": null,
+      "trends": null,
+      "token": null,
+      "offers": {
+       "count": 0,
+       "label": "",
+       "__typename": "ProductPromotionalOffers"
+      },
+      "__typename": "Product"
+     },
+     "variant": null,
+     "__typename": "ProductDossier"
+    },
+    {
+     "product": {
+      "id": 40561,
+      "name": "Good Life Chana Dal",
+      "type": 1,
+      "badge": 0,
+      "kind": 1,
+      "recurrence": {
+       "type": "1",
+       "text": null,
+       "__typename": "ProductRecurrence"
+      },
+      "stickerType": null,
+      "category": {
+       "id": 55,
+       "name": "Rice & Pulses",
+       "subCategory": {
+        "id": 360,
+        "name": "Arhar & Chana dal",
+        "type": "Chana Dal",
+        "typeId": "437",
+        "pTypeId": "542",
+        "__typename": "ProductSubCategoryInfo"
+       },
+       "__typename": "ProductCategoryInfo"
+      },
+      "delivery": {
+       "type": null,
+       "slot": [
+        "5:00-7:00"
+       ],
+       "plusOne": false,
+       "__typename": "ProductDelivery"
+      },
+      "availability": {
+       "isOos": false,
+       "oos": false,
+       "forcedOos": false,
+       "schedule": true,
+       "maxQuantity": 3,
+       "cutOff": {
+        "time": "",
+        "text": "12 AM",
+        "__typename": "ProductCutOff"
+       },
+       "refill": {
+        "text": null,
+        "type": null,
+        "date": null,
+        "__typename": "ProductRefill"
+       },
+       "__typename": "ProductAvailability"
+      },
+      "assets": {
+       "image": {
+        "url": "https://file.milkbasket.com/x.png",
+        "type": 1,
+        "__typename": "ProductImageAssets"
+       },
+       "video": null,
+       "lottie": null,
+       "__typename": "ProductAssets"
+      },
+      "source": null,
+      "tag": null,
+      "weight": {
+       "text": "1 KG",
+       "value": null,
+       "unit": null,
+       "__typename": "ProductWeight"
+      },
+      "price": {
+       "currency": "₹",
+       "perUnit": null,
+       "discount": {
+        "amount": "60.00",
+        "value": 60,
+        "percent": 32,
+        "perUnit": 0,
+        "text": "",
+        "displayValue": "₹60",
+        "__typename": "ProductDiscount"
+       },
+       "dealDiscount": {
+        "amount": "60.00",
+        "value": 60,
+        "percent": 32.43,
+        "perUnit": null,
+        "text": "*32.43% discount on this product",
+        "displayValue": null,
+        "__typename": "ProductDiscount"
+       },
+       "mbeyond": {
+        "amount": "125",
+        "value": 125,
+        "__typename": "ProductPricing"
+       },
+       "mrp": {
+        "amount": "185",
+        "value": 185,
+        "__typename": "ProductPricing"
+       },
+       "price": {
+        "amount": "125",
+        "value": 125,
+        "__typename": "ProductPricing"
+       },
+       "__typename": "ProductPrice"
+      },
+      "bundle": null,
+      "trends": null,
+      "token": null,
+      "offers": {
+       "count": 0,
+       "label": "",
+       "__typename": "ProductPromotionalOffers"
+      },
+      "__typename": "Product"
+     },
+     "variant": null,
+     "__typename": "ProductDossier"
+    },
+    {
+     "product": {
+      "id": 55133,
+      "name": "Good Life Toor Dal Unpolished",
+      "type": 1,
+      "badge": 0,
+      "kind": 1,
+      "recurrence": {
+       "type": "1",
+       "text": null,
+       "__typename": "ProductRecurrence"
+      },
+      "stickerType": null,
+      "category": {
+       "id": 55,
+       "name": "Rice & Pulses",
+       "subCategory": {
+        "id": 360,
+        "name": "Arhar & Chana dal",
+        "type": "Arhar",
+        "typeId": "436",
+        "pTypeId": "160",
+        "__typename": "ProductSubCategoryInfo"
+       },
+       "__typename": "ProductCategoryInfo"
+      },
+      "delivery": {
+       "type": null,
+       "slot": [
+        "5:00-7:00"
+       ],
+       "plusOne": false,
+       "__typename": "ProductDelivery"
+      },
+      "availability": {
+       "isOos": false,
+       "oos": false,
+       "forcedOos": false,
+       "schedule": true,
+       "maxQuantity": 4,
+       "cutOff": {
+        "time": "",
+        "text": "12 AM",
+        "__typename": "ProductCutOff"
+       },
+       "refill": {
+        "text": null,
+        "type": null,
+        "date": null,
+        "__typename": "ProductRefill"
+       },
+       "__typename": "ProductAvailability"
+      },
+      "assets": {
+       "image": {
+        "url": "https://file.milkbasket.com/x.png",
+        "type": 1,
+        "__typename": "ProductImageAssets"
+       },
+       "video": null,
+       "lottie": null,
+       "__typename": "ProductAssets"
+      },
+      "source": null,
+      "tag": null,
+      "weight": {
+       "text": "500 GM",
+       "value": null,
+       "unit": null,
+       "__typename": "ProductWeight"
+      },
+      "price": {
+       "currency": "₹",
+       "perUnit": null,
+       "discount": {
+        "amount": "18.00",
+        "value": 18,
+        "percent": 15,
+        "perUnit": 0,
+        "text": "",
+        "displayValue": "₹18",
+        "__typename": "ProductDiscount"
+       },
+       "dealDiscount": {
+        "amount": "18.00",
+        "value": 18,
+        "percent": 15.13,
+        "perUnit": null,
+        "text": "*15.13% discount on this product",
+        "displayValue": null,
+        "__typename": "ProductDiscount"
+       },
+       "mbeyond": {
+        "amount": "101",
+        "value": 101,
+        "__typename": "ProductPricing"
+       },
+       "mrp": {
+        "amount": "119",
+        "value": 119,
+        "__typename": "ProductPricing"
+       },
+       "price": {
+        "amount": "101",
+        "value": 101,
+        "__typename": "ProductPricing"
+       },
+       "__typename": "ProductPrice"
+      },
+      "bundle": null,
+      "trends": null,
+      "token": null,
+      "offers": {
+       "count": 0,
+       "label": "",
+       "__typename": "ProductPromotionalOffers"
+      },
+      "__typename": "Product"
+     },
+     "variant": null,
+     "__typename": "ProductDossier"
+    },
+    {
+     "product": {
+      "id": 41110,
+      "name": "Udhaiyam Bengal Gram Dal",
+      "type": 1,
+      "badge": 0,
+      "kind": 1,
+      "recurrence": {
+       "type": "1",
+       "text": null,
+       "__typename": "ProductRecurrence"
+      },
+      "stickerType": null,
+      "category": {
+       "id": 55,
+       "name": "Rice & Pulses",
+       "subCategory": {
+        "id": 360,
+        "name": "Arhar & Chana dal",
+        "type": "Chana Dal",
+        "typeId": "437",
+        "pTypeId": "542",
+        "__typename": "ProductSubCategoryInfo"
+       },
+       "__typename": "ProductCategoryInfo"
+      },
+      "delivery": {
+       "type": null,
+       "slot": [
+        "5:00-7:00"
+       ],
+       "plusOne": false,
+       "__typename": "ProductDelivery"
+      },
+      "availability": {
+       "isOos": false,
+       "oos": false,
+       "forcedOos": false,
+       "schedule": true,
+       "maxQuantity": 6,
+       "cutOff": {
+        "time": "",
+        "text": "12 AM",
+        "__typename": "ProductCutOff"
+       },
+       "refill": {
+        "text": null,
+        "type": null,
+        "date": null,
+        "__typename": "ProductRefill"
+       },
+       "__typename": "ProductAvailability"
+      },
+      "assets": {
+       "image": {
+        "url": "https://file.milkbasket.com/x.png",
+        "type": 1,
+        "__typename": "ProductImageAssets"
+       },
+       "video": null,
+       "lottie": null,
+       "__typename": "ProductAssets"
+      },
+      "source": null,
+      "tag": null,
+      "weight": {
+       "text": "500 GM",
+       "value": null,
+       "unit": null,
+       "__typename": "ProductWeight"
+      },
+      "price": {
+       "currency": "₹",
+       "perUnit": null,
+       "discount": {
+        "amount": "0.00",
+        "value": 0,
+        "percent": 0,
+        "perUnit": 0,
+        "text": "",
+        "displayValue": "0%",
+        "__typename": "ProductDiscount"
+       },
+       "dealDiscount": {
+        "amount": "0.00",
+        "value": 0,
+        "percent": 0,
+        "perUnit": null,
+        "text": "",
+        "displayValue": null,
+        "__typename": "ProductDiscount"
+       },
+       "mbeyond": {
+        "amount": "82",
+        "value": 82,
+        "__typename": "ProductPricing"
+       },
+       "mrp": {
+        "amount": "82",
+        "value": 82,
+        "__typename": "ProductPricing"
+       },
+       "price": {
+        "amount": "82",
+        "value": 82,
+        "__typename": "ProductPricing"
+       },
+       "__typename": "ProductPrice"
+      },
+      "bundle": null,
+      "trends": null,
+      "token": null,
+      "offers": {
+       "count": 0,
+       "label": "",
+       "__typename": "ProductPromotionalOffers"
+      },
+      "__typename": "Product"
+     },
+     "variant": null,
+     "__typename": "ProductDossier"
+    },
+    {
+     "product": {
+      "id": 40569,
+      "name": "Good Life Tur/Arhar Dal",
+      "type": 1,
+      "badge": 0,
+      "kind": 1,
+      "recurrence": {
+       "type": "1",
+       "text": null,
+       "__typename": "ProductRecurrence"
+      },
+      "stickerType": null,
+      "category": {
+       "id": 55,
+       "name": "Rice & Pulses",
+       "subCategory": {
+        "id": 360,
+        "name": "Arhar & Chana dal",
+        "type": "Arhar",
+        "typeId": "436",
+        "pTypeId": "160",
+        "__typename": "ProductSubCategoryInfo"
+       },
+       "__typename": "ProductCategoryInfo"
+      },
+      "delivery": {
+       "type": null,
+       "slot": [
+        "5:00-7:00"
+       ],
+       "plusOne": false,
+       "__typename": "ProductDelivery"
+      },
+      "availability": {
+       "isOos": false,
+       "oos": false,
+       "forcedOos": false,
+       "schedule": true,
+       "maxQuantity": 4,
+       "cutOff": {
+        "time": "",
+        "text": "12 AM",
+        "__typename": "ProductCutOff"
+       },
+       "refill": {
+        "text": null,
+        "type": null,
+        "date": null,
+        "__typename": "ProductRefill"
+       },
+       "__typename": "ProductAvailability"
+      },
+      "assets": {
+       "image": {
+        "url": "https://file.milkbasket.com/x.png",
+        "type": 1,
+        "__typename": "ProductImageAssets"
+       },
+       "video": null,
+       "lottie": null,
+       "__typename": "ProductAssets"
+      },
+      "source": null,
+      "tag": null,
+      "weight": {
+       "text": "500 GM",
+       "value": null,
+       "unit": null,
+       "__typename": "ProductWeight"
+      },
+      "price": {
+       "currency": "₹",
+       "perUnit": null,
+       "discount": {
+        "amount": "32.00",
+        "value": 32,
+        "percent": 27,
+        "perUnit": 0,
+        "text": "",
+        "displayValue": "27.83%",
+        "__typename": "ProductDiscount"
+       },
+       "dealDiscount": {
+        "amount": "32.00",
+        "value": 32,
+        "percent": 27.83,
+        "perUnit": null,
+        "text": "*27.83% discount on this product",
+        "displayValue": null,
+        "__typename": "ProductDiscount"
+       },
+       "mbeyond": {
+        "amount": "83",
+        "value": 83,
+        "__typename": "ProductPricing"
+       },
+       "mrp": {
+        "amount": "115",
+        "value": 115,
+        "__typename": "ProductPricing"
+       },
+       "price": {
+        "amount": "83",
+        "value": 83,
+        "__typename": "ProductPricing"
+       },
+       "__typename": "ProductPrice"
+      },
+      "bundle": null,
+      "trends": null,
+      "token": null,
+      "offers": {
+       "count": 0,
+       "label": "",
+       "__typename": "ProductPromotionalOffers"
+      },
+      "__typename": "Product"
+     },
+     "variant": null,
+     "__typename": "ProductDossier"
+    }
+   ],
+   "config": {
+    "layout": 4,
+    "design": {
+     "rows": 1,
+     "showAvailability": false,
+     "showDiscount": true,
+     "showDealDiscount": true,
+     "showSubscribe": true,
+     "showSubscribeCoachmark": false,
+     "showCounter": true,
+     "showRecurrence": false,
+     "showSelectButton": null
+    }
+   },
+   "pages": {
+    "limit": 20,
+    "page": 1,
+    "hasNextPage": false,
+    "records": 20,
+    "pages": 2
+   }
+  }
+ }
+}

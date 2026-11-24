@@ -271,6 +271,26 @@ test('a different form of the same word is refused: ketchup, spring onion (seen 
   assert.equal(matchConfidence('orange juice 1L', { name: 'Tropicana Orange Juice 1 L' }).refused, false);
 });
 
+test('a sweet or a puja item made with the staple is not the staple (seen in saved KPN, Milkbasket and BigBasket rows, 2026-11-20)', () => {
+  // "Laddu" is how KPN spells it; only "ladoo" was known, so this was taken for ghee at ₹37.5/100 g.
+  assert.equal(matchConfidence('ghee', { name: 'Sweet Sanskriti Ghee Besan Laddu Pack 200 g' }).refused, true);
+  assert.equal(matchConfidence('besan', { name: 'Sweet Sanskriti Ghee Besan Laddu Pack 200 g' }).refused, true);
+  assert.equal(matchConfidence('hing', { name: 'Patanjali Pachak Hing - Peda 100 g' }).refused, true);
+  assert.equal(matchConfidence('coconut', { name: 'Haldiram Coconut Burfi 250 g' }).refused, true);
+  // Lamp ghee is not food.
+  assert.equal(matchConfidence('ghee', { name: 'Shubhkart Darshana Puja Ghee Jar 500 ml' }).refused, true);
+  assert.equal(matchConfidence('sesame oil', { name: 'Divya Maarg Pooja Oil (Mustard and Sesame Blend) 900 ml' }).refused, true);
+  // …but asking for them still finds them, in either spelling.
+  assert.equal(matchConfidence('besan laddu', { name: 'Haldiram Besan Laddu 400 g' }).refused, false);
+  assert.equal(matchConfidence('besan ladoo', { name: 'Haldiram Besan Laddu 400 g' }).refused, false);
+  assert.equal(matchConfidence('pooja oil', { name: 'Mr. Gold Nakshatra Pooja Oil 500 ml' }).refused, false);
+  assert.equal(matchConfidence('puja ghee', { name: 'Shubhkart Darshana Puja Ghee Jar 500 ml' }).refused, false);
+  assert.equal(matchConfidence('camphor', { name: 'Mangalam Pooja Camphor Tablets 100 g' }).refused, false);
+  // Real ghee is untouched.
+  assert.equal(matchConfidence('ghee', { name: 'Aavin Ghee 1 L (Carton)' }).refused, false);
+  assert.equal(matchConfidence('ghee', { name: 'Desi Farms Cow Ghee 1 pc (1 L)' }).refused, false);
+});
+
 test('approximate and ranged weights count as the weight asked for', () => {
   const row = (name, price) => ({ name, price, inStock: true, url: 'x' });
   for (const name of ['Onion (Approx. 900 g - 1000 g)', 'Onion 0.95-1.05Kg', 'Local Onion 900-1100g']) {

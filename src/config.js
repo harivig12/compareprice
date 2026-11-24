@@ -4,6 +4,12 @@
  * Lives at DATA_DIR/config.json. Missing keys are filled from DEFAULT_CONFIG,
  * so an empty or partial file is always a usable config. The location is
  * config, never source.
+ *
+ * The default list is the one exception: it lives in DATA_DIR/basket.txt, so
+ * it can be edited as a file (re-read on every load) as well as in Settings.
+ * Until 2026-11-20 it was copied into config.json on the first Save, after
+ * which edits to basket.txt silently did nothing. The first load moves it out
+ * (the config.json copy is kept as basket.previous.txt; nothing is deleted).
  */
 import { readFileSync, writeFileSync, mkdirSync, renameSync } from 'node:fs';
 import { join } from 'node:path';
@@ -40,6 +46,21 @@ export const DEFAULT_CONFIG = Object.freeze({
   ],
   server: { host: '127.0.0.1', port: 7777 },
   timezone: 'Asia/Kolkata',
+  browser: {
+    // Close the headless Chrome after this long with no job or sign-in in
+    // flight; the next job relaunches it. Idle Chrome measured ~1 GB and
+    // 50–75% of a core (docs/diagnosis/2026-11-19-resource-use-and-otp-step.md).
+    idleCloseMs: 5 * 60_000,
+    // Skip images, media and fonts on search tabs (API calls don't need them).
+    blockMedia: true,
+  },
+  // A product this far below MRP is a "deal": shown in its own section, never totalled.
+  // The offer check (deal feeds) runs at these times, in `timezone`.
+  deals: { minDiscountPct: 80, times: ['07:00', '18:00'] },
+  results: {
+    // Per-run JSON files under results/ older than this are deleted; runs.jsonl stays.
+    keepDays: 60,
+  },
   // Per-site overrides of the request budget (see src/limits.js), e.g.
   // { "instamart": { "minGapMs": 4000, "perMinute": 10 } }. Empty = defaults.
   limits: {},
@@ -74,6 +95,36 @@ export function configFile(dir = DATA_DIR) {
   return join(dir, 'config.json');
 }
 
+export function basketFile(dir = DATA_DIR) {
+  return join(dir, 'basket.txt');
+}
+
+function writeAtomic(file, text) {
+  const tmp = `${file}.${process.pid}.tmp`;
+  writeFileSync(tmp, text);
+  renameSync(tmp, file);
+}
+
+/**
+ * The default list: DATA_DIR/basket.txt. Created on first use from the list
+ * that config.json still holds (older installs), else from the bundled basket.txt.
+ */
+function readBasket(dir, stored) {
+  try {
+    return readFileSync(basketFile(dir), 'utf8');
+  } catch (err) {
+    if (err.code !== 'ENOENT') throw err;
+  }
+  const text = typeof stored.basket === 'string' ? stored.basket : DEFAULT_CONFIG.basket;
+  try {
+    mkdirSync(dir, { recursive: true });
+    writeAtomic(basketFile(dir), text.endsWith('\n') || !text ? text : text + '\n');
+  } catch (err) {
+    console.warn(`config: could not create ${basketFile(dir)}: ${err.message}`);
+  }
+  return text;
+}
+
 /** @returns {typeof DEFAULT_CONFIG} */
 export function loadConfig(dir = DATA_DIR) {
   let stored = {};
@@ -84,16 +135,29 @@ export function loadConfig(dir = DATA_DIR) {
     // rather than taking the whole service down.
     if (err.code !== 'ENOENT') console.warn(`config: ignoring unreadable ${configFile(dir)}: ${err.message}`);
   }
-  return withDefaults(stored, DEFAULT_CONFIG);
+  const basket = readBasket(dir, stored);
+  if (typeof stored.basket === 'string') {
+    // Older config.json carried the list: keep a copy, then drop it from the
+    // config so basket.txt is the only place it lives.
+    try {
+      writeFileSync(join(dir, 'basket.previous.txt'), stored.basket, { flag: 'wx' });
+    } catch { /* already kept */ }
+    const { basket: _old, ...rest } = stored;
+    try {
+      writeAtomic(configFile(dir), JSON.stringify(rest, null, 2) + '\n');
+    } catch (err) {
+      console.warn(`config: could not move the list out of ${configFile(dir)}: ${err.message}`);
+    }
+  }
+  return { ...withDefaults(stored, DEFAULT_CONFIG), basket };
 }
 
 export function saveConfig(cfg, dir = DATA_DIR) {
   mkdirSync(dir, { recursive: true });
-  const file = configFile(dir);
-  const tmp = `${file}.${process.pid}.tmp`;
   // Write-then-rename so a crash never leaves a half-written config.
-  writeFileSync(tmp, JSON.stringify(withDefaults(cfg, DEFAULT_CONFIG), null, 2) + '\n');
-  renameSync(tmp, file);
+  const { basket, ...rest } = withDefaults(cfg, DEFAULT_CONFIG);
+  writeAtomic(configFile(dir), JSON.stringify(rest, null, 2) + '\n');
+  if (typeof basket === 'string') writeAtomic(basketFile(dir), basket.endsWith('\n') || !basket ? basket : basket + '\n');
 }
 
 const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -124,6 +188,17 @@ export function validateConfig(cfg, knownSites) {
     if (!Array.isArray(s.times) || s.times.length === 0) return bad(`schedules[${i}].times`, 'each schedule needs at least one time');
     const t = s.times.find((x) => !HHMM.test(String(x)));
     if (t != null) return bad(`schedules[${i}].times`, `"${t}" is not a 24-hour HH:MM time`);
+  }
+  if (cfg.browser && !(Number(cfg.browser.idleCloseMs) >= 0)) return bad('browser.idleCloseMs', 'idle close time must be 0 (never) or more milliseconds');
+  if (cfg.results && !(Number(cfg.results.keepDays) >= 1)) return bad('results.keepDays', 'keep results for at least 1 day');
+  if (cfg.deals) {
+    const pct = Number(cfg.deals.minDiscountPct);
+    if (!(pct >= 50 && pct <= 99)) return bad('deals.minDiscountPct', 'a deal is 50 to 99 percent off MRP');
+    if (cfg.deals.times != null) {
+      if (!Array.isArray(cfg.deals.times)) return bad('deals.times', 'deal check times must be a list');
+      const t = cfg.deals.times.find((x) => !HHMM.test(String(x)));
+      if (t != null) return bad('deals.times', `"${t}" is not a 24-hour HH:MM time`);
+    }
   }
   const names = cfg.schedules.map((s) => s.name.trim());
   if (new Set(names).size !== names.length) return bad('schedules', 'schedule names must be unique');

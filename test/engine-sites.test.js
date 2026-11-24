@@ -38,10 +38,12 @@ describe('site registry', () => {
     assert.equal(getSite('nope'), null);
   });
 
-  it('marks the eight guest-API sites as api; milkbasket is skipped', () => {
+  it('marks all nine sites as api; milkbasket is signed-in only and no longer skipped', () => {
     const api = SITE_IDS.filter((id) => SITES[id].mode === 'api').sort();
-    assert.deepEqual(api, ['amazon', 'bigbasket', 'blinkit', 'flipkart_minutes', 'instamart', 'jiomart', 'kpn', 'zepto']);
-    assert.match(SITES.milkbasket.skip, /needs a login/);
+    assert.deepEqual(api, ['amazon', 'bigbasket', 'blinkit', 'flipkart_minutes', 'instamart', 'jiomart', 'kpn', 'milkbasket', 'zepto']);
+    assert.equal(SITES.milkbasket.skip, undefined);
+    assert.equal(SITES.milkbasket.signedInOnly, true);
+    assert.deepEqual(SITE_IDS.filter((id) => SITES[id].direct).sort(), ['instamart', 'milkbasket'], 'API first only where the recon cleared it');
   });
 });
 
@@ -134,6 +136,104 @@ describe('zepto parser', () => {
     assert.equal(kg.packSize, 1000);
     assert.equal(kg.packUnit, 'g');
     assert.ok(kg.price > 50 && kg.price < 500, `rupees, not paise: ${kg.price}`);
+  });
+
+  it('replays the page\'s own search: signed-in v3 POST keeps its body with our query; guest v1 GET puts it in the URL', async () => {
+    const { searchRequest } = await import('../src/engine/sites/zepto.js');
+    const headers = { 'request-signature': 'x', store_ids: 'y' };
+    const v3 = searchRequest({ url: 'https://bff-gateway.zepto.com/user-search-service/api/v3/search', body: '{"query":"dal","pageNumber":0,"mode":"SHOW_ALL_RESULTS","userSessionId":"s1"}', headers }, 'sugar 1kg');
+    assert.equal(v3.init.method, 'POST');
+    assert.equal(v3.init.headers, headers);
+    assert.deepEqual(JSON.parse(v3.init.body), { query: 'sugar 1kg', pageNumber: 0, mode: 'SHOW_ALL_RESULTS', userSessionId: 's1' });
+    const v1 = searchRequest({ url: 'https://bff-gateway.zepto.com/search-federator-service/api/v1/search?query=dal', body: null, headers }, 'toor dal');
+    assert.equal(v1.init.method, undefined);
+    assert.match(v1.url, /search-federator-service\/api\/v1\/search\?query=toor\+dal&/);
+    assert.throws(() => searchRequest({ url: 'https://bff-gateway.zepto.com/user-search-service/api/v3/search', body: 'not json', headers }, 'x'), (e) => e.kind === 'parse' && /^zepto:/.test(e.message));
+  });
+});
+
+describe('milkbasket', () => {
+  it('parses catalogue rows: price, MRP, "500 GM" pack, stock, max quantity', async () => {
+    const { parseList } = await import('../src/engine/sites/milkbasket.js');
+    const { rows, hasNext } = parseList(fixture('milkbasket-catalog').data.getCatalogProductList);
+    assertRows(rows);
+    assert.equal(hasNext, false);
+    const chana = rows.find((r) => /Best Farms Chana Dal/.test(r.name));
+    assert.deepEqual({ price: chana.price, mrp: chana.mrp, packSize: chana.packSize, packUnit: chana.packUnit }, { price: 77, mrp: 95, packSize: 500, packUnit: 'g' });
+  });
+
+  it('parses the flash deal: ₹1 tomato (MRP ₹78), "1 KG - 1.1 KG Approx" is a kilo pack, max 1', async () => {
+    const { parseList } = await import('../src/engine/sites/milkbasket.js');
+    const { rows, hasNext } = parseList(fixture('milkbasket-flashdeal').data.getMegaFlashDealProducts);
+    assert.equal(hasNext, true);
+    const t = rows.find((r) => /Tomato Desi/.test(r.name));
+    assert.equal(t.price, 1);
+    assert.equal(t.mrp, 78);
+    assert.ok(t.packSize >= 1000 && t.packSize <= 1100 && t.packUnit === 'g', `pack ${t.packSize}${t.packUnit}`);
+    assert.equal(t.maxQty, 1);
+  });
+
+  it('search = catalogue words: toor dal finds dals, not chocolates; units are not words', async () => {
+    const { matchCatalog, queryWords } = await import('../src/engine/sites/milkbasket.js');
+    assert.deepEqual(queryWords('2x toor dal 1kg'), ['toor', 'dal']);
+    const rows = [{ name: 'Good Life Toor Dal Unpolished 500 gm' }, { name: 'Dairy Milk Chocolate' }, { name: 'Udhaiyam Bengal Gram Dal 1 kg' }];
+    assert.deepEqual(matchCatalog(rows, 'toor dal 1kg').map((r) => r.name), ['Good Life Toor Dal Unpolished 500 gm', 'Udhaiyam Bengal Gram Dal 1 kg']);
+    assert.deepEqual(matchCatalog(rows, '1 kg'), []);
+  });
+
+  it('search: "sugar" never picks Low Sugar / Sugar Free products; rows with every word come first', async () => {
+    const { matchCatalog } = await import('../src/engine/sites/milkbasket.js');
+    const rows = [
+      { name: 'Low Sugar Potato 1 kg - 1.1 kg approx' }, { name: 'Sugar Free Gold Pellets' }, { name: 'Sugarless Cookies' },
+      { name: 'Madhur Sugar 1 kg' }, { name: 'Brown Sugar 500 gm' },
+      { name: 'Udhaiyam Bengal Gram Dal 1 kg' }, { name: 'Good Life Tur/Arhar Dal 500 gm' }, { name: 'Good Life Toor Dal Unpolished 500 gm' },
+    ];
+    assert.deepEqual(matchCatalog(rows, 'sugar 1kg').map((r) => r.name), ['Madhur Sugar 1 kg', 'Brown Sugar 500 gm']);
+    assert.equal(matchCatalog(rows, 'toor dal 1kg')[0].name, 'Good Life Toor Dal Unpolished 500 gm', 'both words first');
+  });
+
+  it('catalogue: categories -> every subcategory paged; cached on disk for a day; guest is a session error', async () => {
+    const { catalog } = await import('../src/engine/sites/milkbasket.js');
+    const { mkdtempSync, rmSync, readFileSync: rf } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join: pjoin } = await import('node:path');
+    const dir = mkdtempSync(pjoin(tmpdir(), 'mb-cat-'));
+    const cats = fixture('milkbasket-categories');
+    const page = fixture('milkbasket-catalog');
+    const calls = [];
+    const tab = {
+      _capture: { milkbasket: { headers: { authorization: 'Bearer T', cityid: '11', hubid: '12' }, at: Date.now(), url: 'https://consumerbff.milkbasket.com/graphql' } },
+      on: () => () => {},
+      send: async () => ({ cookies: [] }),
+      evaluate: async (e) => (e === 'navigator.userAgent' ? 'UA' : e === 'location.origin' ? 'https://www.milkbasket.com' : null),
+    };
+    const fetchImpl = async (url, init) => {
+      const b = JSON.parse(init.body);
+      calls.push(b.operationName);
+      assert.equal(init.headers.authorization, 'Bearer T');
+      const data = b.operationName === 'fetchProductCategories' ? cats.data : page.data;
+      return { status: 200, headers: { get: () => 'application/json' }, text: async () => JSON.stringify({ data }) };
+    };
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = fetchImpl;
+    try {
+      const subs = cats.data.getProductCategories.flatMap((c) => c.subCategories.filter((s) => !s.oos)).length;
+      const rows = await catalog(tab, { dir, gap: 0, now: () => 1_000 });
+      assert.equal(calls.filter((c) => c === 'getCatalogProductList').length, subs, 'one page per subcategory (no next page)');
+      assert.ok(rows.length >= 1);
+      const cached = JSON.parse(rf(pjoin(dir, 'cache', 'milkbasket-catalog-12.json'), 'utf8'));
+      assert.equal(cached.rows.length, rows.length);
+      assert.ok(!JSON.stringify(cached).includes('Bearer'), 'no session data on disk');
+      calls.length = 0;
+      await catalog(tab, { dir, gap: 0, now: () => 2_000 });
+      assert.equal(calls.length, 0, 'served from cache');
+
+      tab._capture.milkbasket.headers = { cityid: '1', hubid: '1' };
+      await assert.rejects(() => catalog(tab, { dir, gap: 0, now: () => 3_000 }), (e) => e.kind === 'session' && /^milkbasket: this account is not signed in \(no session token\)/.test(e.message));
+    } finally {
+      globalThis.fetch = realFetch;
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
 
@@ -293,5 +393,25 @@ describe('captured headers', () => {
     const b = await ensureCaptured(tab, 'k', /api\/search/, 'https://x/');
     assert.equal(navigations, 2);
     assert.equal(b.headers.sig, 's2');
+  });
+});
+
+describe('site category on every row (2026-11-20)', () => {
+  const first = (site, name) => SITES[site].parse(fixture(name))[0].category ?? null;
+  it('keeps the site\'s own category path, levels joined by " › "', async () => {
+    assert.equal(first('bigbasket', 'bigbasket-ok'), 'Foodgrains, Oil & Masala › Dals & Pulses › Toor, Channa & Moong Dal');
+    assert.equal(first('instamart', 'instamart-ok'), 'Atta, Rice and Dals › Dal and Pulses › Toor Dal');
+    assert.equal(first('zepto', 'zepto-ok'), 'Atta, Rice, Oil & Dals');
+    assert.equal(first('jiomart', 'jiomart-ok'), 'Toor Dal');
+    // KPN levels carry an id suffix ("(1_13)"), which is dropped.
+    assert.match(first('kpn', 'kpn-ok'), /^Rice, Atta & Dal › (Loose Provisions|Pulses & Dals)$/);
+    const { parseList } = await import('../src/engine/sites/milkbasket.js');
+    const mb = parseList(fixture('milkbasket-catalog').data.getCatalogProductList).rows;
+    assert.ok(mb.every((r) => /^Rice & Pulses › Arhar & Chana dal › /.test(r.category)), 'milkbasket: category › subcategory › type');
+  });
+  it('sites that send no category give null', () => {
+    assert.equal(first('blinkit', 'blinkit-ok'), null);
+    assert.equal(first('flipkart_minutes', 'flipkart_minutes-ok'), null);
+    assert.equal(first('amazon', 'amazon-ok'), null);
   });
 });

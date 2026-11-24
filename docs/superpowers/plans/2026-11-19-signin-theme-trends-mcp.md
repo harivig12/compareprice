@@ -1,6 +1,6 @@
 # Plan: OTP step, light/dark theme, price ▲▼, last-3-dates, MCP for AI chat (2026-11-19)
 
-Status: **planning only**. Agree each task below, then all code is written in one pass (order at the end).
+Status: **in progress on `feature/signin-theme-trends-mcp`.** Tasks 1–6 are coded and tested offline (`npm test`: 209 tests, 208 pass, 1 live skipped). Still open: Task 7 (code review), a live sign-in with a real OTP, the redeploy and UI evidence.
 Ground rules: AGENTS.md. `compareBasket()` stays the single entry point, and `npm test` stays green offline.
 
 ---
@@ -8,7 +8,7 @@ Ground rules: AGENTS.md. `compareBasket()` stays the single entry point, and `np
 ## Task 1: OTP box after "Send OTP", button becomes "Verify"
 
 **Root cause, found 2026-11-19 by inspecting the service's own Chrome tab:**
-- **The number was entered correctly.** The Milkbasket tab reads "Verify Your Number · We have sent an OTP to your phone. **+91-9711020494**". **The OTP was actually sent.**
+- **The number was entered correctly.** The Milkbasket tab reads "Verify Your Number · We have sent an OTP to your phone. **+91-••••••0494**" (number masked here). **The OTP was actually sent.**
 - **The popup didn't move on because our check for the OTP boxes was wrong.** Milkbasket shows 4 boxes, but the first has `maxlength=4` and the other three `maxlength=1`. The detector wanted 4 boxes of `maxlength=1`, saw 3, waited 15 s, then failed with "no OTP box appeared". The popup kept its number screen with that error, so it looked as if there was no place to type the OTP.
 - **Nothing was logged.** The login flow writes no log lines today, so the failure wasn't in `docker logs`.
 - **No Zepto attempt happened.** Its tab still shows "Please login to continue searching".
@@ -179,6 +179,12 @@ Checked without submitting a number:
 
 **Decision (2026-11-19): saved prices by default, with live search as an option.** `compare_basket` and `lookup_price` answer from saved prices. With `fresh: true`, or when the user asks for "latest" or "live", they run a live search under the same per-site limits. If a site needs a pause they return "Zepto needs a 3 s pause", and the AI can retry.
 
+**Status: done.** `src/mcp/tools.js` (client, formatting, handlers) and a 30-line `src/mcp-server.js`; 8 tests in `test/mcp.test.js` against a fake HTTP service; `scripts/mcp-smoke.js` lists 7 tools; checked against the running service (`lookup_price`, `suggest_items`, `site_status`, cached `compare_basket`). Changes from the table above:
+- `price_history` folded into `lookup_price`: `/api/lookup` already carries the 3-date trend, the change and the lowest ever, so a second tool would return the same data.
+- `run_schedule_now` is `run_saved_basket`: it runs the service's list through `POST /api/compare`, so it obeys the per-site budget (scheduled runs skip that check; a chat-triggered run shouldn't).
+- Added `job_result(jobId)` for live runs that outlast `waitSeconds` (default 180 s). Progress is polled from `/api/result` and `/api/jobs` rather than streamed from SSE: MCP tool calls return one answer.
+- A rate-limited `fresh` call returns the waits **and** the saved prices.
+
 ---
 
 ## Task 6: Performance (from measurements, see `docs/diagnosis/2026-11-19-resource-use-and-otp-step.md`)
@@ -212,6 +218,28 @@ There's no need for a broad refactor, but a focused review of the riskier areas 
 - `src/cli.js` (860 lines): leave as is unless touched.
 
 Fix what the review finds before merging.
+
+**Review done 2026-11-19** (code-review skill, Standards and Spec run in parallel against `main`).
+
+Fixed:
+- Finishing a sign-in closed the site's tab even while a job was searching it (the login tab *is* the search tab). Now `pool.releaseLoginTab(site, { inUse })` keeps the tab open while a job runs and puts the media block back. Covered by a test in `test/perf.test.js`.
+- A wrong OTP was detected by matching the message text. It now uses `SiteError.code` (`wrong_otp` / `bad_otp`).
+- Page text quoted in sign-in errors could carry the full number into the logs. `pageSnippet()` masks it, and a test covers this.
+- The Amazon `why` text hardcoded the pincode. It now says "the configured address".
+- `server.js` and `service.js` built the same `LoginManager` twice. Both now use `defaultLoginManager()`.
+- The idle closer's lazy pool lookup used a static import.
+- `pruneResults` no longer fails when the results directory is missing.
+- `Intl.DateTimeFormat` is now built once per store instead of per row.
+- The jobs table now escapes its id and date.
+- `lookup_price` gained `fresh` (the decisions log asked for it). `liveRun` reports its status instead of being parsed.
+- Tests and docs now use a dummy phone number instead of the real one.
+
+Not done (open):
+- Task 6.2's parking of search tabs that weren't in the job. The idle close (all of Chrome after 5 min) covers the resource cost, which was measured at 50 MiB and 0% afterwards.
+- Task 1 Amazon extras: re-reading the default address after sign-in, and an "Open in a normal browser" link for CAPTCHAs. Amazon Now doesn't deliver here, so these are low value.
+- Task 3's "▼ ₹4 (6%)" shows the percentage only. The previous price is in the tooltip.
+- Task 4 on phones: the "Lowest ever" column is hidden, but the bars don't shrink.
+- Smells noted but left for now: the `callTool` if-chain, `store.js` growing (the migrations could move out), and `esc` duplicated in the two pages.
 
 ## Branch, commits, docs
 

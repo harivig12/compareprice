@@ -23,7 +23,7 @@ test('build-site turns the guide into a static landing page', () => {
     const hrefs = [...html.matchAll(/<link[^>]+href="([^"]+)"/g)].map((m) => m[1]).filter((h) => !/^(https?:|data:|#|\/)/.test(h));
     assert.ok(hrefs.length >= 4, 'theme, icon, touch icon and manifest are linked');
     for (const h of hrefs) assert.ok(existsSync(join(out, h)), `${h} is in the site`);
-    assert.ok(!/href="\/(?:theme\.css|icon\.svg|manifest)/.test(html), 'no root-absolute asset links (the site lives under /compareprice/)');
+    assert.ok(!/href="\/(?:theme\.css|icon\.svg|manifest)/.test(html), 'no root-absolute asset links (the site lives under /jhola/)');
 
     const manifest = JSON.parse(readFileSync(join(out, 'manifest.webmanifest'), 'utf8'));
     assert.equal(manifest.start_url, './');

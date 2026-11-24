@@ -44,7 +44,10 @@ Other launch rules:
 
 **Lifecycle:**
 - One-shot CLI commands close the pool when they finish (`closeEngine()` in `src/cli.js`).
-- The service keeps it warm.
+- The service keeps it warm between searches, then **closes Chrome after `browser.idleCloseMs` (default 5 min) with no job, queued job or sign-in in progress** (`src/engine/idle.js`, checked every 30 s). Idle Chrome cost ~1 GB and 50–75% of a core, mostly site pages animating in background tabs (JioMart's home page alone ran 361 ms of script per second). The next search relaunches it with the same profile, so sessions and picked addresses survive; the first search after a close pays the launch and page-load time again. Set `idleCloseMs: 0` to keep it always warm.
+- The sign-in tab is the site's search tab (same session). It's closed as soon as a sign-in finishes or fails, unless a job is running; then it stays open for that job and only gets its media block back (`releaseLoginTab`).
+- Search tabs block images, fonts and media (`browser.blockMedia`, default on) via `Network.setBlockedURLs`. Prices come from JSON and HTML, never from pictures. Turn it off if a site starts treating the missing requests as a bot signal.
+- Chrome's disk cache is capped at 50 MB (`--disk-cache-size`).
 - On SIGINT/SIGTERM the pool closes Chrome before exiting. Chrome is a child process and outlives an abruptly killed parent on Linux.
 
 ## Error kinds (`src/engine/errors.js`)
@@ -79,11 +82,64 @@ How it is applied:
 - Override per site in `config.json → limits`.
 - One OTP flow is limited to 3 requests per site per hour.
 
+## Accounts, API first, deals (2026-11-19)
+
+- **Accounts** (`src/engine/accounts.js`, `<data>/accounts.json`): the main account per site in `chrome-profile`, and extra accounts (`LOGIN_SITES[site].multiAccount`: Instamart, Milkbasket; max 3) in `profiles/<site>-<id>`.
+- **PoolSet** (`src/engine/poolset.js`): an extra account gets its own `BrowserPool` (own profile and port 9400+), launched for one step and closed straight after; one step at a time per account. The main account uses the shared pool. `ownLocation` keeps a signed-in account's saved address: location cookies are only added when missing, and pickers don't run (passive hooks like Instamart's header watcher still do).
+- **API first** (`src/engine/direct.js`, `site.direct`): `apiFetch` sends the call from Node with the tab's cookies and the page's own headers, all in memory. A refusal (network error, 403, HTML) switches that tab to `pageFetch` for the rest of its life and logs `<site>: direct API call refused (HTTP n); using the browser tab instead`. Enabled for Instamart and Milkbasket only (recon in docs/diagnosis/2026-11-19-account-offers-zepto-milkbasket.md).
+- **Per-account search** (`site.perAccountSearch`: Instamart): `compareBasket()` searches each extra signed-in account after the main run, tags each row with its `account`, and the scorer keeps the cheapest. A failing account adds a partial failure naming it.
+- **Milkbasket** (`src/engine/sites/milkbasket.js`, `signedInOnly`):
+  - Session headers come from the page's GraphQL calls that carry `authorization`. Hub and city come from the account's `localStorage` (`MB_PERSIST_USER_HUB` / `MB_PERSIST_USER_CITY`), because the app's first calls use the default city 1/1.
+  - Search reads the catalogue (cached 20 h) and shortlists with `matchCatalog`. That drops negated mentions such as "Low Sugar Potato" or "Sugar Free …"; the scorer then decides.
+  - `offers()` reads `getMegaFlashDeal` → `getMegaFlashDealProducts`, stopping at the last page, an empty page, or 10 pages.
+  - Query documents are in `milkbasket/queries.js`. If Milkbasket renames a field, the server answers `GRAPHQL_VALIDATION_FAILED` and the module reports `parse`.
+- **Instamart `offers()`**: the home feed (`/api/instamart/home/v2`); no separate deal feed exists.
+- **Deals** (`src/deals.js`): `price ≤ (1 − pct/100) × MRP`, with no MRP never counting. They're collected from every raw search candidate (before the price check) and from the offer feeds (`src/offers.js`), and stored in the `deals` and `deal_checks` tables.
+
+## Categories and product groups (2026-11-20)
+
+- Every row carries `category`: the site's own path, joined with ` › `, or `null`.
+  - BigBasket: `tlc › mlc › llc`.
+  - Instamart: variation `superCategory › category › subCategoryType`.
+  - Milkbasket: `category › subCategory › type`.
+  - KPN: `l0 › l1`, with the "(1_13)" ids dropped.
+  - Zepto: `primaryCategoryName`.
+  - JioMart: `l3-category`.
+  - Blinkit, Amazon and Flipkart Minutes send none.
+- It is saved in `prices.category`.
+- `src/categories.js` turns title + category into a group: `staple`, `packaged`, `sweets` or `pooja`. The word lists and their sources are in `docs/diagnosis/2026-11-20-category-trigger-words.md`.
+  - Title words are only the safe ones.
+  - Risky words ("sweet", "frozen", "instant") count only inside a category path.
+  - The top level of a multi-level path never refuses: BigBasket files milk under "Bakery, Cakes & Dairy".
+- `pickBest`:
+  - Refuses **sweets and pooja** unless the line names them ("ghee laddu", "pooja oil").
+  - Then picks from the best tier present:
+    1. the category this line usually lands in on this site (`store.prefsFor`: 2+ visible staple rows);
+    2. staples;
+    3. packaged, or demoted by an AI label.
+  - Packaged is still returned when it is all there is.
+- **AI labels** (`product_groups`, optional, `src/ai/`) only demote. They never refuse or hide, because they can be wrong. Even demotion is narrow:
+  - It applies only on a line known to be a staple: 2+ of its saved products are labelled, and staple is the most common label.
+  - It never touches a product already saved for that line.
+
+  So in practice it pushes a new, different kind of product down, such as a ghee masala paste found in a "ghee" search. See `store.prefsFor` (`lineGroup`, `saved`).
+
 ## Sign-in (`src/engine/login.js`)
 
-Mobile → OTP flows for Milkbasket (`/login`), Zepto (the header's *Login*) and Amazon (`/ap/signin`, switching to OTP if a password is asked for).
-- The session stays in the Chrome profile. `sessions.json` only records which site, when, and the last 4 digits.
-- **These flows are written from the pages' structure and tested against a scripted fake. They have not been run against the live sites with a real OTP yet.** Every failing step names what the page said.
+Mobile → OTP flows for Milkbasket (`/login`), Zepto (the header's *Login*) and Instamart (swiggy.com → *Sign in* → *Login*; `open` may list several clicks, each tried only while the number box is missing); number or email → password for Amazon (`/ap/signin`).
+
+Instamart sign-in is optional: it runs in the same swiggy.com tab and session as Instamart searches, so a signed-in account searches with its own prices; without it, searches stay guest.
+- The session stays in the Chrome profile. `sessions.json` only records which site, when, and a masked hint (last 4 digits, or `a•••@domain`).
+- **Asynchronous.** `LoginManager.start()` checks the id and the limits, returns at once, and drives the page in the background. States: `idle → sending → otp_sent | password_needed → verifying → signed_in`, or `error`; after a password, also `otp_sent` (a two-step code) or `approve_needed`. The popup polls `GET /api/login` (see docs/API.md). Resend needs a 30 s gap; at most 3 OTP requests per site per hour.
+- **OTP screen detection** (`OTP_SCREEN_JS`) accepts one OTP box *or* a row of split boxes. Milkbasket shows four `tel` inputs where the first has `maxlength=4` and the rest `maxlength=1`; the old check wanted four `maxlength=1` boxes, so the OTP was sent but the popup never moved to the OTP step. `verifyLogin` types one digit per box when the boxes are split (`OTP_BOXES_JS`).
+- **Amazon signs in with a password**, checked on 2026-11-19: amazon.in/now → Sign in → number → password, with no OTP option.
+  - The id can be the mobile number or the account email (`acceptsEmail`). `startLogin` stops at the password page (`step: 'password'`, state `password_needed`), and `submitPassword` types it on Amazon's page and ticks "Keep me signed in".
+  - Then one of: signed in (it leaves `/ap/` / `/ax/`); a two-step verification code (state `otp_sent`, the normal OTP step); approval on the phone (`approve_needed`, then `checkApproved`); a puzzle (`blocked`, code `captcha`; it can't be solved here, so sign in once in a normal browser); or a wrong password (`wrong_password`, stays on the step, 3 tries per sign-in).
+  - The password isn't stored, logged or put in an error message. Chrome's own password manager is switched off in the profile before every launch (`disablePasswordSaving`, `credentials_enable_service: false`), so it never lands in `Login Data`.
+- Amazon: if the number has no account, the failure says so (`noAccount`) rather than timing out.
+- A wrong OTP is told apart from other failures by `SiteError.code` (`wrong_otp`, `bad_otp`), never by message text. It keeps the OTP step open.
+- Page text quoted in an error goes through `pageSnippet()`, which keeps only the last 4 digits of any phone-like number, because these messages reach the log and the popup.
+- **These flows are written from the pages' structure and tested against a scripted fake. Milkbasket's OTP screen was checked on the live page; a full live sign-in with a real OTP hasn't been done yet.** Every failing step names what the page said.
 
 ## Site module shape (`src/engine/sites/<id>.js`)
 
@@ -127,7 +183,7 @@ As of 2026-11-18, guest, at Marutham Prestige, Tambaram 600045:
 |---|---|---|
 | instamart | ✅ API | Local brands (Udhaiyam) confirm the location. Throttles bursts. |
 | bigbasket | ✅ API | Location set via the picker, `_bb_pin_code=600045`. Watch out for Akamai blocks. |
-| zepto | ⚠ API, needs sign-in at the located store (2026-11-19) | Picker sets the Krishna Nagar store. Store ids differ from the Bangalore default. |
+| zepto | ✅ API, signed in (needs sign-in at the located store since 2026-11-19) | Picker sets the Krishna Nagar store. Store ids differ from the Bangalore default. Signed in, the page searches with `POST user-search-service/api/v3/search`; `searchRequest()` replays it with the page's body and our query (guest pages still use `GET …/v1/search`). |
 | blinkit | ✅ API | Coordinates via cookies. 12 products per query. |
 | kpn | ✅ HTML+JSON | `__NEXT_DATA__`. Chennai default store. |
 | jiomart | ✅ API (2026-11-18) | `catalog/v1.0/products?f=journey:standard:::department:groceries` with `x-location-detail` + `x-geolocation` headers. Without them it answers 400 "invalid pincode". The cookies need city **and** state (`CHENNAI`, `TAMIL_NADU`), or the page resets them to Mumbai. Quick delivery (`journey:quickcommerce:::store_ids:`) is not used: the store ids only come from a signed `delivery-promise` call, and the ids the page shows were the same for Mumbai and Chennai. |

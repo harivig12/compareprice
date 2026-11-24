@@ -1,0 +1,150 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="980" viewBox="0 0 900 980" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+  <defs>
+    <symbol id="bag" viewBox="0 0 512 512"><rect width="512" height="512" rx="116" fill="#14532d"/><path d="M188 192 q0-80 68-80 q68 0 68 80" fill="none" stroke="#fde68a" stroke-width="26" stroke-linecap="round"/><path d="M128 196 h256 l-26 224 q-3 26-29 26 H183 q-26 0-29-26 z" fill="#f59e0b"/><rect x="190" y="298" width="32" height="96" rx="9" fill="#14532d"/><rect x="240" y="258" width="32" height="136" rx="9" fill="#14532d" opacity=".55"/><rect x="290" y="330" width="32" height="64" rx="9" fill="#fde68a"/></symbol>
+    <symbol id="tabs2" viewBox="0 0 390 64">
+      <rect width="390" height="64" fill="#ffffff"/><rect width="390" height="1" fill="#e5e7eb"/>
+      <g font-size="11" text-anchor="middle" fill="#6b7280">
+        <path d="M38 18 h22 l-3 14 h-16 z" fill="none" stroke="#6b7280" stroke-width="2.2"/><text x="49" y="54">Compare</text>
+        <rect x="111" y="8" width="70" height="30" rx="15" fill="#dcfce7"/>
+        <circle cx="146" cy="23" r="9" fill="none" stroke="#14532d" stroke-width="2.2"/><path d="M152 29 l6 6" stroke="#14532d" stroke-width="2.2"/><text x="146" y="54" fill="#14532d" font-weight="700">Prices</text>
+        <path d="M238 15 h14 l8 8 l-11 12 l-11 -11 z" fill="none" stroke="#6b7280" stroke-width="2.2"/><text x="244" y="54">Deals</text>
+        <circle cx="341" cy="23" r="8" fill="none" stroke="#6b7280" stroke-width="2.2"/><circle cx="341" cy="23" r="3" fill="#6b7280"/><text x="341" y="54">Settings</text>
+      </g>
+    </symbol>
+    <symbol id="tabs1" viewBox="0 0 390 64">
+      <rect width="390" height="64" fill="#ffffff"/><rect width="390" height="1" fill="#e5e7eb"/>
+      <g font-size="11" text-anchor="middle" fill="#6b7280">
+        <rect x="14" y="8" width="70" height="30" rx="15" fill="#dcfce7"/>
+        <path d="M38 18 h22 l-3 14 h-16 z" fill="none" stroke="#14532d" stroke-width="2.2"/><text x="49" y="54" fill="#14532d" font-weight="700">Compare</text>
+        <circle cx="146" cy="23" r="9" fill="none" stroke="#6b7280" stroke-width="2.2"/><path d="M152 29 l6 6" stroke="#6b7280" stroke-width="2.2"/><text x="146" y="54">Prices</text>
+        <path d="M238 15 h14 l8 8 l-11 12 l-11 -11 z" fill="none" stroke="#6b7280" stroke-width="2.2"/><text x="244" y="54">Deals</text>
+        <circle cx="341" cy="23" r="8" fill="none" stroke="#6b7280" stroke-width="2.2"/><circle cx="341" cy="23" r="3" fill="#6b7280"/><text x="341" y="54">Settings</text>
+      </g>
+    </symbol>
+  </defs>
+  <rect width="900" height="980" fill="#eef0f3"/>
+  <text x="40" y="44" font-size="22" font-weight="800" fill="#111827">C · Shopping view and watchlist</text>
+  <text x="40" y="70" font-size="13.5" fill="#4b5563">Left: "Best per item" turned into orders you can place. Right: watched items, with alerts once HTTPS is set up.</text>
+
+  <!-- ============ Phone 1: shopping view ============ -->
+  <g transform="translate(40,96)">
+    <rect width="390" height="844" rx="34" fill="#f9fafb" stroke="#d1d5db" stroke-width="2"/>
+    <use href="#bag" x="16" y="18" width="28" height="28"/>
+    <text x="52" y="40" font-size="22" font-weight="800" fill="#14532d">jhola</text>
+    <text x="374" y="38" font-size="12" fill="#6b7280" text-anchor="end">Shopping view</text>
+
+    <!-- segmented -->
+    <rect x="12" y="58" width="366" height="40" rx="20" fill="#e5e7eb"/>
+    <rect x="16" y="62" width="178" height="32" rx="16" fill="#ffffff"/>
+    <text x="105" y="83" font-size="13" font-weight="700" fill="#111827" text-anchor="middle">One site · KPN ₹376</text>
+    <text x="286" y="83" font-size="13" fill="#4b5563" text-anchor="middle">Split · ₹351 (2 orders)</text>
+    <text x="195" y="116" font-size="11.5" fill="#6b7280" text-anchor="middle">Split saves ₹25 but means two deliveries · goods only, no fees set</text>
+
+    <!-- order 1 -->
+    <rect x="12" y="128" width="366" height="208" rx="14" fill="#ffffff" stroke="#16a34a" stroke-width="1.5"/>
+    <text x="26" y="154" font-size="11" font-weight="700" fill="#16a34a">ORDER 1 OF 2</text>
+    <text x="26" y="178" font-size="18" font-weight="800" fill="#111827">KPN Fresh</text>
+    <text x="364" y="178" font-size="18" font-weight="800" fill="#111827" text-anchor="end">₹230</text>
+    <g font-size="13" fill="#374151">
+      <rect x="26" y="192" width="20" height="20" rx="5" fill="#16a34a"/><path d="M30 202 l4 4 l8 -8" stroke="#fff" stroke-width="2.2" fill="none"/>
+      <text x="56" y="207">2× toor dal 1kg</text><text x="364" y="207" text-anchor="end">₹149</text>
+      <rect x="26" y="220" width="20" height="20" rx="5" fill="#16a34a"/><path d="M30 230 l4 4 l8 -8" stroke="#fff" stroke-width="2.2" fill="none"/>
+      <text x="56" y="235">tata salt 1kg</text><text x="364" y="235" text-anchor="end">₹19</text>
+      <rect x="26" y="248" width="20" height="20" rx="5" fill="#ffffff" stroke="#9ca3af"/>
+      <text x="56" y="263">aashirvaad atta 1kg</text><text x="364" y="263" text-anchor="end">₹62</text>
+    </g>
+    <text x="26" y="290" font-size="11.5" fill="#b45309">₹69 more for free delivery (KPN says ₹299+)</text>
+    <rect x="26" y="300" width="338" height="26" rx="0" fill="none"/>
+    <rect x="26" y="298" width="160" height="30" rx="8" fill="#14532d"/><text x="106" y="318" font-size="13" font-weight="700" fill="#fff" text-anchor="middle">Open KPN Fresh ↗</text>
+    <text x="364" y="318" font-size="12" fill="#2563eb" text-anchor="end">Copy list</text>
+
+    <!-- order 2 -->
+    <rect x="12" y="348" width="366" height="152" rx="14" fill="#ffffff" stroke="#e5e7eb"/>
+    <text x="26" y="374" font-size="11" font-weight="700" fill="#6b7280">ORDER 2 OF 2</text>
+    <text x="26" y="398" font-size="18" font-weight="800" fill="#111827">Zepto</text>
+    <text x="364" y="398" font-size="18" font-weight="800" fill="#111827" text-anchor="end">₹121</text>
+    <g font-size="13" fill="#374151">
+      <rect x="26" y="412" width="20" height="20" rx="5" fill="#ffffff" stroke="#9ca3af"/>
+      <text x="56" y="427">onion 1kg</text><text x="364" y="427" text-anchor="end">₹47</text>
+      <rect x="26" y="440" width="20" height="20" rx="5" fill="#ffffff" stroke="#9ca3af"/>
+      <text x="56" y="455">milk 500ml</text><text x="364" y="455" text-anchor="end">₹74</text>
+    </g>
+    <rect x="26" y="468" width="140" height="30" rx="8" fill="#14532d"/><text x="96" y="488" font-size="13" font-weight="700" fill="#fff" text-anchor="middle">Open Zepto ↗</text>
+
+    <rect x="12" y="514" width="366" height="242" rx="14" fill="#fffbeb" stroke="#fcd34d"/>
+    <text x="26" y="540" font-size="13" font-weight="700" fill="#92400e">What changes</text>
+    <g font-size="12" fill="#78350f">
+      <text x="26" y="562">• "Best per item" becomes orders, one card per site</text>
+      <text x="26" y="582">• Toggle: one site (fewest deliveries) vs split (cheapest)</text>
+      <text x="26" y="602">• Tick items while you add them in the other app;</text>
+      <text x="38" y="620">ticks are kept on this phone only</text>
+      <text x="26" y="640">• Free-delivery gap from what each site publishes</text>
+      <text x="26" y="660">• "Open ↗" goes to the site; on a phone with the app it</text>
+      <text x="38" y="678">opens the app. "Copy list" copies names + packs</text>
+      <text x="26" y="698">• No cart filling inside the sites: that would act on your</text>
+      <text x="38" y="716">accounts, so it stays out of scope</text>
+      <text x="26" y="736">• Totals still come from compareBasket(), unchanged</text>
+    </g>
+
+    <use href="#tabs1" x="0" y="780" width="390" height="64"/>
+  </g>
+
+  <!-- ============ Phone 2: watchlist ============ -->
+  <g transform="translate(470,96)">
+    <rect width="390" height="844" rx="34" fill="#f9fafb" stroke="#d1d5db" stroke-width="2"/>
+    <use href="#bag" x="16" y="18" width="28" height="28"/>
+    <text x="52" y="40" font-size="22" font-weight="800" fill="#14532d">jhola</text>
+    <text x="374" y="38" font-size="12" fill="#6b7280" text-anchor="end">Prices · Watching</text>
+
+    <rect x="12" y="58" width="366" height="40" rx="20" fill="#e5e7eb"/>
+    <text x="105" y="83" font-size="13" fill="#4b5563" text-anchor="middle">Look up a price</text>
+    <rect x="196" y="62" width="178" height="32" rx="16" fill="#ffffff"/><text x="285" y="83" font-size="13" font-weight="700" fill="#111827" text-anchor="middle">Watching (3)</text>
+
+    <!-- watched rows -->
+    <g font-size="13">
+      <rect x="12" y="112" width="366" height="96" rx="14" fill="#ffffff" stroke="#16a34a" stroke-width="1.5"/>
+      <text x="26" y="138" font-weight="700" fill="#111827" font-size="15">ghee</text>
+      <rect x="250" y="122" width="114" height="24" rx="12" fill="#dcfce7"/><text x="307" y="139" fill="#14532d" font-size="11.5" font-weight="700" text-anchor="middle">▼ new low today</text>
+      <text x="26" y="164" fill="#374151">₹66.4 / 100 ml at Zepto</text><text x="364" y="164" fill="#6b7280" text-anchor="end" font-size="12">alert below ₹68</text>
+      <!-- sparkline -->
+      <polyline points="26,194 70,190 114,188 158,192 202,186 246,184 290,186 334,178" fill="none" stroke="#16a34a" stroke-width="2.5"/>
+      <circle cx="334" cy="178" r="4" fill="#16a34a"/><text x="364" y="198" fill="#6b7280" text-anchor="end" font-size="10.5">14 days</text>
+
+      <rect x="12" y="218" width="366" height="96" rx="14" fill="#ffffff" stroke="#e5e7eb"/>
+      <text x="26" y="244" font-weight="700" fill="#111827" font-size="15">toor dal 1kg</text>
+      <text x="364" y="244" fill="#b45309" text-anchor="end" font-size="12" font-weight="600">▲ 4% this week</text>
+      <text x="26" y="270" fill="#374151">₹149 at KPN Fresh</text><text x="364" y="270" fill="#6b7280" text-anchor="end" font-size="12">alert below ₹140</text>
+      <polyline points="26,296 70,298 114,296 158,294 202,292 246,290 290,288 334,286" fill="none" stroke="#f59e0b" stroke-width="2.5"/>
+      <circle cx="334" cy="286" r="4" fill="#f59e0b"/>
+
+      <rect x="12" y="324" width="366" height="96" rx="14" fill="#ffffff" stroke="#e5e7eb"/>
+      <text x="26" y="350" font-weight="700" fill="#111827" font-size="15">aashirvaad atta 1kg</text>
+      <text x="364" y="350" fill="#6b7280" text-anchor="end" font-size="12">steady</text>
+      <text x="26" y="376" fill="#374151">₹62 at KPN Fresh</text><text x="364" y="376" fill="#6b7280" text-anchor="end" font-size="12">alert below ₹58</text>
+      <polyline points="26,402 70,402 114,401 158,402 202,402 246,401 290,402 334,402" fill="none" stroke="#9ca3af" stroke-width="2.5"/>
+    </g>
+    <rect x="12" y="432" width="366" height="44" rx="12" fill="#ffffff" stroke="#d1d5db" stroke-dasharray="4 3"/>
+    <text x="195" y="459" font-size="13.5" fill="#2563eb" font-weight="600" text-anchor="middle">☆ Watch another item</text>
+
+    <!-- notification preview -->
+    <text x="26" y="504" font-size="11" fill="#6b7280" font-weight="700">ON YOUR PHONE (after HTTPS + notifications are on)</text>
+    <rect x="12" y="512" width="366" height="76" rx="16" fill="#1f2937"/>
+    <use href="#bag" x="26" y="526" width="34" height="34"/>
+    <text x="72" y="540" font-size="12" fill="#9ca3af">Jhola · now</text>
+    <text x="72" y="560" font-size="13.5" fill="#f9fafb" font-weight="700">ghee hit a new low: ₹66.4/100 ml</text>
+    <text x="72" y="578" font-size="12" fill="#d1d5db">Zepto · Desi Farms Cow Ghee 1 L · ₹664</text>
+
+    <rect x="12" y="602" width="366" height="154" rx="14" fill="#fffbeb" stroke="#fcd34d"/>
+    <text x="26" y="628" font-size="13" font-weight="700" fill="#92400e">What changes</text>
+    <g font-size="12" fill="#78350f">
+      <text x="26" y="650">• Star an item: 14-day rate trend from saved prices</text>
+      <text x="26" y="670">• Optional alert price; checked after each scheduled run,</text>
+      <text x="38" y="688">so no extra site traffic</text>
+      <text x="26" y="708">• Phone notifications need HTTPS (Tailscale) + a small</text>
+      <text x="38" y="726">service worker; until then the badge shows in the app</text>
+      <text x="26" y="746">• Deals (80%+ off) stay in their own tab, never in totals</text>
+    </g>
+
+    <use href="#tabs2" x="0" y="780" width="390" height="64"/>
+  </g>
+</svg>

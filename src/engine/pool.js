@@ -40,7 +40,9 @@ export class BrowserPool {
    *           sites?: Record<string, object>, openTab?: Function }} [opts]
    *   `sites` and `openTab` are injection points for tests.
    */
-  constructor({ launch = launchChrome, profileDir, location, sites, openTab = CdpTab.open } = {}) {
+  constructor({ launch = launchChrome, profileDir, location, sites, openTab = CdpTab.open, blockMedia = false, ownLocation = () => false } = {}) {
+    // (siteId) => true when the profile is signed in there: keep the site's own address.
+    this.ownLocation = ownLocation;
     this.launch = launch;
     this.profileDir = profileDir;
     this.location = location;
@@ -49,6 +51,67 @@ export class BrowserPool {
     this._browser = null; // Promise<browser>
     this._tabs = new Map(); // siteId -> Promise<CdpTab>
     this._closed = false;
+    this.blockMedia = blockMedia;
+  }
+
+  /** Is a Chrome running (or starting) right now? */
+  isOpen() {
+    return this._browser !== null;
+  }
+
+  /** Close one site's tab (e.g. a sign-in page once done); it reopens on demand. */
+  async closeTab(siteId) {
+    const p = this._tabs.get(siteId);
+    if (!p) return;
+    this._tabs.delete(siteId);
+    await p.then((t) => t.close(), () => {});
+  }
+
+  /**
+   * Sign one site out of this profile: delete its cookies (including
+   * `.domain` ones) and its storage, for that site's origins only, so every
+   * other site keeps its session. The site's tab is closed and reopens signed out.
+   * @param {string} siteId
+   * @param {string[]} origins e.g. ['https://www.swiggy.com']
+   */
+  async clearSiteData(siteId, origins) {
+    await this.closeTab(siteId);
+    const browser = await this._browserP();
+    const tab = await this._openTab(browser.endpoint, 'about:blank');
+    try {
+      const hosts = origins.map((o) => new URL(o).hostname.replace(/^www\./, ''));
+      const { cookies = [] } = await tab.send('Network.getAllCookies');
+      for (const c of cookies) {
+        const d = c.domain.replace(/^\./, '');
+        if (hosts.some((h) => d === h || d.endsWith(`.${h}`) || h.endsWith(`.${d}`) && d.includes('.'))) {
+          await tab.send('Network.deleteCookies', { name: c.name, domain: c.domain, path: c.path });
+        }
+      }
+      for (const origin of origins) {
+        await tab.send('Storage.clearDataForOrigin', { origin, storageTypes: 'local_storage,indexeddb,cache_storage,service_workers,websql,file_systems' }).catch(() => {});
+      }
+    } finally {
+      await tab.close().catch(() => {});
+    }
+  }
+  /**
+   * Done with a sign-in. The login tab is the site's search tab, so while a job
+   * may be searching that site it stays open and only gets its media block back;
+   * otherwise it is closed and reopens on demand.
+   */
+  async releaseLoginTab(siteId, { inUse = false } = {}) {
+    if (!inUse) return this.closeTab(siteId);
+    const tab = await this._tabs.get(siteId)?.catch(() => null);
+    if (tab && this.blockMedia) await tab.send('Network.setBlockedURLs', { urls: MEDIA_PATTERNS }).catch(() => {});
+  }
+  /**
+   * The site's tab for driving its sign-in page: same tab and session as
+   * searches, but with images allowed again (CAPTCHAs, OTP widgets).
+   */
+  async loginTab(siteId) {
+    const tab = await this.tab(siteId);
+    if (this.blockMedia) await tab.send('Network.setBlockedURLs', { urls: [] }).catch(() => {});
+    return tab;
   }
 
   async _site(siteId) {
@@ -79,11 +142,22 @@ export class BrowserPool {
       const tab = await this._openTab(browser.endpoint, 'about:blank');
       tab.onCrash((reason) => this._onCrash(siteId, tab, reason));
       if (browser.userAgent) await tab.setUserAgent(browser.userAgent);
-      const cookies = site.locationCookies?.(this.location);
-      if (cookies?.length) await tab.setCookies(cookies);
+      // API calls run inside the page; its pictures, video and fonts are dead weight.
+      if (this.blockMedia) await tab.send('Network.setBlockedURLs', { urls: MEDIA_PATTERNS }).catch(() => {});
+      // A signed-in account keeps the address saved on it (decision 2026-11-19):
+      // config location only fills in what the site doesn't have yet.
+      const keep = this.ownLocation(siteId);
+      let cookies = site.locationCookies?.(this.location) ?? [];
+      if (keep && cookies.length) {
+        const have = new Set((await tab.getCookies([site.origin]).catch(() => [])).map((c) => c.name));
+        cookies = cookies.filter((c) => !have.has(c.name));
+      }
+      if (cookies.length) await tab.setCookies(cookies);
       if (site.origin) await tab.goto(site.origin, { waitMs: 15000 });
       await assertNotWalled(tab, siteId);
-      if (site.setLocation) await site.setLocation(tab, this.location);
+      // Pickers would move a signed-in account to the config address; passive
+      // hooks (header watchers) still run.
+      if (site.setLocation && (!keep || site.locationPassive)) await site.setLocation(tab, this.location);
       return tab;
     } catch (e) {
       if (e instanceof SiteError) throw e;
@@ -162,6 +236,9 @@ export class BrowserPool {
   }
 }
 
+/** Resource patterns skipped on search tabs when `blockMedia` is on. */
+export const MEDIA_PATTERNS = ['*.png', '*.jpg', '*.jpeg', '*.webp', '*.avif', '*.gif', '*.svg', '*.ico', '*.woff', '*.woff2', '*.ttf', '*.otf', '*.mp4', '*.webm', '*.m3u8'];
+
 let shared = null;
 
 /** The shared pool if one was created, without creating it. */
@@ -185,8 +262,10 @@ export function getPool(opts = {}) {
     process.once('beforeExit', closeShared);
     process.once('SIGINT', () => exitAfterClose(130));
     process.once('SIGTERM', () => exitAfterClose(143));
-  } else if (opts.location) {
-    shared.setLocation(opts.location);
+  } else {
+    if (opts.location) shared.setLocation(opts.location);
+    if (opts.blockMedia != null) shared.blockMedia = opts.blockMedia;
+    if (opts.ownLocation) shared.ownLocation = opts.ownLocation;
   }
   return shared;
 }

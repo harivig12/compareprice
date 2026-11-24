@@ -1,0 +1,133 @@
+{
+ "data": {
+  "getProductCategories": [
+   {
+    "id": 54,
+    "name": "Fruits",
+    "img": null,
+    "oos": false,
+    "subCategories": [
+     {
+      "id": 308,
+      "categoryId": 54,
+      "name": "Apple & Pear",
+      "img": null,
+      "oos": false,
+      "filters": []
+     },
+     {
+      "id": 309,
+      "categoryId": 54,
+      "name": "Banana, Papaya & Pineapple",
+      "img": null,
+      "oos": false,
+      "filters": []
+     },
+     {
+      "id": 311,
+      "categoryId": 54,
+      "name": "Citrus & Pomegranate",
+      "img": null,
+      "oos": false,
+      "filters": []
+     },
+     {
+      "id": 312,
+      "categoryId": 54,
+      "name": "Coconut & Dates",
+      "img": null,
+      "oos": false,
+      "filters": []
+     }
+    ]
+   },
+   {
+    "id": 60,
+    "name": "Vegetables",
+    "img": null,
+    "oos": false,
+    "subCategories": [
+     {
+      "id": 345,
+      "categoryId": 60,
+      "name": "Onion, Potato & Tomato",
+      "img": null,
+      "oos": false,
+      "filters": []
+     },
+     {
+      "id": 335,
+      "categoryId": 60,
+      "name": "Bhindi, Gourds & Drumsticks",
+      "img": null,
+      "oos": false,
+      "filters": []
+     },
+     {
+      "id": 341,
+      "categoryId": 60,
+      "name": "Condiments & Leafy",
+      "img": null,
+      "oos": false,
+      "filters": []
+     },
+     {
+      "id": 346,
+      "categoryId": 60,
+      "name": "Salad & Sprouts",
+      "img": null,
+      "oos": false,
+      "filters": []
+     }
+    ]
+   },
+   {
+    "id": 49,
+    "name": "Milk",
+    "img": null,
+    "oos": false,
+    "subCategories": [
+     {
+      "id": 47,
+      "categoryId": 49,
+      "name": "Fresh Milk",
+      "img": null,
+      "oos": false,
+      "filters": [
+       "A2 Milk",
+       "Cow Milk",
+       "Full Cream",
+       "Toned & Double Toned"
+      ]
+     },
+     {
+      "id": 213,
+      "categoryId": 49,
+      "name": "Milk Tetra Pack",
+      "img": null,
+      "oos": false,
+      "filters": [
+       "Condensed Milk",
+       "Dairy Whitener",
+       "Full Cream Milk Tetra Pack",
+       "Special Milk Tetra Pack",
+       "Toned & Double Toned Milk Tetra Pack"
+      ]
+     },
+     {
+      "id": 173,
+      "categoryId": 49,
+      "name": "Vegan Milk",
+      "img": null,
+      "oos": false,
+      "filters": [
+       "Almond Milk",
+       "Oat Milk",
+       "Soya Milk"
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}
