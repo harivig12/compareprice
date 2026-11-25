@@ -1,0 +1,192 @@
+{
+  "pageLayout": {
+    "widgets": [
+      {
+        "widgetId": "100000",
+        "widgetName": "COUPON_CARD_WIDGET_SECTION_1_1",
+        "widgetType": "COUPON_CARD_WIDGET",
+        "data": {
+          "items": {
+            "couponButton": {
+              "action": {
+                "actionMeta": {
+                  "couponCode": "TRYBHIM",
+                  "couponId": "id-1",
+                  "couponType": "BANK_OFFER"
+                },
+                "actionType": ""
+              },
+              "couponState": "LOCKED",
+              "state": "Locked"
+            },
+            "couponCode": {
+              "text": "TRYBHIM"
+            },
+            "heading": {
+              "text": "Get up to ₹125 cashback with BHIM app"
+            },
+            "subheading": {
+              "text": "Shop for ₹81 more to unlock"
+            },
+            "termsAndConditions": {
+              "description": "Valid on orders above ₹99",
+              "terms": [
+                "- Valid on Zepto orders of ₹99 or above.\n- Applicable exclusively to first-time BHIM app users.\n- Users can earn up to ₹125 in cashback, with rewards unlocked p"
+              ]
+            }
+          }
+        },
+        "order": "10"
+      },
+      {
+        "widgetId": "100001",
+        "widgetName": "COUPON_CARD_WIDGET_SECTION_1_2",
+        "widgetType": "COUPON_CARD_WIDGET",
+        "data": {
+          "items": {
+            "couponButton": {
+              "action": {
+                "actionMeta": {
+                  "couponCode": "ZEPBHIM",
+                  "couponId": "id-2",
+                  "couponType": "BANK_OFFER"
+                },
+                "actionType": ""
+              },
+              "couponState": "LOCKED",
+              "state": "Locked"
+            },
+            "couponCode": {
+              "text": "ZEPBHIM"
+            },
+            "heading": {
+              "text": "Get upto ₹75 instant cashback with BHIM App"
+            },
+            "subheading": {
+              "text": "Shop for ₹81 more to unlock"
+            },
+            "termsAndConditions": {
+              "description": "Valid on orders above ₹99",
+              "terms": [
+                "- Valid only on payments made via BHIM App\n- The minimum order value to avail the offer is ₹99/-\n- The offer is valid only once per user, per registered mobile "
+              ]
+            }
+          }
+        },
+        "order": "11"
+      },
+      {
+        "widgetId": "100002",
+        "widgetName": "COUPON_CARD_WIDGET_SECTION_1_3",
+        "widgetType": "COUPON_CARD_WIDGET",
+        "data": {
+          "items": {
+            "couponButton": {
+              "action": {
+                "actionMeta": {
+                  "couponCode": "ZEPKOTAKCC",
+                  "couponId": "id-3",
+                  "couponType": "BANK_OFFER"
+                },
+                "actionType": ""
+              },
+              "couponState": "LOCKED",
+              "state": "Locked"
+            },
+            "couponCode": {
+              "text": "ZEPKOTAKCC"
+            },
+            "heading": {
+              "text": "Get 10% off up to ₹125 with select Kotak Bank Credit Card"
+            },
+            "subheading": {
+              "text": "Shop for ₹981 more to unlock"
+            },
+            "termsAndConditions": {
+              "description": "Valid on orders above ₹999",
+              "terms": [
+                "- Applicable once per card during the offer period\n- Valid on Kotak Bank Credit Cards only\n- Other Terms and conditions apply"
+              ]
+            }
+          }
+        },
+        "order": "12"
+      },
+      {
+        "widgetId": "100003",
+        "widgetName": "COUPON_CARD_WIDGET_SECTION_1_4",
+        "widgetType": "COUPON_CARD_WIDGET",
+        "data": {
+          "items": {
+            "couponButton": {
+              "action": {
+                "actionMeta": {
+                  "couponCode": "ZEPMAHDFCDC",
+                  "couponId": "id-4",
+                  "couponType": "BANK_OFFER"
+                },
+                "actionType": ""
+              },
+              "couponState": "LOCKED",
+              "state": "Locked"
+            },
+            "couponCode": {
+              "text": "ZEPMAHDFCDC"
+            },
+            "heading": {
+              "text": "Get 15% up to ₹125 off with HDFC Mastercard Debit Cards"
+            },
+            "subheading": {
+              "text": "Valid on orders above ₹599 only on Tuesdays and Thursdays"
+            },
+            "termsAndConditions": {
+              "description": "Valid on orders above ₹599 only on Tuesdays and Thursdays",
+              "terms": [
+                "- Offer is applicable only on select Mastercard HDFC Debit Cards.\n- Offer is valid on orders above Rs. 599.\n- Offer is valid only on Tuesdays and Thursdays ever"
+              ]
+            }
+          }
+        },
+        "order": "13"
+      },
+      {
+        "widgetId": "100004",
+        "widgetName": "COUPON_CARD_WIDGET_SECTION_1_5",
+        "widgetType": "COUPON_CARD_WIDGET",
+        "data": {
+          "items": {
+            "couponButton": {
+              "action": {
+                "actionMeta": {
+                  "couponCode": "ZEPAIRAXIS",
+                  "couponId": "id-5",
+                  "couponType": "BANK_OFFER"
+                },
+                "actionType": ""
+              },
+              "couponState": "LOCKED",
+              "state": "Locked"
+            },
+            "couponCode": {
+              "text": "ZEPAIRAXIS"
+            },
+            "heading": {
+              "text": "Flat ₹1,500 Off with Axis Bank Credit Card."
+            },
+            "subheading": {
+              "text": "Shop for ₹5000 more to unlock"
+            },
+            "termsAndConditions": {
+              "description": "Valid on AirPods 5 Series products",
+              "terms": [
+                "- Valid on purchases of AirPods 5 Series using an eligible Axis Bank Credit Card.\n- Offer valid while stocks last.\n- Offer is not applicable on cancelled or ref"
+              ]
+            }
+          }
+        },
+        "order": "14"
+      }
+    ],
+    "endOfPage": true
+  }
+}

@@ -12,7 +12,8 @@
  */
 import { pageFetch, expectJson } from '../page-fetch.js';
 import { SiteError } from '../errors.js';
-import { ensureCaptured, collectResponses } from './_capture.js';
+import { ensureCaptured, collectResponses, watchRequest } from './_capture.js';
+import { readCartOffers, cheapestInStock, cartBody, listBody } from './zepto-offers.js';
 import { bestPack, cdpClick, typeText, addressSearchText } from './_util.js';
 import { categoryPath } from '../../categories.js';
 
@@ -23,6 +24,8 @@ const ORIGIN = 'https://www.zepto.com/';
 // Signed in (seen 2026-11-19): POST user-search-service/api/v3/search with a JSON
 // body {query, pageNumber, mode, userSessionId}. Same product shape in both.
 const SEARCH_RE = /search-federator-service\/api\/v1\/search\?|user-search-service\/api\/v\d+\/search(\?|$)/;
+// The cart / coupons service: its own requests carry the headers its calls need.
+const CFS_RE = /bff-gateway\.zepto\.com\/cfs\/api\/v1\//;
 const SEARCH_URL = (q) =>
   `https://bff-gateway.zepto.com/search-federator-service/api/v1/search?query=${encodeURIComponent(q).replace(/%20/g, '+')}&mode=SHOW_ALL_RESULTS&pageNumber=0`;
 
@@ -96,6 +99,37 @@ export function parse(json) {
   return rows;
 }
 
+/** The signed-in cart's coupons and payment offers (see zepto-offers.js for the safeguards). */
+async function cartOffers(tab, cfs, storeId, ctx) {
+  for (let i = 0; i < 20 && !cfs.headers; i++) await sleep(500);
+  if (!cfs.headers) throw new SiteError('session', `${ID}: the page made no cart request to copy headers from`, { site: ID });
+  const st = await tab.evaluate(`(() => { const j = (k) => { try { return JSON.parse(localStorage.getItem(k) || '{}'); } catch { return {}; } }; const pos = j('user-position').state?.userPosition ?? {}; return { cartId: j('cart').state?.cartId ?? null, lat: pos.latitude ?? null, lng: pos.longitude ?? null }; })()`, { timeoutMs: 5000 });
+  if (!st?.cartId) throw new SiteError('session', `${ID}: the page holds no cart id (is the account still signed in?)`, { site: ID });
+  if (!storeId) throw new SiteError('parse', `${ID}: the home page named no store for this address`, { site: ID });
+  let cartId = st.cartId;
+  const call = async (path, method, body) => {
+    await ctx.acquire?.();
+    const res = await pageFetch(tab, `https://bff-gateway.zepto.com${path}`, { method, headers: { ...cfs.headers, 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    return expectJson(res, ID);
+  };
+  const where = { storeId, latitude: st.lat, longitude: st.lng };
+  return readCartOffers({
+    list: (t) => call('/cfs/api/v1/cart/coupons/fetch-list', 'POST', listBody({ ...where, cartId, tab: t })),
+    putCart: async (item) => {
+      const j = await call('/cfs/api/v1/cart', 'PUT', cartBody({ ...where, cartId, item }));
+      if (j?.cartId) cartId = j.cartId;
+      return j;
+    },
+    pickItem: async () => {
+      const cap = await ensureCaptured(tab, ID, SEARCH_RE, `${ORIGIN}search?query=salt`);
+      if (!cap.headers) throw new SiteError('session', `${ID}: page never issued a search request to copy headers from`, { site: ID });
+      const req = searchRequest(cap, 'salt');
+      return cheapestInStock(collect(expectJson(await pageFetch(tab, req.url, req.init), ID)));
+    },
+    log: ctx.log,
+  });
+}
+
 export default {
   id: ID,
   label: 'Zepto',
@@ -143,25 +177,40 @@ export default {
   parse,
 
   /**
-   * No deal feed: only the free-delivery minimum its home page states
-   * (`etaInfo.deliveryFeeMov`, ₹99 on 2026-11-19), for the row under Total.
+   * No deal feed. Two things:
+   *   - the free-delivery minimum its home page states (`etaInfo.deliveryFeeMov`, ₹99 on
+   *     2026-11-19), for the row under Total;
+   *   - signed in, the cart's coupons and payment offers (src/engine/sites/zepto-offers.js),
+   *     which only exist while the cart has something in it, so one cheap item goes in and
+   *     out again. `ctx.cart === false` turns that off (config `deals.zeptoCart`).
+   * A failure of the second part is returned as `warning`: the first part still counts.
+   * @param {import('../cdp.js').CdpTab} tab
+   * @param {{ acquire?: () => Promise<void>, signal?: AbortSignal, cart?: boolean, signedIn?: boolean, log?: (m: string) => void }} [ctx]
    */
-  async offers(tab) {
+  async offers(tab, ctx = {}) {
     const page = collectResponses(tab, /\/lms\/api\/v\d+\/get_page/);
+    const cfs = watchRequest(tab, 'zepto-cfs', CFS_RE);
     // Re-opening the address the tab is already on loaded nothing new (live,
     // 2026-11-19): go via a blank page so the home page asks for its layout.
     await tab.goto('about:blank', { waitMs: 2000 }).catch(() => {});
     await tab.goto(ORIGIN, { waitMs: 15000 });
     let mov = null;
-    for (let i = 0; i < 20 && mov == null; i++) {
+    let storeId = null;
+    for (let i = 0; i < 20 && (mov == null || storeId == null); i++) {
       for (const r of await page.peek()) {
-        const m = /"deliveryFeeMov"\s*:\s*(\d{2,4})/.exec(r.text);
-        if (m) { mov = Number(m[1]); break; }
+        mov ??= Number(/"deliveryFeeMov"\s*:\s*(\d{2,4})/.exec(r.text)?.[1]) || null;
+        storeId ??= /"storeServiceableResponse"\s*:\s*\{[^}]*?"storeId"\s*:\s*"([0-9a-f-]{36})"/.exec(r.text)?.[1] ?? null;
       }
-      if (mov == null) await sleep(500);
+      if (mov == null || storeId == null) await sleep(500);
     }
     await page.done();
-    return { rows: [], conditions: null, info: mov ? { freeDeliveryAbove: mov } : null };
+    const base = { rows: [], conditions: null, info: mov ? { freeDeliveryAbove: mov } : null };
+    if (ctx.cart === false || !ctx.signedIn) return base;
+    try {
+      return { ...base, lists: await cartOffers(tab, cfs, storeId, ctx) };
+    } catch (e) {
+      return { ...base, warning: `${String(e?.message ?? e)}` };
+    }
   },
 
   async search(tab, query) {

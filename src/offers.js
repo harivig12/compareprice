@@ -34,7 +34,7 @@ export const OFFER_SITES = ['instamart', 'milkbasket', 'zepto', 'bigbasket'];
  */
 export const OFFER_ACCOUNT_GAP_MS = 60_000;
 
-export async function checkOffers({ poolSet, accounts, sitesImpl, store, limiter, sites = OFFER_SITES, minPct = DEFAULT_MIN_DISCOUNT_PCT, onProgress, signal, now = () => new Date().toISOString(), accountGapMs = 0 }) {
+export async function checkOffers({ poolSet, accounts, sitesImpl, store, limiter, sites = OFFER_SITES, minPct = DEFAULT_MIN_DISCOUNT_PCT, onProgress, signal, now = () => new Date().toISOString(), accountGapMs = 0, zeptoCart = true, log }) {
   const t0 = Date.now();
   const emit = (e) => { try { onProgress?.(e); } catch { /* observer bug */ } };
   const results = [];
@@ -42,7 +42,8 @@ export async function checkOffers({ poolSet, accounts, sitesImpl, store, limiter
     const impl = sitesImpl[site];
     if (!impl?.offers) continue;
     // Milkbasket needs a session; Instamart's home feed works as a guest too.
-    let list = accounts.signedIn(site);
+    const signed = accounts.signedIn(site);
+    let list = signed;
     if (!list.length && !impl.signedInOnly) list = [accounts.get(site, MAIN)];
     emit({ type: 'site-start', site, total: list.length });
     for (const [i, acc] of list.entries()) {
@@ -54,7 +55,7 @@ export async function checkOffers({ poolSet, accounts, sitesImpl, store, limiter
       try {
         await limiter?.acquire(site, { signal });
         // A site that reads many pages (BigBasket's storefronts) paces each one.
-        const ctx = { signal, acquire: () => limiter?.acquire(site, { signal }) };
+        const ctx = { signal, log, acquire: () => limiter?.acquire(site, { signal }), cart: zeptoCart, signedIn: signed.some((a) => a.id === acc.id) };
         const out = await poolSet.with(site, acc, async (pool) => impl.offers(await pool.tab(site), ctx));
         const sitePct = impl.offersMinPct ?? minPct;
         const deals = (out.rows ?? []).filter((r) => r.inStock !== false && isDeal(r, sitePct))
@@ -70,10 +71,15 @@ export async function checkOffers({ poolSet, accounts, sitesImpl, store, limiter
             }
           }
         }
-        store?.recordDeals(deals, { site, account: acc.id, source: 'feed', checkedAt });
+        // A part of the check that failed (Zepto's cart offers) is shown like any failed check, with the rest kept.
+        store?.recordDeals(deals, { site, account: acc.id, source: 'feed', checkedAt, error: out.warning ?? null });
+        // Coupons and payment offers (not products): Zepto's cart lists.
+        if (out.lists && acc.id === MAIN) {
+          for (const kind of ['payment', 'coupons']) store?.recordOfferList?.({ site, account: acc.id, kind, offers: out.lists[kind] ?? [], checkedAt, cart: out.lists.cart, item: out.lists.item });
+        }
         // Fee facts are the site's, from the main account's view.
         if (out.info && acc.id === MAIN) store?.setSiteInfo?.(site, out.info, checkedAt);
-        results.push({ site, account: acc.id, name: acc.name, deals: deals.length, scanned: out.rows?.length ?? 0, note: out.note ?? null });
+        results.push({ site, account: acc.id, name: acc.name, deals: deals.length, scanned: out.rows?.length ?? 0, note: out.note ?? null, ...(out.lists ? { offers: (out.lists.payment?.length ?? 0) + (out.lists.coupons?.length ?? 0), cart: out.lists.cart } : {}), ...(out.warning ? { warning: out.warning } : {}) });
       } catch (e) {
         // One account's failure is that account's; the others still run.
         if (e?.kind === 'blocked' && e?.code !== 'resting') limiter?.penalize?.(site, String(e.message).slice(0, 120));

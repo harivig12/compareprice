@@ -6,6 +6,21 @@
 
 export const DEFAULT_MIN_DISCOUNT_PCT = 80;
 
+/**
+ * What an offer's terms add beyond its title and order minimum ("only on Sundays"), or null.
+ * "Valid on orders above ₹99" is the minimum's own column; a description that only restates
+ * the title (most coupons do) adds nothing.
+ */
+export function offerExtra({ title, description }) {
+  const d = String(description ?? '').replace(/^Valid on (orders|transactions) above\s*(₹|rs\.?)\s?[\d,]+\.?\s*/i, '').trim();
+  if (!d) return null;
+  const words = (s) => new Set(String(s ?? '').toLowerCase().match(/[a-z0-9₹%]+/g) ?? []);
+  const t = words(title);
+  const x = words(d);
+  const shared = [...t].filter((w) => x.has(w)).length;
+  return t.size && shared / t.size >= 0.8 ? null : d;
+}
+
 /** Percent off MRP, rounded to one decimal; null when MRP can't say. */
 export function discountPct(price, mrp) {
   const p = Number(price);

@@ -1,0 +1,76 @@
+{
+  "pageLayout": {
+    "widgets": [
+      {
+        "widgetId": "100000",
+        "widgetName": "COUPON_CARD_WIDGET_SECTION_1_1",
+        "widgetType": "COUPON_CARD_WIDGET",
+        "data": {
+          "items": {
+            "couponButton": {
+              "action": {
+                "actionMeta": {
+                  "couponId": "id-1"
+                },
+                "actionType": ""
+              }
+            },
+            "couponCode": {
+              "text": "Coupon will be auto-applied"
+            },
+            "heading": {
+              "text": "Flat 5% Off on Baidyanath products"
+            },
+            "subheading": {
+              "text": "Shop for ₹1 more to unlock"
+            },
+            "termsAndConditions": {
+              "description": "Flat 5% Off on selected Baidyanath products",
+              "terms": [
+                "- Applicable only on selected Baidyanath products",
+                "- Offer applicable in cities where the platform is operational",
+                "- Valid once per user during offer period"
+              ]
+            }
+          }
+        },
+        "order": "10"
+      },
+      {
+        "widgetId": "100001",
+        "widgetName": "COUPON_CARD_WIDGET_SECTION_1_2",
+        "widgetType": "COUPON_CARD_WIDGET",
+        "data": {
+          "items": {
+            "couponButton": {
+              "action": {
+                "actionMeta": {
+                  "couponId": "id-2"
+                },
+                "actionType": ""
+              }
+            },
+            "couponCode": {
+              "text": "Coupon will be auto-applied"
+            },
+            "heading": {
+              "text": "Flat ₹1000 Off on Fire TV Stick"
+            },
+            "subheading": {
+              "text": "Shop for ₹1 more to unlock"
+            },
+            "termsAndConditions": {
+              "description": "Flat ₹1000 Off on selected Fire TV Stick",
+              "terms": [
+                "- Applicable only on selected Fire TV Stick",
+                "- Offer applicable only in cities where Zepto is operational"
+              ]
+            }
+          }
+        },
+        "order": "11"
+      }
+    ],
+    "endOfPage": true
+  }
+}

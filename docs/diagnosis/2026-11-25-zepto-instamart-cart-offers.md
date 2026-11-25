@@ -28,3 +28,11 @@ Add an item from the search page: the page keeps a cart bar ("1 Item, ₹6 saved
 - **Zepto coupons:** only brand add-ons for now, mostly non-grocery; low value.
 - **Instamart:** needs more recon (headed, with an address saved on the account) before it can be built.
 - **BigBasket:** its sign-in was failing on the OTP step; fixed the same day (see CHANGELOG), so its cart can be checked once the account is signed in.
+
+## Follow-up: Zepto offers are now read by the app (2026-11-25, evening)
+
+- **The call behind the panels:** `POST bff-gateway.zepto.com/cfs/api/v1/cart/coupons/fetch-list` with `activeTab` `COUPONS_TAB` or `PAYMENT_OFFERS_TAB`, `cartId`, `storeId` and the position. The answer is one card per offer. No click is needed, only the page's own headers (copied from its `/cfs/` request).
+- **An empty cart lists nothing** (0 offers, HTTP 200). The offers are computed for the cart, so one item has to be in it. With a wrong or missing cart id the call fails ("Failed to update cart", HTTP 500). The cart id is stable and lives in `localStorage.cart.state.cartId`.
+- **Putting an item in and out** is `PUT /cfs/api/v1/cart` with the item (`id`, `productVariant.id`, `mrp` from a search result, quantity 1) and then with no products. The answer carries `itemQuantityCount`, which the app checks.
+- **A live run of the real code** (23 s, 5 paced calls): cart empty before and after, **55 payment offers** and **4 coupons**, all "locked" at an ₹18 cart. The payment minimums start at ₹99 (BHIM app cashback).
+- **One lesson on the way:** the first probe's cleanup did not take the item out of the server-side cart (the page showed an empty cart, but offers still came back for ₹18). Only a cart update with no products did. The app therefore verifies the emptying through the cart answer, never through what the page shows.

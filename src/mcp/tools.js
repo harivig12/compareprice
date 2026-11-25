@@ -194,8 +194,16 @@ export function dealsMarkdown(d) {
     out.push('');
   }
   if (d.fromSearches?.length) out.push('**From searches** (last 24 h)', ...d.fromSearches.map((x) => `- ${x.site}: ${row(x).slice(2)}`), '');
+  // Coupons and payment offers listed in a site's cart (Zepto): not products, never in totals.
+  for (const l of d.offerLists ?? []) {
+    const list = l.offers.slice(0, STOREFRONT_ROWS);
+    out.push(`**${l.site} · ${l.kind === 'payment' ? 'payment offers' : 'coupons'}** (${l.offers.length} cart offers, checked ${hhmm(l.checkedAt)})`);
+    out.push(...list.map((o) => `- ${o.title}${o.code ? ` [${o.code}]` : ''}${o.minOrder ? ` · above ${rupees(o.minOrder)}` : ''}${o.extra ? ` · ${o.extra}` : ''}`));
+    if (l.offers.length > list.length) out.push(`- … and ${l.offers.length - list.length} more (see the page)`);
+    out.push('');
+  }
   for (const e of d.errors ?? []) out.push(`> ${e.site} · ${e.name}: ${e.error}`);
-  if (!(d.groups?.length || d.fromSearches?.length)) out.push('No offer check has run yet. It runs at the deal times (07:00 and 18:00 unless changed), or press "Check offers" on the page.');
+  if (!(d.groups?.length || d.fromSearches?.length || d.offerLists?.length)) out.push('No offer check has run yet. It runs at the deal times (07:00 and 18:00 unless changed), or press "Check offers" on the page.');
   return out.join('\n');
 }
 

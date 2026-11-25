@@ -135,6 +135,8 @@ export async function startService({
       sites: platforms?.length ? platforms.filter((s) => OFFER_SITES.includes(s)) : OFFER_SITES,
       limiter: getLimiter(getConfig().limits),
       minPct: getConfig().deals?.minDiscountPct,
+      zeptoCart: getConfig().deals?.zeptoCart !== false,
+      log: (m) => console.log(`[${new Date().toISOString()}] ${m}`),
       accountGapMs: (await import('./offers.js')).OFFER_ACCOUNT_GAP_MS,
     });
     for (const o of out.offers) log(`offers ${o.site} ${o.account === 'main' ? '' : `(${o.name}) `}${o.error ? `FAILED ${o.error}` : `${o.deals} deal(s) of ${o.scanned} checked`}`);

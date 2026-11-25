@@ -12,6 +12,7 @@ import { DATA_DIR } from './paths.js';
 import { canonicalQuery, productsMatching } from './catalog.js';
 import { parsePack, matchConfidence, CONFIDENCE_THRESHOLD, queryWords, addsKind } from './normalize.js';
 import { categoryGroup, namedGroups } from './categories.js';
+import { offerExtra } from './deals.js';
 
 // Canonical pack unit (normalize.js) -> [base unit, divisor, family].
 const BASE_UNITS = {
@@ -200,6 +201,26 @@ export function openStore(file = join(DATA_DIR, 'basket.db'), { timeZone = 'Asia
       checked_at TEXT NOT NULL,
       error TEXT,
       PRIMARY KEY (site, account)
+    );
+    -- Coupons and payment offers a site lists (not products; Zepto's cart lists). The latest
+    -- check replaces a site+account+kind's rows; a failed check keeps them.
+    CREATE TABLE IF NOT EXISTS offer_lists (
+      site TEXT NOT NULL,
+      account TEXT NOT NULL DEFAULT 'main',
+      kind TEXT NOT NULL,
+      code TEXT NOT NULL,
+      title TEXT NOT NULL,
+      note TEXT,
+      state TEXT,
+      type TEXT,
+      min_order REAL,
+      shortfall REAL,
+      description TEXT,
+      terms TEXT,
+      cart TEXT,
+      item TEXT,
+      seen_at TEXT NOT NULL,
+      PRIMARY KEY (site, account, kind, code)
     );
   `);
 
@@ -518,8 +539,29 @@ export function openStore(file = join(DATA_DIR, 'basket.db'), { timeZone = 'Asia
       return Object.fromEntries(db.prepare('SELECT site, info, seen_at FROM site_info').all().map((r) => [r.site, { ...JSON.parse(r.info), seenAt: r.seen_at }]));
     },
 
+    /**
+     * Coupons / payment offers from one check, replacing that site+account+kind's earlier rows.
+     * @param {{ site: string, account?: string, kind: 'payment'|'coupons', offers: object[], checkedAt?: string, cart?: string|null, item?: string|null }} o
+     */
+    recordOfferList({ site, account = 'main', kind, offers, checkedAt = new Date().toISOString(), cart = null, item = null }) {
+      db.exec('BEGIN');
+      try {
+        db.prepare('DELETE FROM offer_lists WHERE site = ? AND account = ? AND kind = ?').run(site, account, kind);
+        const ins = db.prepare('INSERT OR REPLACE INTO offer_lists (site, account, kind, code, title, note, state, type, min_order, shortfall, description, terms, cart, item, seen_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        for (const o of offers ?? []) {
+          if (!o?.title) continue;
+          ins.run(site, account, kind, o.code ?? o.title, o.title, o.note ?? null, o.state ?? null, o.type ?? null, o.minOrder ?? null, o.shortfall ?? null, o.description ?? null, o.terms?.length ? JSON.stringify(o.terms) : null, cart, item, checkedAt);
+        }
+        db.exec('COMMIT');
+      } catch (err) {
+        db.exec('ROLLBACK');
+        throw err;
+      }
+    },
+
     /** An account signed out or removed: its deals and check rows go too. */
     forgetAccountDeals(site, account) {
+      db.prepare('DELETE FROM offer_lists WHERE site = ? AND account = ?').run(site, account);
       db.prepare('DELETE FROM deals WHERE site = ? AND account = ?').run(site, account);
       db.prepare('DELETE FROM deal_checks WHERE site = ? AND account = ?').run(site, account);
     },
@@ -585,7 +627,19 @@ export function openStore(file = join(DATA_DIR, 'basket.db'), { timeZone = 'Asia
       });
       const since = new Date(now - 24 * 3_600_000).toISOString();
       const fromSearches = merge(db.prepare("SELECT * FROM deals WHERE source = 'search' AND seen_at >= ?").all(since));
-      return { checkedAt, groups, fromSearches, errors };
+      // Coupons and payment offers: one list per site and kind, payment offers by order minimum.
+      const offerLists = [];
+      const rows = db.prepare('SELECT * FROM offer_lists ORDER BY site, kind, rowid').all();
+      for (const r of rows) {
+        let l = offerLists.find((x) => x.site === r.site && x.kind === r.kind);
+        if (!l) offerLists.push((l = { site: r.site, kind: r.kind, checkedAt: r.seen_at, cart: r.cart, item: r.item, offers: [] }));
+        if (r.seen_at > l.checkedAt) l.checkedAt = r.seen_at;
+        let terms = [];
+        try { terms = r.terms ? JSON.parse(r.terms) : []; } catch { /* kept as none */ }
+        l.offers.push({ code: r.code === r.title ? null : r.code, title: r.title, note: r.note, state: r.state, type: r.type, minOrder: r.min_order, shortfall: r.shortfall, description: r.description, extra: offerExtra({ title: r.title, description: r.description }), terms });
+      }
+      for (const l of offerLists) if (l.kind === 'payment') l.offers.sort((a, b) => (a.minOrder ?? 1e9) - (b.minOrder ?? 1e9) || a.title.localeCompare(b.title));
+      return { checkedAt, groups, fromSearches, errors, offerLists };
     },
 
     /**

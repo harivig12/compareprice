@@ -379,7 +379,7 @@ export function startServer({
       // Deals (80%+ off MRP), grouped by site; never part of a total.
       if (req.method === 'GET' && path === '/api/deals') {
         const minDiscountPct = getConfig().deals?.minDiscountPct ?? 80;
-        if (!store?.currentDeals) return json(res, 200, { minDiscountPct, checkedAt: {}, groups: [], fromSearches: [], errors: [] });
+        if (!store?.currentDeals) return json(res, 200, { minDiscountPct, checkedAt: {}, groups: [], fromSearches: [], errors: [], offerLists: [] });
         // Account ids repeat across sites ('main', 'a2'), so names are looked up per site.
   // (A Milkbasket account whose offer check lost its session is marked signed out.)
         const deals = store.currentDeals({});
