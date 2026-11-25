@@ -1,0 +1,163 @@
+{
+  "data": {
+    "widgets": [
+      {
+        "type": "COUPON_APPLY",
+        "widgetInfo": {
+          "widgetType": "COUPON_APPLY"
+        },
+        "data": [
+          {
+            "widgetType": "COUPON_APPLY",
+            "textPlaceHolder": "Enter Coupon Code"
+          }
+        ]
+      },
+      {
+        "type": "AVAILABLE_COUPONS",
+        "widgetInfo": {
+          "widgetType": "AVAILABLE_COUPONS",
+          "title": "AVAILABLE COUPONS"
+        },
+        "data": [
+          {
+            "couponCode": "LXMEUPI",
+            "title": "Get Flat ₹30 Digital Gold on first & upto ₹500 on consecutive transactions with Lxme UPI",
+            "description": "Digital Gold is applicable only for female users",
+            "tnc": {
+              "title": "Terms and Conditions",
+              "bulletTexts": [
+                "As per regulatory & manufacturer policies, certain items in the tobacco, infant food, ghee, milk, butter & probiotic drinks categories are excluded from coupon discounts",
+                "Fixed Digital Gold is only on the first transaction.",
+                "Up to ₹500 Digital Gold back on eligible Lxme UPI transactions"
+              ]
+            },
+            "isApplicable": true,
+            "couponPreValidationStatus": {
+              "status": "APPLICABLE",
+              "message": ""
+            }
+          }
+        ]
+      },
+      {
+        "type": "UNAVAILABLE_COUPONS",
+        "widgetInfo": {
+          "widgetType": "UNAVAILABLE_COUPONS",
+          "title": "UNAVAILABLE COUPONS"
+        },
+        "data": [
+          {
+            "couponCode": "SBIVISADC25",
+            "title": "Get 25% OFF with SBI VISA Infinite, Signature, Platinum & Business Platinum Debit Cards",
+            "description": "Maximum upto ₹300 discount on orders above ₹999",
+            "tnc": {
+              "title": "Terms and Conditions",
+              "bulletTexts": [
+                "As per regulatory & manufacturer policies, certain items in the tobacco, infant food, ghee, milk, butter & probiotic drinks categories are excluded from coupon discounts",
+                "Valid only on SBI Visa Infinite, Signature, Platinum & Business Platinum Debit Cards",
+                "Applicable once per user per calendar month"
+              ]
+            },
+            "isApplicable": true,
+            "couponPreValidationStatus": {
+              "status": "NOT_APPLICABLE_CART_MIN",
+              "message": "Add items worth ₹901 more to avail this offer."
+            }
+          },
+          {
+            "couponCode": "IDFCDC175",
+            "title": "Get 20% OFF with IDFC FIRST Bank Debit Cards",
+            "description": "Maximum upto ₹175 discount on orders above ₹750",
+            "tnc": {
+              "title": "Terms and Conditions",
+              "bulletTexts": [
+                "As per regulatory & manufacturer policies, certain items in the tobacco, infant food, ghee, milk, butter & probiotic drinks categories are excluded from coupon discounts",
+                "Offer valid only on IDFC FIRST Bank Debit Cards",
+                "Applicable once per user during the offer period"
+              ]
+            },
+            "isApplicable": true,
+            "couponPreValidationStatus": {
+              "status": "NOT_APPLICABLE_CART_MIN",
+              "message": "Add items worth ₹652 more to avail this offer."
+            }
+          },
+          {
+            "couponCode": "PAYTMUPI10",
+            "title": "Get upto ₹100 cashback with Paytm UPI",
+            "description": "Assured ₹10 to ₹100 cashback on payments above ₹99",
+            "tnc": {
+              "title": "Terms and Conditions",
+              "bulletTexts": [
+                "As per regulatory & manufacturer policies, certain items in the tobacco, infant food, ghee, milk, butter & probiotic drinks categories are excluded from coupon discounts",
+                "Applicable once per user during the offer period",
+                "First time Paytm users will have to install the Paytm app to avail the offer"
+              ]
+            },
+            "isApplicable": true,
+            "couponPreValidationStatus": {
+              "status": "NOT_APPLICABLE_CART_MIN",
+              "message": "Add items worth ₹1 more to avail this offer."
+            }
+          },
+          {
+            "couponCode": "RBLCCGADGETS",
+            "title": "Get 5% OFF on Smart Phones, Tablets & Laptops with RBL Bank Credit Cards",
+            "description": "Maximum upto ₹1000 discount on orders above ₹10000",
+            "tnc": {
+              "title": "Terms and Conditions",
+              "bulletTexts": [
+                "Applicable once per user during the offer period",
+                "Valid only on select Mobile Phones, Tablets & Laptops",
+                "Offer valid on payments made using RBL Bank Credit Cards"
+              ]
+            },
+            "isApplicable": true,
+            "couponPreValidationStatus": {
+              "status": "NOT_APPLICABLE_CART_MIN",
+              "message": "Add eligible Mobiles, Tablets & Laptop items worth ₹10000 more to avail this offer."
+            }
+          },
+          {
+            "couponCode": "LOVEARATA10",
+            "title": "Get 10% off on Arata ",
+            "description": "Get 10% off on all Arata products above ₹499",
+            "tnc": {
+              "title": "Terms and Conditions",
+              "bulletTexts": [
+                "",
+                "As per regulatory & manufacturer policies, certain items in the tobacco, infant food, ghee, milk, butter & probiotic drinks categories are excluded from coupon discounts"
+              ]
+            },
+            "isApplicable": true,
+            "couponPreValidationStatus": {
+              "status": "NOT_APPLICABLE_CART_MIN",
+              "message": "Add Arata  items worth ₹499 more to avail this offer."
+            }
+          },
+          {
+            "couponCode": "SBIVISADC25",
+            "title": "Get 25% OFF with SBI VISA Infinite, Signature, Platinum & Business Platinum Debit Cards",
+            "description": "Maximum upto ₹300 discount on orders above ₹999",
+            "tnc": {
+              "title": "Terms and Conditions",
+              "bulletTexts": [
+                "As per regulatory & manufacturer policies, certain items in the tobacco, infant food, ghee, milk, butter & probiotic drinks categories are excluded from coupon discounts",
+                "Valid only on SBI Visa Infinite, Signature, Platinum & Business Platinum Debit Cards",
+                "Applicable once per user per calendar month"
+              ]
+            },
+            "isApplicable": true,
+            "couponPreValidationStatus": {
+              "status": "NOT_APPLICABLE_CART_MIN",
+              "message": "Add items worth ₹901 more to avail this offer."
+            }
+          }
+        ]
+      }
+    ],
+    "callouts": []
+  },
+  "statusCode": 0
+}

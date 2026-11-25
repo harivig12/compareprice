@@ -1,0 +1,30 @@
+{
+  "data": {
+    "data": {
+      "items": [
+        {
+          "itemId": "SKU-1",
+          "quantity": 1,
+          "name": "Puro Healthy Salt (Sendha namak)",
+          "metadata": {
+            "display_name": "Puro Healthy Salt (Sendha namak)",
+            "variations": [
+              {
+                "id": "SKU-1",
+                "spin": "SPIN-1",
+                "price": {
+                  "mrp": 99,
+                  "store_price": 99,
+                  "offer_price": 98
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "statusCode": 0,
+    "statusMessage": null
+  },
+  "statusCode": 0
+}

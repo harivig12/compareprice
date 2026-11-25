@@ -12,7 +12,11 @@ export const DEFAULT_MIN_DISCOUNT_PCT = 80;
  * the title (most coupons do) adds nothing.
  */
 export function offerExtra({ title, description }) {
-  const d = String(description ?? '').replace(/^Valid on (orders|transactions) above\s*(₹|rs\.?)\s?[\d,]+\.?\s*/i, '').trim();
+  const d = String(description ?? '')
+    .replace(/^Valid on (orders|transactions) above\s*(₹|rs\.?)\s?[\d,]+\.?\s*/i, '')
+    // "Maximum upto ₹300 discount on orders above ₹999": the minimum has its own column, the cap stays.
+    .replace(/\s*on (orders|transactions|payments) (of |above |over )?(₹|rs\.?)\s?[\d,]+( (&|and) above)?\.?\s*$/i, '')
+    .trim();
   if (!d) return null;
   const words = (s) => new Set(String(s ?? '').toLowerCase().match(/[a-z0-9₹%]+/g) ?? []);
   const t = words(title);

@@ -136,6 +136,7 @@ export async function startService({
       limiter: getLimiter(getConfig().limits),
       minPct: getConfig().deals?.minDiscountPct,
       zeptoCart: getConfig().deals?.zeptoCart !== false,
+      cartOffers: { zepto: getConfig().deals?.zeptoCart !== false, instamart: getConfig().deals?.instamartCart !== false },
       log: (m) => console.log(`[${new Date().toISOString()}] ${m}`),
       accountGapMs: (await import('./offers.js')).OFFER_ACCOUNT_GAP_MS,
     });

@@ -34,7 +34,9 @@ export const OFFER_SITES = ['instamart', 'milkbasket', 'zepto', 'bigbasket'];
  */
 export const OFFER_ACCOUNT_GAP_MS = 60_000;
 
-export async function checkOffers({ poolSet, accounts, sitesImpl, store, limiter, sites = OFFER_SITES, minPct = DEFAULT_MIN_DISCOUNT_PCT, onProgress, signal, now = () => new Date().toISOString(), accountGapMs = 0, zeptoCart = true, log }) {
+export async function checkOffers({ poolSet, accounts, sitesImpl, store, limiter, sites = OFFER_SITES, minPct = DEFAULT_MIN_DISCOUNT_PCT, onProgress, signal, now = () => new Date().toISOString(), accountGapMs = 0, zeptoCart = true, cartOffers = {}, log }) {
+  // Which sites may put one item in the signed-in cart to read its offers (config deals.zeptoCart / deals.instamartCart).
+  const cartOk = (site) => (cartOffers[site] ?? (site === 'zepto' ? zeptoCart : true)) !== false;
   const t0 = Date.now();
   const emit = (e) => { try { onProgress?.(e); } catch { /* observer bug */ } };
   const results = [];
@@ -55,7 +57,7 @@ export async function checkOffers({ poolSet, accounts, sitesImpl, store, limiter
       try {
         await limiter?.acquire(site, { signal });
         // A site that reads many pages (BigBasket's storefronts) paces each one.
-        const ctx = { signal, log, acquire: () => limiter?.acquire(site, { signal }), cart: zeptoCart, signedIn: signed.some((a) => a.id === acc.id) };
+        const ctx = { signal, log, acquire: () => limiter?.acquire(site, { signal }), cart: cartOk(site) && acc.id === MAIN, signedIn: signed.some((a) => a.id === acc.id) };
         const out = await poolSet.with(site, acc, async (pool) => impl.offers(await pool.tab(site), ctx));
         const sitePct = impl.offersMinPct ?? minPct;
         const deals = (out.rows ?? []).filter((r) => r.inStock !== false && isDeal(r, sitePct))
@@ -73,9 +75,9 @@ export async function checkOffers({ poolSet, accounts, sitesImpl, store, limiter
         }
         // A part of the check that failed (Zepto's cart offers) is shown like any failed check, with the rest kept.
         store?.recordDeals(deals, { site, account: acc.id, source: 'feed', checkedAt, error: out.warning ?? null });
-        // Coupons and payment offers (not products): Zepto's cart lists.
+        // Coupons and payment offers (not products): the cart lists (Zepto: payment + coupons; Instamart: coupons).
         if (out.lists && acc.id === MAIN) {
-          for (const kind of ['payment', 'coupons']) store?.recordOfferList?.({ site, account: acc.id, kind, offers: out.lists[kind] ?? [], checkedAt, cart: out.lists.cart, item: out.lists.item });
+          for (const kind of ['payment', 'coupons'].filter((k) => Array.isArray(out.lists[k]))) store?.recordOfferList?.({ site, account: acc.id, kind, offers: out.lists[kind], checkedAt, cart: out.lists.cart, item: out.lists.item });
         }
         // Fee facts are the site's, from the main account's view.
         if (out.info && acc.id === MAIN) store?.setSiteInfo?.(site, out.info, checkedAt);

@@ -8,7 +8,8 @@
  *           request (seen on warm-up) instead of being hardcoded.
  * Recon: docs/diagnosis/2026-11-16-api-platforms-failing.md
  */
-import { expectJson } from '../page-fetch.js';
+import { expectJson, pageFetch } from '../page-fetch.js';
+import { readInstamartCartOffers, cheapestVariation, couponsBody, addBody } from './instamart-offers.js';
 import { apiFetch } from '../direct.js';
 import { SiteError } from '../errors.js';
 import { bestPack } from './_util.js';
@@ -140,8 +141,11 @@ export default {
    * Offer check without a product search: the home feed's product widgets
    * (same item shape as search). Recon 2026-11-19 found no separate deal feed;
    * deals at 80%+ show up here or in searches.
+   * Signed in (main account), also the cart's coupons and payment offers (instamart-offers.js):
+   * returned as `lists.coupons`; a failure there is a `warning` and the feed still counts.
+   * `ctx.cart === false` (config `deals.instamartCart`) leaves the cart alone.
    */
-  async offers(tab) {
+  async offers(tab, ctx = {}) {
     // Read the page's own responses (no replay): the home feed comes twice, a
     // small shell first and the product widgets after, and the cart says
     // "FREE DELIVERY on orders above ₹99". On a slow machine the second feed
@@ -168,6 +172,56 @@ export default {
       // The home feed keeps its product widgets outside `data.cards`: walk all of it.
       for (const row of parse({ data: { cards: j } })) if (!seen.has(row.url + row.name)) { seen.add(row.url + row.name); rows.push(row); }
     }
-    return { rows, conditions: null, info, ...(rows.length ? {} : { note: 'the home feed had no products' }) };
+    const base = { rows, conditions: null, info, ...(rows.length ? {} : { note: 'the home feed had no products' }) };
+    if (ctx.cart === false || !ctx.signedIn) return base;
+    try {
+      const out = await cartOffers(tab, ctx);
+      return { ...base, lists: { cart: out.cart, item: out.item, coupons: out.coupons } };
+    } catch (e) {
+      return { ...base, warning: String(e?.message ?? e) };
+    }
   },
 };
+
+/**
+ * The signed-in cart's coupons (see instamart-offers.js for the safeguards). The page's own search page for
+ * "salt" supplies the headers, the store ids (in its search request's URL) and the cheapest item.
+ */
+async function cartOffers(tab, ctx) {
+  const sess = watchRequest(tab, 'instamart-cart', SEARCH_RE);
+  sess.headers = null;
+  const found = collectResponses(tab, SEARCH_RE);
+  await tab.goto(`${ORIGIN}instamart/search?custom_back=true&query=salt`, { waitMs: 15000 });
+  let searchJson = null;
+  for (let i = 0; i < 24 && !(sess.headers && searchJson); i++) {
+    for (const r of await found.peek()) { try { const j = JSON.parse(r.text); if (j?.data) searchJson = j; } catch { /* not this one */ } }
+    if (!(sess.headers && searchJson)) await new Promise((r) => setTimeout(r, 500));
+  }
+  await found.done();
+  if (!sess.headers) throw new SiteError('session', `${ID}: the search page made no request to copy headers from`, { site: ID });
+  const q = new URL(sess.url).searchParams;
+  const cheapest = cheapestVariation(searchJson);
+  // A search page loaded directly sends empty store ids in its URL (2026-11-25); the store that sells an
+  // item is its variation's podId, which the page's own cart call uses as storeId.
+  const storeId = q.get('storeId') || q.get('primaryStoreId') || cheapest?.podId;
+  if (!storeId) throw new SiteError('parse', `${ID}: no store found for this address (search had no in-stock items)`, { site: ID });
+  const [{ value: locRaw = '' } = {}] = (await tab.getCookies(['https://www.swiggy.com/'])).filter((c) => c.name === 'userLocation');
+  let loc = {};
+  try { loc = JSON.parse(decodeURIComponent(locRaw)); } catch { /* checked below */ }
+  const userId = await tab.evaluate(`(() => { try { const u = JSON.parse(localStorage.getItem('user_info') || '{}'); return String((u.addresses || []).map((a) => a.user_id).find(Boolean) || u.user_id || u.userId || ''); } catch { return ''; } })()`, { timeoutMs: 5000 }).catch(() => '');
+  if (!(loc.lat && loc.lng) || !userId) throw new SiteError('session', `${ID}: no saved location or user id on this page (is the account still signed in?)`, { site: ID });
+  const headers = { ...sess.headers, 'content-type': 'application/json' };
+  const api = async (path, init) => {
+    await ctx.acquire?.();
+    return expectJson(await pageFetch(tab, `${ORIGIN}${path}`, init), ID);
+  };
+  const couponQuery = new URLSearchParams({ serviceLine: 'INSTAMART', lat: String(loc.lat), lng: String(loc.lng), userId, storeId, primaryStoreId: q.get('primaryStoreId') || storeId, secondaryStoreId: q.get('secondaryStoreId') || '' });
+  return readInstamartCartOffers({
+    getCart: () => api('api/instamart/checkout/v2/cart', { headers: sess.headers }),
+    coupons: (lines) => api(`api/instamart/checkout/v2/im-coupons?${couponQuery}`, { method: 'POST', headers, body: JSON.stringify(couponsBody(lines)) }),
+    addItem: (item) => api('api/instamart/checkout/v2/cart?pageType=INSTAMART_SEARCH', { method: 'POST', headers, body: JSON.stringify(addBody({ ...item, storeId })) }),
+    clearCart: () => api('api/instamart/checkout/v2/cart/clear', { method: 'POST', headers, body: JSON.stringify({ source: 'USER_INITIATED' }) }),
+    pickItem: async () => cheapest,
+    log: ctx.log,
+  });
+}

@@ -56,10 +56,10 @@ export const DEFAULT_CONFIG = Object.freeze({
   },
   // A product this far below MRP is a "deal": shown in its own section, never totalled.
   // The offer check (deal feeds) runs at these times, in `timezone`.
-  // zeptoCart: Zepto's coupons and payment offers only exist while the cart has an item, so the
-  // check puts one cheap item in the signed-in cart and takes it out again (an account that
-  // already has items in its cart is only read). false = don't touch the cart at all.
-  deals: { minDiscountPct: 80, times: ['07:00', '18:00'], zeptoCart: true },
+  // zeptoCart / instamartCart: their coupons and payment offers only exist while the cart has an item,
+  // so the check puts one cheap item in the signed-in cart and takes it out again (an account that
+  // already has items in its cart is only read). false = don't touch that site's cart at all.
+  deals: { minDiscountPct: 80, times: ['07:00', '18:00'], zeptoCart: true, instamartCart: true },
   results: {
     // Per-run JSON files under results/ older than this are deleted; runs.jsonl stays.
     keepDays: 60,
@@ -197,7 +197,7 @@ export function validateConfig(cfg, knownSites) {
   if (cfg.deals) {
     const pct = Number(cfg.deals.minDiscountPct);
     if (!(pct >= 50 && pct <= 99)) return bad('deals.minDiscountPct', 'a deal is 50 to 99 percent off MRP');
-    if (cfg.deals.zeptoCart != null && typeof cfg.deals.zeptoCart !== 'boolean') return bad('deals.zeptoCart', 'must be true or false');
+    for (const k of ['zeptoCart', 'instamartCart']) if (cfg.deals[k] != null && typeof cfg.deals[k] !== 'boolean') return bad(`deals.${k}`, 'must be true or false');
     if (cfg.deals.times != null) {
       if (!Array.isArray(cfg.deals.times)) return bad('deals.times', 'deal check times must be a list');
       const t = cfg.deals.times.find((x) => !HHMM.test(String(x)));

@@ -17,21 +17,11 @@
  * Nothing is ever ordered, and no address, payment or coupon is touched.
  */
 import { SiteError } from '../errors.js';
+import { minOrderFrom, shortfallFrom } from './_offers.js';
+
+export { minOrderFrom, shortfallFrom };
 
 const ID = 'zepto';
-const num = (s) => Number(String(s).replace(/,/g, ''));
-
-/** "Valid on orders above ₹99 only on Sundays" -> 99 (the order minimum), else null. */
-export function minOrderFrom(text) {
-  const m = /(?:above|over|of|from)\s*(?:₹|rs\.?)\s?([\d,]+)/i.exec(String(text ?? ''));
-  return m ? num(m[1]) : null;
-}
-
-/** "Shop for ₹81 more to unlock" -> 81 (what the cart is short by), else null. */
-export function shortfallFrom(text) {
-  const m = /shop for\s*(?:₹|rs\.?)\s?([\d,]+)\s*more/i.exec(String(text ?? ''));
-  return m ? num(m[1]) : null;
-}
 
 /**
  * Pure: a fetch-list answer -> offers, in the page's order.
