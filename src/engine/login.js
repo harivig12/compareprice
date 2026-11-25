@@ -47,11 +47,22 @@ export const OTP_SCREEN_JS = `(() => {
   if (/(sent|send) (an |the )?otp|verify your (mobile |phone )?number|enter (the )?otp|one.?time (password|code)/i.test(text) && vis.length) return true;
   if (vis.some((i) => i.autocomplete === 'one-time-code' || /otp|verification.?code/i.test((i.name || '') + (i.id || '') + (i.placeholder || '')))) return true;
   const short = vis.filter((i) => /^(tel|number|text)$/.test(i.type) && i.maxLength > 0 && i.maxLength <= 6);
-  return short.length >= 4;
+  if (short.length >= 4) return true;
+  // BigBasket (2026-11-25): six bare type=number boxes (no maxlength, name or
+  // placeholder), 40 px wide, under a page that says "Enter OTP".
+  const small = vis.filter((i) => /^(tel|number|text)$/.test(i.type) && i.getBoundingClientRect().width <= 64);
+  return /otp/i.test(text) && small.length >= 4 && small.length <= 8;
 })()`;
 
 /** The OTP boxes on screen, in page order (one box, or one per digit). */
-const OTP_BOXES_JS = `[...document.querySelectorAll('input')].filter((i) => i.getClientRects().length && i.type !== 'hidden' && (i.autocomplete === 'one-time-code' || /otp|code/i.test((i.name || '') + (i.id || '') + (i.placeholder || '')) || (/^(tel|number|text)$/.test(i.type) && i.maxLength > 0 && i.maxLength <= 6)))`;
+export const OTP_BOXES_JS = `(() => {
+  const vis = [...document.querySelectorAll('input')].filter((i) => i.getClientRects().length && i.type !== 'hidden');
+  const named = vis.filter((i) => i.autocomplete === 'one-time-code' || /otp|code/i.test((i.name || '') + (i.id || '') + (i.placeholder || '')) || (/^(tel|number|text)$/.test(i.type) && i.maxLength > 0 && i.maxLength <= 6));
+  if (named.length) return named;
+  // A row of 4 to 8 small bare boxes (BigBasket, 2026-11-25: six type=number, 40 px, no maxlength).
+  const small = vis.filter((i) => /^(tel|number|text)$/.test(i.type) && i.getBoundingClientRect().width <= 64);
+  return small.length >= 4 && small.length <= 8 ? small : [];
+})()`;
 
 export const LOGIN_SITES = Object.freeze({
   milkbasket: {
