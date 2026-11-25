@@ -10,6 +10,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - **BigBasket runs in a Chrome of its own** (`<data>/profiles/bigbasket`), headless. After its bot wall shows on two page loads in a row it switches to a headed Chrome and stays so (`<data>/browser-mode.json`). On a server that Chrome runs inside a virtual screen: the Docker image now ships Xvfb.
 
 ### Fixed
+- **BigBasket sign-in typed the OTP but never submitted it** ("the OTP box is still showing 15 s after entering the code"). Its submit match (`verify|continue|login|submit`) found the page header's "Login/ Sign Up" button before the dialog's "Verify & Continue". It now looks for the button that starts with "Verify". When the box still shows after 15 s, the error now says what the dialog says (digits masked).
 - **BigBasket sign-in stopped at "could not focus the OTP box".** Its OTP screen is six bare number boxes (no maxlength, name or placeholder), which the box finder skipped. A row of 4 to 8 small boxes under an "OTP" page now counts, with a test that runs the real expressions against fake pages (`test/otp-boxes.test.js`).
 
 ### Changed

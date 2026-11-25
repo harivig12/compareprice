@@ -64,6 +64,14 @@ export const OTP_BOXES_JS = `(() => {
   return small.length >= 4 && small.length <= 8 ? small : [];
 })()`;
 
+/** BigBasket's OTP dialog button: text starts with "Verify" (a button, or the smallest element that says it). */
+export const BIGBASKET_VERIFY_JS = `(() => {
+  const ok = (e) => e.getClientRects().length && !e.disabled && e.getAttribute('aria-disabled') !== 'true';
+  return [...document.querySelectorAll('button,[role=button]')].find((e) => ok(e) && /^verify\\b/i.test((e.innerText || '').trim()))
+    || [...document.querySelectorAll('div,span,a')].filter((e) => ok(e) && /^verify\\s*(&|and)?\\s*continue$/i.test((e.innerText || '').trim())).pop()
+    || null;
+})()`;
+
 export const LOGIN_SITES = Object.freeze({
   milkbasket: {
     label: 'Milkbasket',
@@ -121,7 +129,9 @@ export const LOGIN_SITES = Object.freeze({
     phoneInput: `document.querySelector('#multiform, input[placeholder*="Phone number" i]')`,
     submitPhone: `[...document.querySelectorAll('button')].find((b) => b.getClientRects().length && !b.disabled && /^(continue|get otp|send otp)$/i.test((b.innerText || '').trim()))`,
     otpInput: OTP_SCREEN_JS,
-    submitOtp: `[...document.querySelectorAll('button')].find((b) => b.getClientRects().length && !b.disabled && /verify|continue|login|submit/i.test((b.innerText || '').trim()))`,
+    // The dialog's "Verify & Continue". Not /login|continue/: the page header's "Login/ Sign Up"
+    // comes first in the page and matched, so the OTP was typed but never submitted (2026-11-25).
+    submitOtp: BIGBASKET_VERIFY_JS,
     wrongOtp: /invalid otp|incorrect otp|wrong otp|otp (is )?(invalid|incorrect|expired)|enter a valid otp/i,
     // Akamai's wall: stop at once, never retry (repeat visits prolong the block).
     botWall: /access denied|reference #\d|you don't have permission to access/i,
@@ -392,7 +402,12 @@ export async function verifyLogin(driver, siteId, otp) {
       return { loggedIn: true };
     }
   }
-  throw new SiteError('timeout', `${siteId}: the OTP box is still showing 15 s after entering the code`, { site: siteId });
+  // What the dialog says (digits masked), so "still showing" can be told apart from a wrong code, a captcha or a missing button.
+  const said = driver.evaluate
+    ? await driver.evaluate(`(() => { const d = document.querySelector('[role=dialog]') || [...document.querySelectorAll('div')].filter((x) => /Verify Mobile Number|Enter OTP/i.test(x.innerText || '') && (x.innerText || '').length < 700).pop(); return d ? d.innerText : ''; })()`).catch(() => '')
+    : '';
+  const dlg = pageSnippet(said, 200);
+  throw new SiteError('timeout', `${siteId}: the OTP box is still showing 15 s after entering the code${dlg ? ` (the dialog says: "${dlg}")` : ''}`, { site: siteId });
 }
 
 /**

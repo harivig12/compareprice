@@ -57,3 +57,39 @@ test('hidden inputs are ignored', () => {
   const run = page(boxes, BB_TEXT);
   assert.equal(run(`${OTP_BOXES_JS}.length`), 0);
 });
+
+// ───────────────────────── the Verify button ─────────────────────────
+
+import { BIGBASKET_VERIFY_JS, LOGIN_SITES } from '../src/engine/login.js';
+
+const el = (innerText, o = {}) => ({
+  innerText, disabled: false, aria: null, hidden: false,
+  getClientRects() { return this.hidden ? [] : [{}]; },
+  getAttribute(n) { return n === 'aria-disabled' ? this.aria : null; },
+  ...o,
+});
+
+/** A page with `buttons` (button / role=button elements) and `others` (div, span, a), in page order. */
+function buttonPage(buttons, others = []) {
+  const document = { querySelectorAll: (sel) => (sel === 'button,[role=button]' ? buttons : sel === 'div,span,a' ? others : []) };
+  return () => vm.runInNewContext(BIGBASKET_VERIFY_JS, { document });
+}
+
+test('BigBasket: the OTP is submitted with the dialog\'s Verify button, not the header\'s "Login/ Sign Up"', () => {
+  const header = el('Login/ Sign Up');
+  const verify = el('Verify & Continue');
+  const resend = el('Resend OTP');
+  assert.equal(buttonPage([header, el('Cart'), verify, resend])(), verify);
+  assert.equal(LOGIN_SITES.bigbasket.submitOtp, BIGBASKET_VERIFY_JS);
+});
+
+test('BigBasket Verify: a disabled or hidden button is skipped; a non-button that says it is the fallback; nothing -> null', () => {
+  const off = el('Verify & Continue', { disabled: true });
+  const ariaOff = el('Verify & Continue', { aria: 'true' });
+  const gone = el('Verify & Continue', { hidden: true });
+  assert.equal(buttonPage([off, ariaOff, gone])(), null);
+  const div = el('Verify & Continue');
+  const wrapper = el('Verify & Continue Resend OTP');
+  assert.equal(buttonPage([el('Login/ Sign Up')], [wrapper, div])(), div, 'the exact "Verify & Continue" element, not a wrapper around more text');
+  assert.equal(buttonPage([el('Login/ Sign Up'), el('Resend OTP')])(), null);
+});
