@@ -64,6 +64,28 @@ export const OTP_BOXES_JS = `(() => {
   return small.length >= 4 && small.length <= 8 ? small : [];
 })()`;
 
+/**
+ * What the sign-in dialog (or a toast) says right now, digits masked: the error text when an
+ * expected step doesn't come (BigBasket only reported the page's category menu, 2026-11-25).
+ */
+export const DIALOG_TEXT_JS = `(() => {
+  const vis = (e) => e.getClientRects().length > 0;
+  const parts = [];
+  const dlg = document.querySelector('[role=dialog]') || [...document.querySelectorAll('div')].filter((d) => vis(d) && /phone number|email id|enter otp|verify|login|sign ?up/i.test(d.innerText || '') && (d.innerText || '').length < 600).sort((a, b) => a.innerText.length - b.innerText.length).pop();
+  if (dlg && vis(dlg)) parts.push(dlg.innerText);
+  for (const t of document.querySelectorAll('[role=alert], [role=status], [class*=toast i], [class*=snackbar i], [class*=error i]')) if (vis(t) && (t.innerText || '').trim()) parts.push(t.innerText);
+  if ([...document.querySelectorAll('iframe')].some((f) => /recaptcha/.test(f.src || '') && vis(f) && f.getBoundingClientRect().height > 60)) parts.push('[a reCAPTCHA puzzle is showing]');
+  return [...new Set(parts.map((p) => p.trim()).filter(Boolean))].join(' / ');
+})()`;
+
+/** What the dialog says, for an error message (digits masked), or ''. */
+async function dialogSays(driver) {
+  if (!driver.evaluate) return '';
+  const said = await driver.evaluate(DIALOG_TEXT_JS).catch(() => '');
+  const t = pageSnippet(said, 220);
+  return t ? ` (the dialog says: "${t}")` : '';
+}
+
 /** BigBasket's OTP dialog button: text starts with "Verify" (a button, or the smallest element that says it). */
 export const BIGBASKET_VERIFY_JS = `(() => {
   const ok = (e) => e.getClientRects().length && !e.disabled && e.getAttribute('aria-disabled') !== 'true';
@@ -300,8 +322,9 @@ export async function startLogin(driver, siteId, phone) {
     }
     await driver.sleep(500);
   }
-  const t = pageSnippet(await driver.text(), 160);
-  throw new SiteError('timeout', `${siteId}: no OTP box appeared after asking for the OTP (page says: "${t}")`, { site: siteId });
+  const says = await dialogSays(driver);
+  const t = says || ` (page says: "${pageSnippet(await driver.text(), 160)}")`;
+  throw new SiteError('timeout', `${siteId}: no OTP box appeared after asking for the OTP${t}`, { site: siteId });
 }
 
 const captchaError = (siteId, cfg) =>
@@ -403,11 +426,7 @@ export async function verifyLogin(driver, siteId, otp) {
     }
   }
   // What the dialog says (digits masked), so "still showing" can be told apart from a wrong code, a captcha or a missing button.
-  const said = driver.evaluate
-    ? await driver.evaluate(`(() => { const d = document.querySelector('[role=dialog]') || [...document.querySelectorAll('div')].filter((x) => /Verify Mobile Number|Enter OTP/i.test(x.innerText || '') && (x.innerText || '').length < 700).pop(); return d ? d.innerText : ''; })()`).catch(() => '')
-    : '';
-  const dlg = pageSnippet(said, 200);
-  throw new SiteError('timeout', `${siteId}: the OTP box is still showing 15 s after entering the code${dlg ? ` (the dialog says: "${dlg}")` : ''}`, { site: siteId });
+  throw new SiteError('timeout', `${siteId}: the OTP box is still showing 15 s after entering the code${await dialogSays(driver)}`, { site: siteId });
 }
 
 /**

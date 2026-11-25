@@ -93,3 +93,24 @@ test('BigBasket Verify: a disabled or hidden button is skipped; a non-button tha
   assert.equal(buttonPage([el('Login/ Sign Up')], [wrapper, div])(), div, 'the exact "Verify & Continue" element, not a wrapper around more text');
   assert.equal(buttonPage([el('Login/ Sign Up'), el('Resend OTP')])(), null);
 });
+
+// ───────────────────────── what the dialog says ─────────────────────────
+
+import { DIALOG_TEXT_JS } from '../src/engine/login.js';
+
+test('the dialog reader returns the login dialog and any toast, not the page\'s menus', () => {
+  const box = (innerText, o = {}) => ({ innerText, src: '', getClientRects() { return o.hidden ? [] : [{}]; }, getBoundingClientRect() { return { height: o.h ?? 300 }; } });
+  const menu = box('Shop by Category Electronics Fashion Pharmacy & Wellness Fruits & Vegetables');
+  const dialog = box('Login/ Sign up\nEnter Phone number/ Email Id\nContinue');
+  const toast = box('Too many attempts. Please try after some time');
+  const document = {
+    querySelector: () => null,
+    querySelectorAll: (sel) => (sel === 'div' ? [menu, dialog] : sel === 'iframe' ? [] : /role=alert/.test(sel) ? [toast] : []),
+  };
+  const said = vm.runInNewContext(DIALOG_TEXT_JS, { document });
+  assert.match(said, /Enter Phone number/);
+  assert.match(said, /Too many attempts/);
+  assert.doesNotMatch(said, /Shop by Category/);
+  const captcha = { ...document, querySelectorAll: (sel) => (sel === 'iframe' ? [{ ...box(''), src: 'https://www.google.com/recaptcha/api2/bframe' }] : []) };
+  assert.match(vm.runInNewContext(DIALOG_TEXT_JS, { document: captcha }), /reCAPTCHA puzzle/);
+});
