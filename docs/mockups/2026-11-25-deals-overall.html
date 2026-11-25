@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup · the whole Deals section (2026-11-25)</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#E9EDF5;color:#1f2937;font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.sheet{max-width:1400px;margin:0 auto;padding:1.6rem 1.25rem 3rem}
+h1{margin:0 0 .3rem;font-size:1.6rem} h2{margin:2.2rem 0 .4rem;font-size:1.25rem;border-top:2px solid #cbd5e1;padding-top:1.1rem}
+p{margin:.2rem 0 .8rem;max-width:1000px}
+code{font:600 .86em ui-monospace,Consolas,monospace;background:#fff;border:1px solid #e2e8f0;border-radius:5px;padding:.05rem .3rem}
+.note{background:#fff;border-left:4px solid #2563EB;padding:.7rem 1rem;border-radius:.4rem;max-width:1000px;margin:.6rem 0}
+.note ul{margin:.3rem 0 0;padding-left:1.2rem}
+.ask{background:#FFFBEB;border-left:4px solid #B45309;padding:.8rem 1rem;border-radius:.4rem;max-width:1000px;margin-top:1.4rem}
+.ask ol{margin:.3rem 0 0;padding-left:1.2rem}
+.row{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:1.2rem;align-items:start}
+@media (max-width:1150px){.row{grid-template-columns:1fr}}
+.cap{font-size:.82rem;color:#475569;margin:.35rem 0 0}
+
+/* the app's tokens (src/ui/theme.css) */
+.app{--text:#0B1B14;--dim:#3E5148;--faint:#5C6E65;--line:#D9E4DD;--cell:#F4F8F5;--surface:rgba(255,255,255,.92);--glass:rgba(255,255,255,.55);--rim:rgba(255,255,255,.8);
+  --best:#0E7A4B;--best-ink:#06492C;--warn:#9A4A06;--bw:#FFF3E3;--blue:#1D4ED8;--bluebg:#EAF0FF;--wash:rgba(255,255,255,.7);--field:#fff;--hot:#0B1B14;--hotk:#FFD54A;
+  --shadow:0 10px 30px rgba(11,27,20,.08),inset 0 1px 0 rgba(255,255,255,.7);
+  --mesh:radial-gradient(60% 50% at 8% 6%,#BFF0D4 0,transparent 60%),radial-gradient(45% 45% at 96% 10%,#FFD9C2 0,transparent 60%),radial-gradient(60% 60% at 75% 100%,#DCD3FF 0,transparent 60%),#F4F7F2;
+  color:var(--text);background:var(--mesh);font:13px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:14px;border-radius:22px;box-shadow:0 18px 40px #0b1b1426}
+.app.dark{--text:#E8F1EC;--dim:#A9BDB2;--faint:#8FA69A;--line:#24362D;--cell:#16241E;--surface:rgba(19,30,25,.92);--glass:rgba(22,36,30,.55);--rim:rgba(255,255,255,.09);
+  --best:#137A4A;--best-ink:#7EE2AE;--warn:#F6C25B;--bw:#2A2210;--blue:#8AB4FF;--bluebg:#141C30;--wash:rgba(255,255,255,.06);--field:#0F1A15;--hot:#0E2A1D;--hotk:#FFD54A;
+  --shadow:0 10px 30px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.05);
+  --mesh:radial-gradient(60% 50% at 8% 6%,#0F3B27 0,transparent 60%),radial-gradient(45% 45% at 96% 10%,#3A2A0B 0,transparent 60%),radial-gradient(60% 60% at 75% 100%,#211A3D 0,transparent 60%),#08110D}
+.panel{background:var(--glass);backdrop-filter:blur(18px) saturate(1.4);border:1px solid var(--rim);box-shadow:var(--shadow);border-radius:18px;padding:12px 14px}
+.head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.head h3{margin:0;font-size:16px;letter-spacing:-.01em}
+.sync{color:var(--dim);font-size:11.5px;margin-top:1px}
+.btn{display:inline-flex;align-items:center;min-height:34px;padding:0 14px;border-radius:999px;border:1.5px solid rgba(127,127,127,.4);font-weight:700;font-size:13px;color:var(--text);white-space:nowrap}
+
+/* the answer first: three counts, one of them highlighted */
+.tiles{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:8px;margin:10px 0 10px}
+.tile{background:var(--surface);border:1px solid var(--rim);border-radius:14px;padding:8px 12px;box-shadow:var(--shadow)}
+.tile .k{font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
+.tile b{display:block;font-size:20px;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin-top:1px}
+.tile small{display:block;color:var(--dim);font-size:11px}
+.tile.hot{background:var(--hot);border-color:var(--hot);color:#fff}.tile.hot .k{color:var(--hotk)}.tile.hot small{color:#C7D6CE}
+
+/* filters: one segmented control, counts in every segment */
+.seg{display:flex;gap:4px;padding:3px;border-radius:999px;background:var(--wash);border:1px solid var(--line);overflow-x:auto;scrollbar-width:none;margin-bottom:6px}
+.seg span{flex:none;border-radius:999px;padding:5px 12px;font-weight:700;font-size:12px;color:var(--dim);white-space:nowrap}
+.seg span b{font-variant-numeric:tabular-nums;margin-left:4px;opacity:.8}
+.seg span.on{background:var(--best);color:#fff}
+.chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 0 4px}
+.chips span{flex:none;border:1.5px solid var(--line);border-radius:999px;padding:2px 10px;font-weight:700;font-size:11.5px;color:var(--dim);background:var(--surface)}
+.chips span.on{border-color:var(--best);color:var(--best-ink)}
+
+/* kinds and groups */
+.kind{display:flex;align-items:baseline;gap:8px;margin:14px 0 2px;padding-bottom:3px;border-bottom:1px dashed var(--line)}
+.kind h4{margin:0;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+.kind .why{font-size:11px;color:var(--faint)}
+.site{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline;margin:10px 0 4px;font-weight:800;font-size:13px}
+.tag{font-size:10.5px;font-weight:800;border-radius:999px;padding:1px 8px}
+.t80{color:var(--dim);background:var(--wash);border:1px solid var(--line)}
+.tany{color:var(--blue);background:var(--bluebg)}
+.tcart{color:var(--best-ink);background:color-mix(in srgb,var(--best) 14%,transparent)}
+.tnew{color:var(--warn);background:var(--bw);border:1px dashed currentColor}
+.meta{color:var(--faint);font-weight:600;font-size:11.5px}
+.age::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:0;background:#16A34A}
+.age.amber::before{background:#D97706}
+.how{color:var(--dim);font-size:11.5px;margin:0 0 4px}
+.dr{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:3px 10px;align-items:center;font-size:12.5px;padding:5px 9px;border-radius:10px;background:var(--cell);margin-bottom:3px}
+.dr .n{overflow-wrap:anywhere}.dr .n small{color:var(--faint);font-weight:600}
+.dp{font-weight:800;color:var(--best-ink);font-variant-numeric:tabular-nums}
+.dm{color:var(--dim);text-decoration:line-through;font-size:11.5px}
+.pill{background:var(--best);color:#fff;border-radius:999px;padding:1px 8px;font-size:11px;font-weight:800;white-space:nowrap}
+.or{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;align-items:start;font-size:12.5px;padding:5px 9px;border-radius:10px;background:var(--cell);margin-bottom:3px}
+.code{display:inline-flex;align-items:center;gap:3px;font:600 10.5px ui-monospace,Menlo,Consolas,monospace;border:1px solid var(--line);border-radius:6px;padding:0 5px;margin-left:4px;color:var(--dim);vertical-align:1px}
+.or .d{display:block;color:var(--faint);font-size:11px}
+.min{color:var(--dim);font-size:12px;white-space:nowrap;font-variant-numeric:tabular-nums;text-align:right}
+.min i{display:block;font-style:normal;font-size:10.5px;font-weight:700;color:var(--best-ink)}
+.more{color:var(--best-ink);font-weight:700;font-size:12px;padding:3px 0;display:block}
+.quiet{font-size:12px;color:var(--dim);background:var(--wash);border:1px solid var(--line);border-radius:10px;padding:6px 10px;margin:8px 0 2px}
+.quiet b{color:var(--text)}
+.warnrow{font-size:12px;border-radius:10px;padding:6px 10px;margin:8px 0 2px;background:var(--bw);color:var(--warn);border:1px solid color-mix(in srgb,var(--warn) 40%,transparent);font-weight:600}
+.warnrow b{font-weight:800}
+.prop{border:1.5px dashed color-mix(in srgb,var(--warn) 60%,transparent);border-radius:14px;padding:2px 8px 6px;margin-top:8px}
+
+.phone{border-radius:34px;padding:8px;background:#0b0f0d}
+.phone .app{border-radius:27px;padding:10px 10px 74px;min-height:640px;font-size:12px;position:relative}
+.phone .tiles{grid-template-columns:1fr 1fr;} .phone .tile.hot{grid-column:1/-1}
+.phone .dr{grid-template-columns:minmax(0,1fr) auto auto}.phone .dr .n{grid-column:1/-1}
+.phone .btn{min-height:30px;padding:0 11px;font-size:12px}
+.tabs{position:absolute;left:10px;right:10px;bottom:10px;border-radius:20px;padding:5px;display:grid;grid-template-columns:repeat(4,1fr);gap:3px;background:var(--glass);border:1px solid var(--rim);backdrop-filter:blur(18px)}
+.tabs span{display:grid;justify-items:center;gap:1px;padding:5px 0;border-radius:14px;font-size:9.5px;font-weight:800;color:var(--dim)}
+.tabs span.on{background:var(--best);color:#fff}.tabs i{font-style:normal;font-size:14px;line-height:1}
+</style>
+</head>
+<body>
+<div class="sheet">
+<h1>The whole Deals section</h1>
+<p>Everything the section holds now, plus the two cart-offer sources still to come, using today's real data (checked 14:20, 07:00 and 18:00 schedule). The section got long: product deals, BigBasket's five storefronts, and now Zepto's 59 cart offers (Instamart's 34 are next). Two ways to keep it readable; both keep every row, rule and number the app has today.</p>
+<div class="note"><b>Design-library references used:</b> <code>guides/dashboards.md</code> (lead with the answer, one highlighted card, filters above the list, designed empty/error states, tabular figures, phone without a wrapping header, no colour-only status), <code>guides/mobile-app-flows.md</code> (lists on a phone: one column, the name on its own line), <code>tokens/tokens.css</code> and the app's own <code>theme.css</code> tokens.
+<ul>
+<li><b>Nothing here counts in a basket total.</b> The "Deals" rule is unchanged.</li>
+<li><b>Cart offers show the order minimum</b> ("above ₹99"), not "shop for ₹81 more": that gap was measured against my one-item probe cart, so it means nothing for your basket.</li>
+<li><b>Empty groups collapse into one line</b> instead of a heading each, so only things that exist take space.</li>
+<li>Every status has a word (not just a colour): <i>checked</i>, <i>not signed in</i>, <i>not read yet</i>, <i>proposed</i>.</li>
+<li>Dashed amber "PROPOSED" boxes are <b>not built yet</b> (Instamart and BigBasket cart offers). Everything else is what the app shows or will show from data already read.</li>
+</ul></div>
+
+<h2>Option A · one list, filtered by a single control</h2>
+<p>Counts first, then <b>All | Product deals | Storefronts | Cart offers</b>. "All" shows the three kinds one after another, each with a small heading saying what rule it follows. The control is the same on a phone (scrolls sideways).</p>
+<div class="row">
+  <div><div class="app" id="a-desk"></div><p class="cap">A · light, 1280 px, "All" selected.</p></div>
+  <div><div class="phone"><div class="app dark" id="a-phone"></div></div><p class="cap">A · dark, phone (Deals tab), "Cart offers" selected.</p></div>
+</div>
+
+<h2>Option B · three tabs inside Deals</h2>
+<p>The same counts on top, but each kind is its own tab, so one tab is one short list. Better when you usually want one kind; costs a tap to see another.</p>
+<div class="row">
+  <div><div class="app" id="b-desk"></div><p class="cap">B · light, 1280 px, "Cart offers" tab, Zepto chip selected.</p></div>
+  <div><div class="phone"><div class="app" id="b-phone"></div></div><p class="cap">B · light, phone, "Storefronts" tab.</p></div>
+</div>
+
+<div class="ask"><b>To pick:</b>
+<ol>
+<li>A (one list, one filter) or B (three tabs)?</li>
+<li>Collapse empty groups into one line (as drawn), or keep a heading for each site even when it has nothing?</li>
+<li>Keep the three count tiles at the top (the 80%+ one highlighted), or drop them and let the filter's counts do the job?</li>
+<li>Build Instamart's cart coupons next (the dashed box)? BigBasket's wait until its sign-in and cart read are safe.</li>
+</ol></div>
+</div>
+
+<script>
+const rs = (n) => '₹' + Number(n).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+const deal = (n, meta, price, mrp, pct, site) => `<div class="dr"><span class="n">${site ? `<b>${site}</b> · ` : ''}${n}${meta ? ` <small>· ${meta}</small>` : ''}</span><span class="dp">${rs(price)}</span><span class="dm">${rs(mrp)}</span><span class="pill">${pct}% off</span></div>`;
+const offer = (t, code, min, extra, note) => `<div class="or"><span>${t}${code ? `<span class="code">${code}</span>` : ''}${extra ? `<span class="d">${extra}</span>` : ''}</span><span class="min">${min ? 'above ' + rs(min) : ''}${note ? `<i>${note}</i>` : ''}</span></div>`;
+const group = (site, tag, tagCls, meta, age, body, how) => `<div class="site"><span>${site}</span><span class="tag ${tagCls}">${tag}</span>${meta ? `<span class="meta">${meta}</span>` : ''}${age ? `<span class="meta age">${age}</span>` : ''}</div>${how ? `<div class="how">${how}</div>` : ''}${body}`;
+const kind = (h, why) => `<div class="kind"><h4>${h}</h4><span class="why">${why}</span></div>`;
+
+/* real rows, 2026-11-25 */
+const searches = [
+  deal('Sarthi DeLight Mix Dry Fruit Combo Pack 250 g', '', 199, 2999, 93, 'JioMart'),
+  deal('LILA DRY FRUITS Premium Prunes 100 g', '', 226, 1999, 89, 'JioMart'),
+  deal('bb Royal Til/Ellu - White 500 g', '', 140, 1200, 88, 'BigBasket'),
+  deal('Savara nuts Premium Jumbo Dried Apricot 300 g', '', 189, 1599, 88, 'JioMart'),
+  deal('AJAPOR Biodegradable Garbage Bags 10 pcs', '', 269, 2000, 87, 'JioMart'),
+].join('');
+const sfDeals = {
+  'Deals of the Week': [46, [deal('Lakme Glitterati Illuminizer 4 g', 'max 3 items', 150, 500, 70), deal('Tasties Khari - Methi 200 g', '', 59, 120, 51), deal('LuvLap Baby Diaper Pants - S 38 pcs', 'max 3 items', 299, 499, 40)]],
+  'Buy More Save More': [72, [deal('Keya Penne Pasta - Durum Wheat Semolina 400 g', '', 75.6, 140, 46), deal('Saffola Active Forest Honey 1 kg', 'max 3 items', 299, 499, 40)]],
+  'Combos': [46, [deal('Britannia The Original Bourbon Creme Biscuit 120 g', '', 17.5, 35, 50), deal('Britannia Treat - Orange Creme Biscuits 309 g', '', 61, 100, 39)]],
+  'Big Pack Big Discount': [39, [deal('True Elements Quinoa 2 kg', '', 502.69, 1300, 61), deal('4700BC Himalayan Salt Caramel Popcorn 2 x 125 g', '', 190, 400, 53)]],
+  'Rs. 30 Corner': [34, [deal('Pearlfiesta Panchang Wall Calendar 2026, Hindi', 'max 10 items', 9, 60, 85), deal('Gulmeher Phulwa Natural Pink Gulaal 50 g', '', 29, 99, 71)]],
+};
+const sfGroups = (n) => Object.entries(sfDeals).slice(0, n).map(([t, [c, rows]]) => group('BigBasket · ' + t, 'any discount', 'tany', c + ' items', 'checked 07:04', rows.join('') + `<span class="more">+ ${c - rows.length} more</span>`)).join('');
+const zPay = [
+  offer('Get up to ₹125 cashback with BHIM app', 'TRYBHIM', 99), offer('Get upto ₹75 instant cashback with BHIM App', 'ZEPBHIM', 99),
+  offer('Flat ₹150 or ₹15 cashback with Jupiter UPI', 'JUPITER', 199, 'Earn cashback in the form of Jewels on the Jupiter App'), offer('Flat ₹25 off with Tata Neu UPI', 'TATANEU25', 199),
+  offer('Flat ₹10 off with Bajaj Pay UPI', 'ZEPBAJAJ', 299),
+].join('');
+const zPayDay = offer('Get 15% up to ₹125 off with HDFC Mastercard Debit Cards', 'ZEPMAHDFCDC', 599, 'only on Tuesdays and Thursdays');
+const zCoupons = [offer('Flat 5% Off on Baidyanath products', '', null, '', 'auto-applied'), offer('Flat ₹1000 Off on Fire TV Stick', '', null, '', 'auto-applied'), offer('Flat ₹500 Off on JBL products', '', null, '', 'auto-applied')].join('');
+const iCoupons = [
+  offer('Get upto ₹100 cashback with Paytm UPI', 'PAYTMUPI10', 99, 'Assured ₹10 to ₹100 cashback'), offer('Flat ₹40 cashback using Navi UPI', 'NAVIUPINEW', 99, 'first-ever Navi UPI payment'),
+  offer('Get flat ₹150 cashback with MobiKwik UPI', 'MBKUPINEW', 199), offer('Get 15% OFF with Indian Bank Credit Cards', 'INDIANBANKCC', 299, 'up to ₹120'),
+].join('');
+const readNote = 'Read from the cart with one item put in and taken out again. Nothing is ordered.';
+
+const head = (compact) => `<div class="panel"><div class="head"><div><h3>Deals <span style="color:var(--dim);font-weight:600;font-size:12px">· not in totals</span></h3><div class="sync">Checked 14:20 · next checks 18:00 and 07:00</div></div><span class="btn">Check offers</span></div>
+<div class="tiles"><div class="tile hot"><span class="k">Product deals · 80%+ off</span><b>25</b><small>from searches: JioMart, BigBasket</small></div><div class="tile"><span class="k">Storefront items</span><b>237</b><small>BigBasket · 5 storefronts</small></div><div class="tile"><span class="k">Cart offers</span><b>59</b><small>lowest minimum ${rs(99)}</small></div></div>`;
+const seg = (on) => `<div class="seg">${[['All', 321], ['Product deals', 25], ['Storefronts', 237], ['Cart offers', 59]].map(([t, c]) => `<span class="${t === on ? 'on' : ''}">${t}<b>${c}</b></span>`).join('')}</div>`;
+const tabsB = (on) => `<div class="seg">${[['Product deals', 25], ['Storefronts', 237], ['Cart offers', 59]].map(([t, c]) => `<span class="${t === on ? 'on' : ''}">${t}<b>${c}</b></span>`).join('')}</div>`;
+
+const productKind = (extra = '') => kind('Product deals', 'at 80%+ off MRP') +
+  `<div class="warnrow"><b>Milkbasket:</b> not signed in, so not checked. Sign in to see its ₹1 deals.</div>` +
+  `<div class="quiet"><b>Nothing at 80%+</b> at the last check: Instamart (07:00), Zepto (14:20)</div>` +
+  group('From searches', 'last 24 h', 't80', '', '', searches + `<span class="more">+ 20 more</span>`);
+const storefrontKind = (n) => kind('Storefront deals', 'BigBasket\'s own deal pages, any discount') + sfGroups(n);
+const cartKind = () => kind('Cart offers', 'coupons and payment offers listed in the cart') +
+  group('Zepto · Payment offers', 'cart offers', 'tcart', '55 offers', 'checked 14:20', zPay + zPayDay + `<span class="more">+ 49 more</span>`, readNote) +
+  group('Zepto · Coupons', 'cart offers', 'tcart', '4 offers', 'checked 14:20', zCoupons + `<span class="more">+ 1 more</span>`) +
+  `<div class="prop">` + group('Instamart · Coupons', 'cart offers', 'tcart', '34 offers', 'read 2026-11-25', iCoupons + `<span class="more">+ 30 more</span>`, readNote) + `<div class="meta" style="padding:2px 0"><span class="tag tnew">PROPOSED · not built yet</span></div></div>` +
+  `<div class="prop"><div class="warnrow" style="margin-top:6px"><b>BigBasket · cart offers:</b> not read yet. Its cart page is read from the page's own data request, never opened, once its bot protection has cleared.</div><div class="meta" style="padding:2px 0"><span class="tag tnew">PROPOSED · not built yet</span></div></div>`;
+
+/* Option A */
+document.getElementById('a-desk').innerHTML = head() + seg('All') + productKind() + storefrontKind(3) + `<span class="more" style="margin-top:6px">+ 2 more storefronts</span>` + cartKind() + `</div>`;
+document.getElementById('a-phone').innerHTML = head() + seg('Cart offers') + `<div class="chips"><span class="on">Zepto 59</span><span>Instamart 34</span><span>BigBasket –</span></div>` +
+  group('Zepto · Payment offers', 'cart offers', 'tcart', '55', 'checked 14:20', zPay.split('<div class="or">').slice(1, 4).map((x) => '<div class="or">' + x).join('') + `<span class="more">+ 52 more</span>`, readNote) +
+  group('Zepto · Coupons', 'cart offers', 'tcart', '4', '', zCoupons.split('<div class="or">').slice(1, 3).map((x) => '<div class="or">' + x).join('') + `<span class="more">+ 2 more</span>`) + `</div>
+  <div class="tabs"><span><i>🛒</i>Compare</span><span><i>🔍</i>Prices</span><span class="on"><i>🏷</i>Deals</span><span><i>⚙</i>Settings</span></div>`;
+
+/* Option B */
+document.getElementById('b-desk').innerHTML = head() + tabsB('Cart offers') + `<div class="chips"><span class="on">Zepto 59</span><span>Instamart 34</span><span>BigBasket –</span></div>` +
+  group('Zepto · Payment offers', 'cart offers', 'tcart', '55 offers', 'checked 14:20', zPay + zPayDay + `<span class="more">+ 49 more</span>`, readNote) +
+  group('Zepto · Coupons', 'cart offers', 'tcart', '4 offers', 'checked 14:20', zCoupons + `<span class="more">+ 1 more</span>`) + `</div>`;
+document.getElementById('b-phone').innerHTML = head() + tabsB('Storefronts') + sfGroups(2) + `<span class="more" style="margin-top:6px">+ 3 more storefronts</span></div>
+  <div class="tabs"><span><i>🛒</i>Compare</span><span><i>🔍</i>Prices</span><span class="on"><i>🏷</i>Deals</span><span><i>⚙</i>Settings</span></div>`;
+</script>
+</body>
+</html>
