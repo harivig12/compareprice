@@ -576,6 +576,38 @@ function renderFreshness(r) {
   $('refreshold')?.addEventListener('click', () => fetchOnly(STALE, 'old'));
 }
 
+/**
+ * "Pay with" line under each site's total: the best offer for the methods saved in
+ * Settings. A separate line, never part of a total or the ranking (decision 2026-11-25).
+ */
+let ADVICE_SEQ = 0;
+async function loadAdvice(up, downCount) {
+  const seq = ++ADVICE_SEQ;
+  const totals = {};
+  for (const p of up) if (!p.others && p.total > 0) totals[p.platform] = p.total;
+  if (!Object.keys(totals).length) return;
+  let a;
+  try {
+    a = await (await fetch('/api/advice', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ totals }) })).json();
+  } catch { return; }
+  if (seq !== ADVICE_SEQ || !a || a.error) return;
+  const cell = (p) => {
+    const b = a.advice?.[p.platform]?.best;
+    if (!b) return p.others ? '<td>—</td>' : `<td class="muted" style="font-weight:500;font-size:12px">${a.advice?.[p.platform] ? 'No offer fits your methods' : '—'}</td>`;
+    const cond = b.conditions?.length ? `<div class="u">if eligible: ${esc(b.conditions.join(', '))}</div>` : '';
+    return `<td style="font-weight:500;font-size:12px" title="${esc(`${b.title}${b.code ? ` (${b.code})` : ''}${b.minOrder ? ` · min ${rs(b.minOrder)}` : ''}`)}">Pay with <b>${esc(b.method)}</b>: save <b>${rs(b.saving)}</b><div class="u">after offer ${rs(b.after)}</div>${cond}</td>`;
+  };
+  const span = up.length + 1 + (downCount ? 1 : 0);
+  const row = a.hasMethods
+    ? `<tr class="pay"><td>Best payment offer</td>${up.map(cell).join('')}${downCount ? '<td></td>' : ''}</tr>`
+    : `<tr class="pay"><td colspan="${span}" class="muted">Add your cards and UPI apps in <a href="/settings#payments">Settings</a> to see the best payment offer for this basket.</td></tr>`;
+  $('table').querySelector('tfoot')?.insertAdjacentHTML('beforeend', row);
+  if (a.hasMethods) {
+    const lines = up.filter((p) => a.advice?.[p.platform]?.best).map((p) => { const b = a.advice[p.platform].best; return `<div class="row"><b>${esc(label(p.platform))}</b><span>Pay with ${esc(b.method)}: save ${rs(b.saving)}<div class="u">after offer ${rs(b.after)}${b.conditions?.length ? ` · if eligible: ${esc(b.conditions.join(', '))}` : ''}</div></span><b></b></div>`; }).join('');
+    if (lines) $('cards').insertAdjacentHTML('beforeend', `<div class="card"><h3>Best payment offer</h3>${lines}</div>`);
+  }
+}
+
 function render(r) {
   $('result').hidden = false;
   $('title').textContent = `${r.basket.length} item${r.basket.length === 1 ? '' : 's'}`;
@@ -621,6 +653,7 @@ function render(r) {
   const anyFree = up.some((p) => SITE_INFO[p.platform]?.freeDeliveryAbove);
   const freeRow = anyFree ? `<tr class="free"><td>Free delivery</td>${up.map(freeCell).join('')}${down.length ? '<td></td>' : ''}</tr>` : '';
   $('table').innerHTML = `<thead><tr><th class="item" scope="col">Item</th>${head}</tr></thead><tbody>${rows}</tbody><tfoot><tr><td>Total</td>${foot}</tr>${freeRow}</tfoot>`;
+  loadAdvice(up, down.length);
   // "Get for missing only": item/site pairs with no counted price in this view.
   MISSING = {};
   for (const p of r.platforms) {
@@ -990,7 +1023,7 @@ function offerRow(o) {
   const tip = [o.description, ...(o.terms || [])].filter(Boolean).join('\n');
   const extra = o.extra; // what the terms add to the title and minimum ("only on Sundays"), worked out by the server
   return `<div class="dealrow offer" tabindex="0"${tip ? ` title="${esc(tip)}"` : ''}>
-    <span class="dn">${esc(o.title)}${o.code ? ` <span class="codechip">${esc(o.code)}</span>` : ''}${extra ? `<span class="offdesc">${esc(extra)}</span>` : ''}</span>
+    <span class="dn">${esc(o.title)}${o.code ? ` <span class="codechip">${esc(o.code)}</span>` : ''}${extra ? `<span class="offdesc">${esc(extra)}</span>` : ''}${o.fits ? `<span class="offnow">✓ Works with your ${esc(o.fits)}</span>` : o.read === false ? '<span class="offdesc">terms not read yet</span>' : ''}</span>
     <span class="offmin">${o.state === 'available' ? '<span class="offnow">usable now</span>' : o.state === 'auto-applied' ? '<span class="offnow">auto-applied</span>' : ''}${o.minOrder ? `above ${rs(o.minOrder)}` : ''}</span></div>`;
 }
 function offerGroup(l) {

@@ -542,3 +542,35 @@ test('unknown routes 404 as JSON', async () => {
 test.after(() => {
   rmSync(TMP, { recursive: true, force: true });
 });
+
+test('payment advisor: methods are kept, the best offer is worked out per site, totals are untouched, Deals marks offers that fit', async () => {
+  const { offerKey } = await import('../src/payments.js');
+  const offer = { code: 'HDFC10', title: '10% off with HDFC credit card', description: 'above ₹999', terms: [], minOrder: 999, state: 'locked' };
+  const meta = new Map();
+  meta.set(`offer_rule:${offerKey('zepto', offer)}`, JSON.stringify({ kind: 'percent', value: 10, cap: 75, minOrder: 999, methods: [{ issuer: 'hdfc', instrument: 'credit' }], conditions: ['first order'] }));
+  const store = {
+    getMeta: (k) => meta.get(k) ?? null, setMeta: (k, v) => meta.set(k, String(v)),
+    currentDeals: () => ({ checkedAt: {}, groups: [], fromSearches: [], errors: [], offerLists: [{ site: 'zepto', kind: 'payment', checkedAt: 't', offers: [{ ...offer }] }] }),
+    listJobs: () => [], createJob: () => 1, updateJob: () => {}, getJob: () => null,
+  };
+  const queue = { enqueue: () => 1, current: () => null, pending: () => [], on: () => {}, off: () => {} };
+  const server = await startServer({ port: 0, compare: async () => FAKE_RESULT, store, queue });
+  try {
+    const put = (methods) => fetch(`${server.url}/api/payments`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ methods }) });
+    assert.equal((await put('nope')).status, 400);
+    const none = await (await post(server, '/api/advice', { totals: { zepto: 1240 } })).json();
+    assert.equal(none.hasMethods, false);
+    assert.deepEqual(await (await put([' HDFC  Credit Card ', ''])).json(), { methods: ['HDFC Credit Card'] });
+    const a = await (await post(server, '/api/advice', { totals: { zepto: 1240, instamart: 900 } })).json();
+    assert.equal(a.hasMethods, true);
+    assert.deepEqual([a.advice.zepto.best.saving, a.advice.zepto.best.after, a.advice.zepto.best.conditions], [75, 1165, ['first order']]);
+    assert.equal(a.advice.instamart, undefined);
+    const low = await (await post(server, '/api/advice', { totals: { zepto: 500 } })).json();
+    assert.equal(low.advice.zepto.best, null);
+    const deals = await (await fetch(`${server.url}/api/deals`)).json();
+    assert.equal(deals.offerLists[0].offers[0].fits, 'HDFC Credit Card');
+    assert.equal(deals.offerLists[0].offers[0].read, true);
+  } finally {
+    await server.close();
+  }
+});

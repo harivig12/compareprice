@@ -87,6 +87,10 @@ Result lines from a site searched per account (Instamart) carry `product.account
   - The key goes to `<data>/secrets.json` (mode 600).
 - `POST /api/ai/check` → `{ ok, modelListed, sample: { ok, got }, error }`. It calls `GET {base}/models`, then labels two known titles.
 - `POST /api/ai/run` → 202 `{ jobId, queued }`, which queues an `ai-labels` job. It answers 400 when the labeller is off.
+- `POST /api/ai/offer-rules/run` → 202 `{ jobId, queued }`, which queues an `offer-rules` job (reads new payment offers' terms into fixed rules; 400 without a key). `PUT /api/ai` also takes `readOffers` (bool).
+- `GET /api/payments` / `PUT /api/payments { methods: string[] }` → `{ methods }`: "my payment methods", kept in the local store.
+- `POST /api/advice { totals: { <site>: <goods total> } }` → `{ hasMethods, advice: { <site>: { best: { title, code, method, saving, after, conditions, minOrder } | null, checkedAt } }, unread }`. Pure arithmetic on saved rules; it changes no total.
+- `GET /api/deals` payment offers carry `read` (rule saved) and `fits` (the method of mine that fits, or null).
 
 Cached `POST /api/compare` lines can now carry `savedFrom`: the more specific saved line they were answered from ("salt" ← "tata salt 1kg"). Line products carry `category`.
 

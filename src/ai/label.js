@@ -62,7 +62,7 @@ export function parseReply(json, n) {
   return out;
 }
 
-async function call(url, init, fetchImpl) {
+export async function call(url, init, fetchImpl) {
   let res;
   try {
     res = await fetchImpl(url, { ...init, signal: init.signal ?? AbortSignal.timeout(90_000) });
@@ -75,7 +75,7 @@ async function call(url, init, fetchImpl) {
   try { return JSON.parse(text); } catch { throw new Error('AI provider answered with something that is not JSON'); }
 }
 
-const headers = (key) => ({ 'content-type': 'application/json', authorization: `Bearer ${key}` });
+export const headers = (key) => ({ 'content-type': 'application/json', authorization: `Bearer ${key}` });
 
 /** Label one batch of titles with one request. */
 export async function labelBatch({ titles, settings, key, fetchImpl = fetch, signal }) {

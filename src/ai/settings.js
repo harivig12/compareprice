@@ -18,6 +18,8 @@ export const PROVIDERS = {
 // key in ai.md -> [setting, kind]. Order is the order written to a new file.
 const FIELDS = [
   ['enabled', 'enabled', 'bool'],
+  // Reads payment offers' terms into fixed rules for the payment advisor (offer text only).
+  ['read offers', 'readOffers', 'bool'],
   ['provider', 'provider', 'text'],
   ['base url', 'baseUrl', 'text'],
   ['model', 'model', 'text'],
@@ -31,6 +33,7 @@ const FIELDS = [
 
 export const DEFAULT_AI = Object.freeze({
   enabled: false,
+  readOffers: true,
   provider: 'groq',
   baseUrl: PROVIDERS.groq.baseUrl,
   model: PROVIDERS.groq.model,

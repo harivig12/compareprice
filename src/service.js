@@ -127,7 +127,9 @@ export async function startService({
     ? runOfferCheck(opts)
     : opts.trigger === 'ai-labels'
       ? runAiLabelsJob(opts)
-      : import('./compare.js').then((m) => m.compareBasket({ ...opts, accounts, poolSet, store, pool: poolSet.getMain() })));
+      : opts.trigger === 'offer-rules'
+        ? runOfferRulesJob(opts)
+        : import('./compare.js').then((m) => m.compareBasket({ ...opts, accounts, poolSet, store, pool: poolSet.getMain() })));
   const runOfferCheck = async ({ signal, onProgress, platforms }) => {
     const [{ checkOffers, OFFER_SITES }, { SITES }, { getLimiter }] = await Promise.all([import('./offers.js'), import('./engine/sites/index.js'), import('./limits.js')]);
     const out = await checkOffers({
@@ -150,6 +152,14 @@ export async function startService({
     log(`ai-labels: ${out.error ? `FAILED ${out.error}` : `${out.labelled} labelled in ${out.calls} call(s)${out.skipped ? ` (${out.skipped})` : ''}`}`);
     // A failure shows in the jobs list with its reason (what was labelled before it is kept).
     if (out.error) throw new Error(`ai-labels: ${out.error}${out.labelled ? ` (after ${out.labelled} labelled)` : ''}`);
+    return out;
+  };
+  // Payment advisor: read new payment offers' terms into fixed rules (offer text only).
+  const runOfferRulesJob = async ({ signal }) => {
+    const { runOfferRules } = await import('./ai/offer-rules.js');
+    const out = await runOfferRules({ store, dataDir, signal, log, timeZone: getConfig().timezone });
+    log(`offer-rules: ${out.error ? `FAILED ${out.error}` : `${out.read} read in ${out.calls} call(s)${out.skipped ? ` (${out.skipped})` : ''}`}`);
+    if (out.error) throw new Error(`offer-rules: ${out.error}${out.read ? ` (after ${out.read} read)` : ''}`);
     return out;
   };
   const aiEnabled = async () => (await import('./ai/settings.js')).readAiSettings(dataDir).enabled;
@@ -226,6 +236,8 @@ export async function startService({
         const already = queue.pending().some((j) => j.trigger === 'ai-labels') || queue.current()?.trigger === 'ai-labels';
         if (on && !already) queue.enqueue({ items: '', sites: null, trigger: 'ai-labels' });
       }).catch((err) => log(`ai-labels: could not read ai.md: ${err.message}`));
+      // New payment offers get their rules read (a no-op without a key or with "read offers: no").
+      if (!queue.pending().some((j) => j.trigger === 'offer-rules') && queue.current()?.trigger !== 'offer-rules') queue.enqueue({ items: '', sites: null, trigger: 'offer-rules' });
     }
     lastTrigger.delete(jobId);
     idle.touch();

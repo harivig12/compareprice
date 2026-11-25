@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup · best payment offer for your basket (2026-11-25)</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#E9EDF5;color:#1f2937;font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.sheet{max-width:1300px;margin:0 auto;padding:1.4rem 1.2rem 3rem}
+h1{margin:0 0 .3rem;font-size:1.5rem}h2{margin:1.8rem 0 .3rem;font-size:1.15rem;border-top:2px solid #cbd5e1;padding-top:.9rem}
+p{margin:.2rem 0 .7rem;max-width:960px}.cap{font-size:.82rem;color:#475569}
+.note{background:#fff;border-left:4px solid #2563EB;padding:.6rem 1rem;border-radius:.4rem;max-width:960px}
+.row{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:1.2rem;align-items:start}
+@media(max-width:1000px){.row{grid-template-columns:1fr}}
+.app{--text:#0B1B14;--dim:#3E5148;--faint:#5C6E65;--line:#D9E4DD;--cell:#F4F8F5;--surface:rgba(255,255,255,.92);--glass:rgba(255,255,255,.55);--rim:rgba(255,255,255,.8);--best:#0E7A4B;--best-ink:#06492C;--warn:#9A4A06;--bw:#FFF3E3;--blue:#1D4ED8;--bluebg:#EAF0FF;--wash:rgba(255,255,255,.7);--field:#fff;
+--shadow:0 10px 30px rgba(11,27,20,.08),inset 0 1px 0 rgba(255,255,255,.7);
+--mesh:radial-gradient(60% 50% at 8% 6%,#BFF0D4 0,transparent 60%),radial-gradient(45% 45% at 96% 10%,#FFD9C2 0,transparent 60%),radial-gradient(60% 60% at 75% 100%,#DCD3FF 0,transparent 60%),#F4F7F2;
+color:var(--text);background:var(--mesh);font:13px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:14px;border-radius:22px;box-shadow:0 18px 40px #0b1b1426}
+.app.dark{--text:#E8F1EC;--dim:#A9BDB2;--faint:#8FA69A;--line:#24362D;--cell:#16241E;--surface:rgba(19,30,25,.92);--glass:rgba(22,36,30,.55);--rim:rgba(255,255,255,.09);--best:#137A4A;--best-ink:#7EE2AE;--warn:#F6C25B;--bw:#2A2210;--blue:#8AB4FF;--bluebg:#141C30;--wash:rgba(255,255,255,.06);--field:#0F1A15;
+--mesh:radial-gradient(60% 50% at 8% 6%,#0F3B27 0,transparent 60%),radial-gradient(45% 45% at 96% 10%,#3A2A0B 0,transparent 60%),radial-gradient(60% 60% at 75% 100%,#211A3D 0,transparent 60%),#08110D}
+.panel{background:var(--glass);backdrop-filter:blur(18px) saturate(1.4);border:1px solid var(--rim);box-shadow:var(--shadow);border-radius:18px;padding:12px 14px;margin-bottom:10px}
+h3{margin:0 0 6px;font-size:15px}
+.sites{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.phone .sites{grid-template-columns:1fr}
+.site{background:var(--surface);border:1px solid var(--rim);border-radius:14px;padding:9px 12px}
+.site.win{border-color:var(--best)}
+.site .nm{font-weight:800}.site .tot{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.site small{color:var(--dim)}
+.pay{margin-top:6px;padding:6px 9px;border-radius:10px;background:var(--cell);border:1px dashed var(--line);font-size:12px}
+.pay b{color:var(--best-ink);font-variant-numeric:tabular-nums}
+.pay .if{display:block;color:var(--warn);font-weight:600;font-size:11px}
+.pay .src{display:block;color:var(--faint);font-size:10.5px}
+.tag{font-size:10.5px;font-weight:800;border-radius:999px;padding:1px 8px;background:var(--best);color:#fff}
+.tag.ghost{background:color-mix(in srgb,var(--best) 14%,transparent);color:var(--best-ink)}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--line);border-radius:999px;padding:3px 6px 3px 11px;font-weight:700;background:var(--surface);margin:0 6px 6px 0}
+.chip i{font-style:normal;border-radius:50%;width:20px;height:20px;display:grid;place-items:center;color:var(--dim);border:1px solid var(--line)}
+.btn{display:inline-flex;align-items:center;min-height:34px;padding:0 14px;border-radius:999px;border:1.5px solid rgba(127,127,127,.4);font-weight:700;color:var(--text)}
+.btn.p{background:var(--best);border-color:var(--best);color:#fff}
+.field{border:1.5px solid var(--line);background:var(--field);border-radius:10px;padding:6px 10px;color:var(--dim);display:inline-block;min-width:200px}
+.or{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;font-size:12.5px;padding:6px 9px;border-radius:10px;background:var(--cell);margin-bottom:4px}
+.or .d{display:block;color:var(--faint);font-size:11px}
+.min{color:var(--dim);font-size:12px;text-align:right;white-space:nowrap}
+.code{font:600 10.5px ui-monospace,Consolas,monospace;border:1px solid var(--line);border-radius:6px;padding:0 5px;margin-left:4px;color:var(--dim)}
+.mine{color:var(--best-ink);font-weight:800;font-size:11px}
+.phone{border-radius:34px;padding:8px;background:#0b0f0d}.phone .app{border-radius:27px;padding:10px}
+</style></head><body><div class="sheet">
+<h1>Best payment offer for your basket</h1>
+<p>Feature 1 of 3. Your answers: payment methods kept in Settings (local), result under each site's total, the price after the offer on its own line, conditions I can't verify shown as "if eligible", and the AI reads each offer's terms once into fixed rules.</p>
+<div class="note"><b>References used:</b> <code>guides/dashboards.md</code> (answer first, status in words, tabular figures), <code>guides/mobile-app-flows.md</code> (settings and lists on a phone), <code>tokens/tokens.css</code>, and the app's <code>theme.css</code> glass tokens (same as the Deals mock).
+<ul><li><b>Ranking stays goods-only.</b> The "after offer" line never changes who wins or any total.</li>
+<li>Only your own listed methods are used. The AI never sees your basket or cards, only offer text.</li>
+<li>The saving is plain arithmetic on fixed rules: percent, cap, minimum order, method.</li></ul></div>
+
+<h2>1 · Compare page: a "Pay with" line under each site total</h2>
+<div class="row">
+<div><div class="app"><div class="panel"><h3>Site totals <span class="tag">Cheapest: Site A</span></h3>
+<div class="sites">
+<div class="site win"><div class="nm">Site A</div><div class="tot">₹1,240</div><small>goods only, 12 of 12 items</small>
+ <div class="pay">Pay with <b>HDFC Credit Card</b>: save <b>₹75</b><br>After offer <b>₹1,165</b>
+ <span class="if">if eligible: first order on the app</span><span class="src">10% up to ₹75 · min ₹999 · read 18:02</span></div></div>
+<div class="site"><div class="nm">Site B</div><div class="tot">₹1,262</div><small>goods only, 12 of 12 items</small>
+ <div class="pay">Pay with <b>UPI (GPay)</b>: save <b>₹100</b><br>After offer <b>₹1,162</b>
+ <span class="src">flat ₹100 · min ₹1,199 · read 18:02</span></div></div>
+<div class="site"><div class="nm">Site C</div><div class="tot">₹1,301</div><small>goods only, 11 of 12 items</small>
+ <div class="pay">No offer fits your methods</div></div>
+</div></div>
+<p class="cap" style="margin:0 4px">Site B is cheaper after the offer, but ranking stays by goods. The line says so; it does not reorder.</p></div>
+<p class="cap">Light, 1280 px.</p></div>
+<div><div class="phone"><div class="app dark"><div class="panel"><h3>Site totals</h3><div class="sites">
+<div class="site win"><div class="nm">Site A <span class="tag">Cheapest</span></div><div class="tot">₹1,240</div>
+ <div class="pay">Pay with <b>HDFC Credit Card</b>: save <b>₹75</b><br>After offer <b>₹1,165</b><span class="if">if eligible: first order on the app</span></div></div>
+<div class="site"><div class="nm">Site B</div><div class="tot">₹1,262</div>
+ <div class="pay">Pay with <b>UPI (GPay)</b>: save <b>₹100</b><br>After offer <b>₹1,162</b></div></div>
+</div></div></div></div><p class="cap">Dark, phone.</p></div>
+</div>
+
+<h2>2 · Settings: "My payment methods"</h2>
+<div class="row">
+<div><div class="app"><div class="panel"><h3>My payment methods</h3>
+<p class="cap">Kept on this device only. Used to find which offers could apply to you. Never sent anywhere. Offer text is the only thing the AI reads.</p>
+<span class="chip">HDFC Credit Card <i>✕</i></span><span class="chip">UPI (GPay) <i>✕</i></span><span class="chip">Amazon Pay wallet <i>✕</i></span><br>
+<span class="field">Add a method, e.g. ICICI Debit Card</span> <span class="btn p">Add</span>
+<p class="cap" style="margin-top:8px">AI offer reading: <b>On</b> (key set under AI). 94 offers read, 0 pending. Each offer is read once and remembered.</p></div></div>
+<p class="cap">Light, 1280 px.</p></div>
+<div><div class="phone"><div class="app dark"><div class="panel"><h3>My payment methods</h3>
+<span class="chip">HDFC Credit Card <i>✕</i></span><span class="chip">UPI (GPay) <i>✕</i></span><br><span class="field" style="min-width:0;width:100%">Add a method</span><p><span class="btn p">Add</span></p></div></div></div><p class="cap">Dark, phone.</p></div>
+</div>
+
+<h2>3 · Deals › Cart offers: a "works for your basket" mark</h2>
+<div class="row">
+<div><div class="app"><div class="panel"><h3>Cart offers · Site A</h3>
+<div class="or"><div>10% off up to ₹75 <span class="code">FIRST10</span> <span class="mine">✓ Works for your basket · HDFC Credit Card</span><span class="d">if eligible: first order on the app</span></div><div class="min">above ₹999</div></div>
+<div class="or"><div>Flat ₹100 off <span class="code">SAVE100</span><span class="d">needs a method you haven't listed</span></div><div class="min">above ₹1,199</div></div>
+<div class="or"><div>₹50 cashback on wallet <span class="mine">✓ Works for your basket · Amazon Pay wallet</span></div><div class="min">above ₹499</div></div></div></div>
+<p class="cap">Light, 1280 px. The mark has a tick and words, never colour alone. Offers whose terms the AI couldn't turn into rules show "terms not read" and are skipped from the advisor.</p></div>
+<div><div class="phone"><div class="app dark"><div class="panel"><h3>Cart offers</h3>
+<div class="or"><div>10% off up to ₹75 <span class="code">FIRST10</span><br><span class="mine">✓ Works for your basket</span><span class="d">HDFC Credit Card · if eligible: first order</span></div><div class="min">above ₹999</div></div>
+<div class="or"><div>Flat ₹100 off <span class="code">SAVE100</span><span class="d">needs a method you haven't listed</span></div><div class="min">above ₹1,199</div></div></div></div></div><p class="cap">Dark, phone.</p></div>
+</div>
+</div></body></html>

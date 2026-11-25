@@ -91,6 +91,18 @@
     </div>
   </form>
 
+  <section class="panel" id="payments" aria-labelledby="payh">
+    <h2 id="payh">My payment methods</h2>
+    <p class="hint" style="margin:0 0 10px">Your cards, UPI apps and wallets, e.g. “HDFC Credit Card” or “BHIM UPI”. Kept on this device only. They are used to pick the best payment offer for a basket; they are never sent anywhere. Only an offer's own text goes to the AI.</p>
+    <div id="paychips" aria-live="polite"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px">
+      <label for="paynew" class="sr">New payment method</label>
+      <input id="paynew" type="text" maxlength="40" placeholder="e.g. ICICI Debit Card" autocomplete="off" style="max-width:260px">
+      <button type="button" id="payadd">Add</button>
+      <span id="paystatus" role="status" aria-live="polite"></span>
+    </div>
+  </section>
+
   <form id="aif" class="panel" novalidate aria-labelledby="aih">
     <h2 id="aih">AI labels (optional)</h2>
     <p class="hint" style="margin:0 0 10px">Sorts saved products from sites that send no category (Blinkit, Amazon, Flipkart Minutes) into staple / packaged / sweets / pooja.
@@ -103,8 +115,10 @@
       <div><label for="aikey">API key</label><input id="aikey" type="password" autocomplete="new-password" spellcheck="false" aria-describedby="aikeyhint"><div class="hint" id="aikeyhint">Not saved yet</div></div>
     </div>
     <div style="margin-top:8px"><label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="aion"> Label new products after the scheduled runs</label></div>
+    <div style="margin-top:8px"><label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="airead"> Read payment offers' terms for the payment advisor (offer text only, each offer once)</label></div>
     <div class="bar" style="position:static">
       <button type="submit">Save AI settings</button>
+      <button type="button" class="secondary" id="airules">Read offers now</button>
       <button type="button" class="secondary" id="aicheck">Check connection</button>
       <button type="button" class="secondary" id="airun">Label now</button>
       <button type="button" class="danger" id="aiclear">Remove key</button>
@@ -160,6 +174,7 @@ function aiShow(v) {
   $('aimodel').value = v.settings.model;
   $('aiurl').value = v.settings.baseUrl;
   $('aion').checked = v.settings.enabled;
+  $('airead').checked = v.settings.readOffers !== false;
   $('aikey').value = '';
   $('aikey').placeholder = v.hasKey ? 'saved; type to replace' : 'paste your key';
   $('aikeyhint').textContent = v.hasKey ? `Saved (${v.keyHint}). Kept in secrets.json, never shown.` : 'Not saved yet';
@@ -175,7 +190,7 @@ $('aiprov').addEventListener('change', () => {
 });
 async function aiSave(extra = {}) {
   document.querySelectorAll('[data-aierr]').forEach((e) => { e.textContent = ''; });
-  const body = { provider: $('aiprov').value, model: $('aimodel').value, baseUrl: $('aiurl').value, enabled: $('aion').checked, ...extra };
+  const body = { provider: $('aiprov').value, model: $('aimodel').value, baseUrl: $('aiurl').value, enabled: $('aion').checked, readOffers: $('airead').checked, ...extra };
   if ($('aikey').value.trim() && !extra.clearKey) body.key = $('aikey').value;
   const res = await fetch('/api/ai', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
   const b = await res.json();
@@ -197,7 +212,31 @@ $('airun').addEventListener('click', async () => {
   const b = await res.json();
   aiStatus(res.ok ? `Queued as job ${b.jobId}. It runs after any search in progress.` : b.error, res.ok ? 'ok' : 'bad');
 });
+$('airules').addEventListener('click', async () => {
+  if (!(await aiSave())) return;
+  const res = await fetch('/api/ai/offer-rules/run', { method: 'POST' });
+  const b = await res.json();
+  aiStatus(res.ok ? `Queued as job ${b.jobId}. It runs after any search in progress.` : b.error, res.ok ? 'ok' : 'bad');
+});
 fetch('/api/ai').then((r) => r.json()).then(aiShow).catch(() => aiStatus('Could not load AI settings', 'bad'));
+
+// ── My payment methods (local only) ──
+let PAY = [];
+function payShow() {
+  $('paychips').innerHTML = PAY.length
+    ? PAY.map((m, i) => `<span class="chip" style="display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--line);border-radius:999px;padding:3px 6px 3px 12px;font-weight:700;margin:0 6px 6px 0">${esc(m)} <button type="button" class="secondary" data-i="${i}" aria-label="Remove ${esc(m)}" style="min-height:22px;padding:0 7px;border-radius:50%">✕</button></span>`).join('')
+    : '<p class="hint" style="margin:0">None yet. Without any, no payment offer line is shown.</p>';
+  $('paychips').querySelectorAll('button[data-i]').forEach((b) => b.addEventListener('click', () => paySave(PAY.filter((_, i) => i !== Number(b.dataset.i)))));
+}
+async function paySave(list) {
+  const res = await fetch('/api/payments', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ methods: list }) });
+  const b = await res.json();
+  $('paystatus').textContent = res.ok ? 'Saved' : b.error;
+  if (res.ok) { PAY = b.methods; payShow(); }
+}
+$('payadd').addEventListener('click', () => { const t = $('paynew').value.trim(); if (!t) return; $('paynew').value = ''; paySave([...PAY, t]); });
+$('paynew').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); $('payadd').click(); } });
+fetch('/api/payments').then((r) => r.json()).then((b) => { PAY = b.methods; payShow(); }).catch(() => { $('paystatus').textContent = 'Could not load'; });
 
 async function load() {
   META = await (await fetch('/api/meta')).json();

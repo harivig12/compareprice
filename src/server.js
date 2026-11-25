@@ -133,6 +133,8 @@ export function startServer({
 } = {}) {
   const budget = () => limiter ?? getLimiter(getConfig().limits);
   let loginManager = login;
+  // "My payment methods": a list of names, kept in the local store only.
+  const readPaymentMethods = () => { try { return JSON.parse(store?.getMeta?.('payment_methods') ?? '[]'); } catch { return []; } };
   const logins = () =>
     (loginManager ??= defaultLoginManager({
       file: pjoin(dataDir, 'accounts.json'),
@@ -389,7 +391,40 @@ export function startServer({
           d.seenBy = d.seenBy.map((x) => ({ ...x, name: name(d.site, x.account), hint: labelsOf(d.site).hints[x.account] ?? null }));
         }
         for (const e of deals.errors) e.name = name(e.site, e.account);
+        // Payment offers: the fixed rule read from their terms, and which of my methods it fits.
+        const [{ withRules }, pay] = await Promise.all([import('./ai/offer-rules.js'), import('./payments.js')]);
+        const mine = pay.cleanMethods(readPaymentMethods()).map(pay.describeMethod);
+        for (const l of withRules(store, deals.offerLists)) {
+          const list = deals.offerLists.find((x) => x.site === l.site && x.kind === 'payment');
+          list.offers.forEach((o, i) => { o.read = l.offers[i].read; o.fits = pay.fitsMethods(l.offers[i].rule, mine); });
+        }
         return json(res, 200, { minDiscountPct, ...deals });
+      }
+
+      // "My payment methods" (kept on this device) and the best offer per site for a basket's goods totals.
+      if (path === '/api/payments' && (req.method === 'GET' || req.method === 'PUT')) {
+        const pay = await import('./payments.js');
+        if (req.method === 'PUT') {
+          const b = await readJson(req);
+          if (!Array.isArray(b.methods)) return json(res, 400, { error: 'methods must be a list of names', field: 'methods' });
+          store?.setMeta?.('payment_methods', JSON.stringify(pay.cleanMethods(b.methods)));
+        }
+        return json(res, 200, { methods: pay.cleanMethods(readPaymentMethods()) });
+      }
+      if (req.method === 'POST' && path === '/api/advice') {
+        const b = await readJson(req);
+        const [{ withRules }, pay] = await Promise.all([import('./ai/offer-rules.js'), import('./payments.js')]);
+        const mine = pay.cleanMethods(readPaymentMethods()).map(pay.describeMethod);
+        const lists = store?.currentDeals ? withRules(store, store.currentDeals({}).offerLists) : [];
+        const advice = {};
+        let unread = 0;
+        for (const [site, total] of Object.entries(b.totals ?? {})) {
+          const list = lists.find((l) => l.site === site);
+          if (!list || !(Number(total) > 0)) continue;
+          unread += list.offers.filter((o) => !o.read).length;
+          advice[site] = { best: pay.bestOffer(Number(total), list.offers, mine), checkedAt: list.checkedAt };
+        }
+        return json(res, 200, { hasMethods: mine.length > 0, advice, unread });
       }
 
       // "Check offers": a queued job (shares the queue, so no tab is shared with a search).
@@ -415,6 +450,7 @@ export function startServer({
           const b = await readJson(req);
           const patch = {};
           if ('enabled' in b) patch.enabled = Boolean(b.enabled);
+          if ('readOffers' in b) patch.readOffers = Boolean(b.readOffers);
           if (b.provider != null) {
             if (!ai.PROVIDERS[b.provider]) return json(res, 400, { error: `Provider must be one of: ${Object.keys(ai.PROVIDERS).join(', ')}`, field: 'provider' });
             patch.provider = b.provider;
@@ -440,6 +476,13 @@ export function startServer({
           const queued = q.pending().find((j) => j.trigger === 'ai-labels') ?? (cur?.trigger === 'ai-labels' ? cur : null);
           if (queued) return json(res, 202, { jobId: queued.id, queued: true });
           return json(res, 202, { jobId: enqueue({ items: '', sites: null, trigger: 'ai-labels' }), queued: Boolean(cur) });
+        }
+        if (req.method === 'POST' && path === '/api/ai/offer-rules/run') {
+          if (!ai.readKey(dataDir)) return json(res, 400, { error: 'Save an API key first (Settings → AI).' });
+          const cur = q.current();
+          const queued = q.pending().find((j) => j.trigger === 'offer-rules') ?? (cur?.trigger === 'offer-rules' ? cur : null);
+          if (queued) return json(res, 202, { jobId: queued.id, queued: true });
+          return json(res, 202, { jobId: enqueue({ items: '', sites: null, trigger: 'offer-rules' }), queued: Boolean(cur) });
         }
         return json(res, 404, { error: 'Unknown AI route' });
       }
