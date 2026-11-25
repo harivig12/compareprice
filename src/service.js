@@ -129,7 +129,9 @@ export async function startService({
       ? runAiLabelsJob(opts)
       : opts.trigger === 'offer-rules'
         ? runOfferRulesJob(opts)
-        : import('./compare.js').then((m) => m.compareBasket({ ...opts, accounts, poolSet, store, pool: poolSet.getMain() })));
+        : opts.trigger === 'same-product'
+          ? runSameProductJob(opts)
+          : import('./compare.js').then((m) => m.compareBasket({ ...opts, accounts, poolSet, store, pool: poolSet.getMain() })));
   const runOfferCheck = async ({ signal, onProgress, platforms }) => {
     const [{ checkOffers, OFFER_SITES }, { SITES }, { getLimiter }] = await Promise.all([import('./offers.js'), import('./engine/sites/index.js'), import('./limits.js')]);
     const out = await checkOffers({
@@ -160,6 +162,16 @@ export async function startService({
     const out = await runOfferRules({ store, dataDir, signal, log, timeZone: getConfig().timezone });
     log(`offer-rules: ${out.error ? `FAILED ${out.error}` : `${out.read} read in ${out.calls} call(s)${out.skipped ? ` (${out.skipped})` : ''}`}`);
     if (out.error) throw new Error(`offer-rules: ${out.error}${out.read ? ` (after ${out.read} read)` : ''}`);
+    return out;
+  };
+  // "Same product?" check on the latest comparison's borderline matches (titles only; it only demotes).
+  const runSameProductJob = async ({ signal }) => {
+    const { runSameProduct } = await import('./ai/same-product.js');
+    let result = null;
+    try { result = JSON.parse(readFileSync(join(dataDir, 'last-result.json'), 'utf8')); } catch { /* none yet */ }
+    const out = await runSameProduct({ store, dataDir, result, signal, log, timeZone: getConfig().timezone });
+    log(`same-product: ${out.error ? `FAILED ${out.error}` : out.skipped ?? `${out.asked} asked, ${out.flagged} flagged`}`);
+    if (out.error) throw new Error(`same-product: ${out.error}`);
     return out;
   };
   const aiEnabled = async () => (await import('./ai/settings.js')).readAiSettings(dataDir).enabled;
@@ -238,6 +250,12 @@ export async function startService({
       }).catch((err) => log(`ai-labels: could not read ai.md: ${err.message}`));
       // New payment offers get their rules read (a no-op without a key or with "read offers: no").
       if (!queue.pending().some((j) => j.trigger === 'offer-rules') && queue.current()?.trigger !== 'offer-rules') queue.enqueue({ items: '', sites: null, trigger: 'offer-rules' });
+    }
+    // After a basket run (search or schedule), judge its borderline matches (a no-op without a key).
+    const trig = lastTrigger.get(jobId);
+    if (!run && trig && !['offers', 'ai-labels', 'offer-rules', 'same-product'].includes(trig) && !(outcome instanceof Error)
+      && !queue.pending().some((j) => j.trigger === 'same-product')) {
+      queue.enqueue({ items: '', sites: null, trigger: 'same-product' });
     }
     lastTrigger.delete(jobId);
     idle.touch();

@@ -353,6 +353,16 @@ export function startServer({
         return json(res, 200, { ok: true, ...store.rejectMatch({ query: b.query, site: b.site, product: b.product }) });
       }
 
+      // ✓ keep on an "AI doubts this match" flag: the user says it is the same product (the AI never demotes it again).
+      if (req.method === 'POST' && path === '/api/prices/keep') {
+        const b = await readJson(req);
+        if (!ALL_PLATFORMS.includes(b.site)) return json(res, 400, { error: 'Unknown site', field: 'site' });
+        if (!String(b.query ?? '').trim() || !String(b.product ?? '').trim()) return json(res, 400, { error: 'Pass { site, query, product }' });
+        if (!store?.setMeta) return json(res, 400, { error: 'No history store' });
+        (await import('./ai/same-product.js')).keepMatch(store, { query: b.query, site: b.site, product: b.product });
+        return json(res, 200, { ok: true });
+      }
+
       // "Others": prices bought or seen elsewhere, entered by the user.
       if (path === '/api/entries') {
         if (!store?.addManualPrice) return json(res, 400, { error: 'No history store' });
@@ -451,6 +461,7 @@ export function startServer({
           const patch = {};
           if ('enabled' in b) patch.enabled = Boolean(b.enabled);
           if ('readOffers' in b) patch.readOffers = Boolean(b.readOffers);
+          if ('checkMatches' in b) patch.checkMatches = Boolean(b.checkMatches);
           if (b.provider != null) {
             if (!ai.PROVIDERS[b.provider]) return json(res, 400, { error: `Provider must be one of: ${Object.keys(ai.PROVIDERS).join(', ')}`, field: 'provider' });
             patch.provider = b.provider;
@@ -476,6 +487,13 @@ export function startServer({
           const queued = q.pending().find((j) => j.trigger === 'ai-labels') ?? (cur?.trigger === 'ai-labels' ? cur : null);
           if (queued) return json(res, 202, { jobId: queued.id, queued: true });
           return json(res, 202, { jobId: enqueue({ items: '', sites: null, trigger: 'ai-labels' }), queued: Boolean(cur) });
+        }
+        if (req.method === 'POST' && path === '/api/ai/same-product/run') {
+          if (!ai.readKey(dataDir)) return json(res, 400, { error: 'Save an API key first (Settings → AI).' });
+          const cur = q.current();
+          const queued = q.pending().find((j) => j.trigger === 'same-product') ?? (cur?.trigger === 'same-product' ? cur : null);
+          if (queued) return json(res, 202, { jobId: queued.id, queued: true });
+          return json(res, 202, { jobId: enqueue({ items: '', sites: null, trigger: 'same-product' }), queued: Boolean(cur) });
         }
         if (req.method === 'POST' && path === '/api/ai/offer-rules/run') {
           if (!ai.readKey(dataDir)) return json(res, 400, { error: 'Save an API key first (Settings → AI).' });

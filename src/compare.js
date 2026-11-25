@@ -10,6 +10,7 @@ import { resolveBasket } from './resolver.js';
 import { searchAll, PLATFORMS, ALL_PLATFORMS, selectBackend } from './platforms.js';
 import { scorePlatform, rank, pickBest } from './score.js';
 import { dropOutliers } from './pricecheck.js';
+import { doubtedNames } from './ai/same-product.js';
 import { dealsFromRows, DEFAULT_MIN_DISCOUNT_PCT } from './deals.js';
 import { CONFIDENCE_THRESHOLD, withoutBrand, addsKind, annotate } from './normalize.js';
 import { FEES, loadFees, allFeesKnown } from './fees.js';
@@ -265,7 +266,16 @@ export async function compareBasket({
   const prefs = store?.prefsFor?.(queries, active) ?? {};
   const aiGroups = store?.aiGroups?.() ?? new Map();
   for (const result of platformResults) {
-    const scored = scorePlatform(result.platform, basket, filtered[result.platform] ?? result.resultsByQuery ?? {}, feeConfig, { prefs: prefs[result.platform], aiGroups });
+    // Matches the AI doubted (src/ai/same-product.js): demoted to weak, never hidden; ✓ keep lifts them.
+    let doubt;
+    if (store?.getMeta) {
+      doubt = new Map();
+      for (const [q, rows] of Object.entries(filtered[result.platform] ?? result.resultsByQuery ?? {})) {
+        const names = doubtedNames(store, q, result.platform, (rows ?? []).map((r) => r.name));
+        if (names.size) doubt.set(q, names);
+      }
+    }
+    const scored = scorePlatform(result.platform, basket, filtered[result.platform] ?? result.resultsByQuery ?? {}, feeConfig, { prefs: prefs[result.platform], aiGroups, doubt });
     if (result.perAccount) addAccountPrices(scored, result, accounts);
     for (const line of scored.lines) {
       const d = dropped[result.platform]?.[line.query];

@@ -20,6 +20,8 @@ const FIELDS = [
   ['enabled', 'enabled', 'bool'],
   // Reads payment offers' terms into fixed rules for the payment advisor (offer text only).
   ['read offers', 'readOffers', 'bool'],
+  // Asks the AI whether borderline matches are the same product (titles only); it only demotes.
+  ['check matches', 'checkMatches', 'bool'],
   ['provider', 'provider', 'text'],
   ['base url', 'baseUrl', 'text'],
   ['model', 'model', 'text'],
@@ -34,6 +36,7 @@ const FIELDS = [
 export const DEFAULT_AI = Object.freeze({
   enabled: false,
   readOffers: true,
+  checkMatches: true,
   provider: 'groq',
   baseUrl: PROVIDERS.groq.baseUrl,
   model: PROVIDERS.groq.model,

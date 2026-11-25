@@ -574,3 +574,20 @@ test('payment advisor: methods are kept, the best offer is worked out per site, 
     await server.close();
   }
 });
+
+test('✓ keep route saves the user\'s "same product" verdict, and refuses a bad request', async () => {
+  const meta = new Map();
+  const store = { getMeta: (k) => meta.get(k) ?? null, setMeta: (k, v) => meta.set(k, String(v)), listJobs: () => [], createJob: () => 1, updateJob: () => {}, getJob: () => null };
+  const queue = { enqueue: () => 1, current: () => null, pending: () => [], on: () => {}, off: () => {} };
+  const server = await startServer({ port: 0, compare: async () => FAKE_RESULT, store, queue });
+  try {
+    assert.equal((await post(server, '/api/prices/keep', { site: 'nope', query: 'curd', product: 'X' })).status, 400);
+    assert.equal((await post(server, '/api/prices/keep', { site: 'zepto', query: 'curd' })).status, 400);
+    assert.equal((await post(server, '/api/prices/keep', { site: 'zepto', query: 'curd', product: 'X' })).status, 200);
+    const [[key, val]] = [...meta];
+    assert.match(key, /^same:curd\|zepto\|X$/);
+    assert.equal(JSON.parse(val).by, 'user');
+  } finally {
+    await server.close();
+  }
+});

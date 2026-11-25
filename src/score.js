@@ -62,6 +62,15 @@ export function pickBest(query, products, qty = 1, prefs = {}) {
   // AI label demotes, only come after staples.
   const named = namedGroups(query);
   const groupFor = (p) => groupOf({ name: p.name, category: p.category, aiGroup: prefs.aiGroups?.get(String(p.name ?? '').trim()) });
+  // The AI said "probably a different product" (src/ai/same-product.js): a weak match, never counted
+  // while a better candidate exists. Demoted only: it stays a candidate, and ✓ keep lifts it for good.
+  for (const p of annotated) {
+    if (prefs.doubt?.has(String(p.name ?? '').trim())) {
+      p.confident = false;
+      p.aiDoubt = true;
+      p.confidenceReason = 'AI: probably not the same product';
+    }
+  }
   for (const p of annotated) {
     const g = groupFor(p);
     p.group = g.group;
@@ -153,7 +162,10 @@ export function scorePlatform(platform, items, resultsByQuery, feeConfig, opts =
 
   for (const item of items) {
     const products = resultsByQuery[item.query] || [];
-    const { chosen, status } = pickBest(item.query, products, item.qty, { ...(opts.prefs?.[item.query] ?? {}), aiGroups: opts.aiGroups });
+    const doubt = opts.doubt?.get(item.query);
+    const { chosen, status } = pickBest(item.query, products, item.qty, { ...(opts.prefs?.[item.query] ?? {}), aiGroups: opts.aiGroups, doubt });
+    // Doubted products of this line, even when a better candidate took the line: the page flags them.
+    const doubted = doubt?.size ? products.filter((p) => doubt.has(String(p.name ?? '').trim())).map((p) => ({ name: String(p.name).trim(), price: p.price })) : [];
 
     if (!chosen) {
       lines.push({
@@ -162,6 +174,7 @@ export function scorePlatform(platform, items, resultsByQuery, feeConfig, opts =
         status,
         product: null,
         lineTotal: null,
+        ...(doubted.length ? { aiDoubt: doubted } : {}),
       });
       continue;
     }
@@ -188,7 +201,7 @@ export function scorePlatform(platform, items, resultsByQuery, feeConfig, opts =
     };
     if (status === 'bigger-pack') {
       // Visible, with its rate, but not part of the basket total.
-      lines.push({ query: item.query, qty: item.qty, status, product, lineTotal: null });
+      lines.push({ query: item.query, qty: item.qty, status, product, lineTotal: null, ...(doubted.length ? { aiDoubt: doubted } : {}) });
       continue;
     }
     // `packs` already includes qty, so the line is simply price × packs.
@@ -201,6 +214,7 @@ export function scorePlatform(platform, items, resultsByQuery, feeConfig, opts =
       status,
       product,
       lineTotal,
+      ...(doubted.length ? { aiDoubt: doubted } : {}),
     });
   }
 

@@ -116,8 +116,10 @@
     </div>
     <div style="margin-top:8px"><label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="aion"> Label new products after the scheduled runs</label></div>
     <div style="margin-top:8px"><label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="airead"> Read payment offers' terms for the payment advisor (offer text only, each offer once)</label></div>
+    <div style="margin-top:8px"><label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="aimatch"> Check borderline matches after a run (product titles only; a “no” only sets a match aside and flags it)</label></div>
     <div class="bar" style="position:static">
       <button type="submit">Save AI settings</button>
+      <button type="button" class="secondary" id="aimatchnow">Check matches now</button>
       <button type="button" class="secondary" id="airules">Read offers now</button>
       <button type="button" class="secondary" id="aicheck">Check connection</button>
       <button type="button" class="secondary" id="airun">Label now</button>
@@ -175,6 +177,7 @@ function aiShow(v) {
   $('aiurl').value = v.settings.baseUrl;
   $('aion').checked = v.settings.enabled;
   $('airead').checked = v.settings.readOffers !== false;
+  $('aimatch').checked = v.settings.checkMatches !== false;
   $('aikey').value = '';
   $('aikey').placeholder = v.hasKey ? 'saved; type to replace' : 'paste your key';
   $('aikeyhint').textContent = v.hasKey ? `Saved (${v.keyHint}). Kept in secrets.json, never shown.` : 'Not saved yet';
@@ -190,7 +193,7 @@ $('aiprov').addEventListener('change', () => {
 });
 async function aiSave(extra = {}) {
   document.querySelectorAll('[data-aierr]').forEach((e) => { e.textContent = ''; });
-  const body = { provider: $('aiprov').value, model: $('aimodel').value, baseUrl: $('aiurl').value, enabled: $('aion').checked, readOffers: $('airead').checked, ...extra };
+  const body = { provider: $('aiprov').value, model: $('aimodel').value, baseUrl: $('aiurl').value, enabled: $('aion').checked, readOffers: $('airead').checked, checkMatches: $('aimatch').checked, ...extra };
   if ($('aikey').value.trim() && !extra.clearKey) body.key = $('aikey').value;
   const res = await fetch('/api/ai', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
   const b = await res.json();
@@ -211,6 +214,12 @@ $('airun').addEventListener('click', async () => {
   const res = await fetch('/api/ai/run', { method: 'POST' });
   const b = await res.json();
   aiStatus(res.ok ? `Queued as job ${b.jobId}. It runs after any search in progress.` : b.error, res.ok ? 'ok' : 'bad');
+});
+$('aimatchnow').addEventListener('click', async () => {
+  if (!(await aiSave())) return;
+  const res = await fetch('/api/ai/same-product/run', { method: 'POST' });
+  const b = await res.json();
+  aiStatus(res.ok ? `Queued as job ${b.jobId}. It checks the latest comparison after any search in progress.` : b.error, res.ok ? 'ok' : 'bad');
 });
 $('airules').addEventListener('click', async () => {
   if (!(await aiSave())) return;
