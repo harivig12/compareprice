@@ -21,18 +21,43 @@ async function defaultSites() {
 // Bot-wall pages (Akamai, Cloudflare, AWS WAF) that replace the whole document.
 const WALL_RE = /^(Access Denied|Attention Required|Just a moment|Request blocked|403 Forbidden|Pardon Our Interruption)/i;
 
+const HEADLESS_UA = /HeadlessChrome/i;
+
+/**
+ * Never load a site's page from a tab that says "HeadlessChrome". Bot walls (BigBasket's Akamai: "Access
+ * Denied") reject that user-agent on sight, and a refused page can start a block that lasts hours.
+ * The browser keeps every tab on a real user-agent (ua-guard.js) and the pool sets one per tab; this is
+ * the last check before the first request, so a leak fails loudly here instead of as a mystery wall.
+ * (Navigator is read from the tab's current document: an override applies to it at once.)
+ */
+export async function assertRealUserAgent(tab, siteId) {
+  if (typeof tab.evaluate !== 'function') return;
+  const ua = await tab.evaluate('navigator.userAgent', { timeoutMs: 5000 }).catch(() => null);
+  if (typeof ua === 'string' && HEADLESS_UA.test(ua)) {
+    throw new SiteError(
+      'browser',
+      `${siteId}: this tab reports a HeadlessChrome user-agent, so ${siteId} was not loaded (its bot protection rejects that and can block for hours). The user-agent override was lost; restart the browser`,
+      { site: siteId, code: 'headless_ua' },
+    );
+  }
+}
+
 /** Throw SiteError('blocked') when the warm page is a bot wall, with its reference id. */
 export async function assertNotWalled(tab, siteId) {
   if (typeof tab.evaluate !== 'function') return;
   const info = await tab
-    .evaluate(`({ title: document.title, text: (document.body && document.body.innerText || '').slice(0, 300) })`, { timeoutMs: 5000 })
+    .evaluate(`({ title: document.title, ua: navigator.userAgent, text: (document.body && document.body.innerText || '').slice(0, 300) })`, { timeoutMs: 5000 })
     .catch(() => null);
   if (!info || !WALL_RE.test(String(info.title || '').trim())) return;
   const ref = String(info.text).match(/Reference\s*#?\s*([\w.]+)/i)?.[1];
+  // A wall on a tab that says HeadlessChrome is our leak, not the site's verdict on this IP.
+  const leak = typeof info.ua === 'string' && HEADLESS_UA.test(info.ua);
   throw new SiteError(
     'blocked',
-    `${siteId}: bot protection page "${info.title.trim()}"${ref ? ` (ref ${ref})` : ''} — this IP is temporarily blocked; it usually clears within hours`,
-    { site: siteId },
+    leak
+      ? `${siteId}: bot protection page "${info.title.trim()}"${ref ? ` (ref ${ref})` : ''} on a tab that reported a HeadlessChrome user-agent: the override was lost, not necessarily an IP block`
+      : `${siteId}: bot protection page "${info.title.trim()}"${ref ? ` (ref ${ref})` : ''} — this IP is temporarily blocked; it usually clears within hours`,
+    { site: siteId, ...(leak ? { code: 'headless_ua' } : {}) },
   );
 }
 
@@ -150,6 +175,8 @@ export class BrowserPool {
       const tab = await this._openTab(browser.endpoint, 'about:blank');
       tab.onCrash((reason) => this._onCrash(siteId, tab, reason));
       if (browser.userAgent) await tab.setUserAgent(browser.userAgent);
+      // Before the first request to the site: never as HeadlessChrome.
+      await assertRealUserAgent(tab, siteId);
       // API calls run inside the page; its pictures, video and fonts are dead weight.
       if (this.blockMedia) await tab.send('Network.setBlockedURLs', { urls: MEDIA_PATTERNS }).catch(() => {});
       // A signed-in account keeps the address saved on it (decision 2026-11-19):
@@ -221,6 +248,7 @@ export class BrowserPool {
     // Headers copied from the page's own requests (signatures, csrf, store
     // ids) go stale; drop them so the retry re-captures fresh ones.
     if (tab._capture) for (const k of Object.keys(tab._capture)) tab._capture[k].headers = null;
+    await assertRealUserAgent(tab, siteId);
     try {
       await tab.goto(site.origin, { waitMs: 15000 });
     } catch (e) {
@@ -234,7 +262,9 @@ export class BrowserPool {
     try {
       await assertNotWalled(tab, siteId);
     } catch (e) {
-      if (e?.kind === 'blocked' && this.wallWatch?.walled(siteId, e.message)) this._relaunch = true;
+      // A wall caused by our own user-agent leak says nothing about the site: it must not push the
+      // site into headed mode (a headed Chrome would not cure it).
+      if (e?.kind === 'blocked' && e.code !== 'headless_ua' && this.wallWatch?.walled(siteId, e.message)) this._relaunch = true;
       throw e;
     }
     this.wallWatch?.clear(siteId);

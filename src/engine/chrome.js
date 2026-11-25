@@ -10,6 +10,7 @@ import { existsSync, mkdirSync, readFileSync, readlinkSync, rmSync, writeFileSyn
 import { hostname as osHostname } from 'node:os';
 import { delimiter, dirname, isAbsolute, join } from 'node:path';
 import { headedEnv } from './display.js';
+import { holdUserAgent } from './ua-guard.js';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -164,6 +165,20 @@ export function disablePasswordSaving(profileDir) {
 }
 
 /**
+ * Keep every tab of this browser on the real-Chrome user-agent for the browser's whole life (ua-guard.js:
+ * a per-tab override dies with the connection that set it, and a "HeadlessChrome" tab is walled by BigBasket).
+ * Never fatal: without it the per-tab override in the pool still protects the app's own tabs.
+ */
+async function startGuard(endpoint, userAgent) {
+  try {
+    return await holdUserAgent({ endpoint, userAgent, log: (m) => console.warn(m) });
+  } catch (e) {
+    console.warn(`ua-guard: not started (${e.message}); only the app's own tabs are covered`);
+    return null;
+  }
+}
+
+/**
  * @param {{ port?: number, profileDir: string, headless?: boolean, chromePath?: string }} opts
  * @returns {Promise<{ endpoint: string, userAgent: string, close(): Promise<void>, process: import('node:child_process').ChildProcess | null }>}
  */
@@ -171,7 +186,9 @@ export async function launchChrome({ port = 9333, profileDir, headless = true, c
   if (process.env.CDP_ENDPOINT) {
     const endpoint = process.env.CDP_ENDPOINT.replace(/\/+$/, '');
     const version = await readVersion(endpoint, 15000, null);
-    return { endpoint, userAgent: matchedUserAgent(version), process: null, close: async () => {} };
+    const userAgent = matchedUserAgent(version);
+    const guard = await startGuard(endpoint, userAgent);
+    return { endpoint, userAgent, process: null, close: async () => guard?.stop() };
   }
   if (!profileDir) throw new Error('launchChrome: profileDir is required');
   mkdirSync(profileDir, { recursive: true });
@@ -200,7 +217,10 @@ export async function launchChrome({ port = 9333, profileDir, headless = true, c
     throw e;
   }
   const exited = new Promise((r) => (proc.exitCode != null ? r() : proc.once('exit', r)));
+  const userAgent = matchedUserAgent(version);
+  const guard = await startGuard(endpoint, userAgent);
   async function close() {
+    guard?.stop();
     if (proc.exitCode != null || proc.signalCode) return;
     proc.kill('SIGTERM');
     const done = await Promise.race([exited.then(() => true), sleep(5000).then(() => false)]);
@@ -209,5 +229,5 @@ export async function launchChrome({ port = 9333, profileDir, headless = true, c
       await Promise.race([exited, sleep(2000)]);
     }
   }
-  return { endpoint, userAgent: matchedUserAgent(version), process: proc, close };
+  return { endpoint, userAgent, process: proc, close };
 }

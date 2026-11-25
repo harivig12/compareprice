@@ -52,6 +52,48 @@ export function greasedBrands(major, chromiumVersion, chromeVersion) {
   return out;
 }
 
+/**
+ * The `Network.setUserAgentOverride` parameters for a real-Chrome UA: the string, plus client hints
+ * (`sec-ch-ua`) that carry the same version and no "HeadlessChrome" brand. `real` is what the page
+ * itself reports through navigator.userAgentData (its true GREASE brand); without it the hints are
+ * rebuilt with Chromium's own algorithm (greasedBrands).
+ * @param {string} ua
+ * @param {object|null} [real]
+ */
+export function userAgentOverride(ua, real = null) {
+  const params = { userAgent: ua };
+  const m = ua.match(/Chrome\/((\d+)[\d.]*)/);
+  const clean = (list) => list?.map((b) => ({ brand: b.brand.replace(/^HeadlessChrome$/, 'Google Chrome'), version: b.version }));
+  if (real?.brands?.length) {
+    params.userAgentMetadata = {
+      brands: clean(real.brands),
+      fullVersionList: clean(real.fullVersionList || real.brands),
+      fullVersion: real.uaFullVersion || m?.[1] || '',
+      platform: real.platform || 'Linux',
+      platformVersion: real.platformVersion || '',
+      architecture: real.architecture || 'x86',
+      model: real.model || '',
+      mobile: !!real.mobile,
+      bitness: real.bitness || '64',
+    };
+  } else if (m) {
+    const [, full, major] = m;
+    const platform = /Windows/.test(ua) ? 'Windows' : /Mac OS X/.test(ua) ? 'macOS' : /Android/.test(ua) ? 'Android' : 'Linux';
+    params.userAgentMetadata = {
+      brands: greasedBrands(Number(major), major, major),
+      fullVersionList: greasedBrands(Number(major), full, full),
+      fullVersion: full,
+      platform,
+      platformVersion: '',
+      architecture: 'x86',
+      model: '',
+      mobile: /Mobile/.test(ua),
+      bitness: '64',
+    };
+  }
+  return params;
+}
+
 export class CdpTab {
   /** @private use CdpTab.open */
   constructor(endpoint, target, ws) {
@@ -204,44 +246,19 @@ export class CdpTab {
   /**
    * Override the UA for this tab. Client hints are rebuilt from the UA so the
    * `sec-ch-ua` brands carry the same version and no "HeadlessChrome" brand.
+   *
+   * THE OVERRIDE LASTS ONLY AS LONG AS THIS CONNECTION: when the socket that set it closes, the tab
+   * reads "HeadlessChrome" again (proved 2026-11-25, test/ua-guard.test.js). The browser as a whole
+   * therefore also holds it for every tab (ua-guard.js, started by launchChrome); this per-tab call
+   * stays as the exact version with the page's own client hints.
    */
   async setUserAgent(ua) {
-    const params = { userAgent: ua };
     // Prefer the browser's own hints (real GREASE brand) over synthesized ones.
     const real = await this.evaluate(
       `navigator.userAgentData ? navigator.userAgentData.getHighEntropyValues(['architecture','bitness','model','platformVersion','fullVersionList','uaFullVersion']).then(v => JSON.parse(JSON.stringify(v))) : null`,
       { timeoutMs: 5000 },
     ).catch(() => null);
-    const m = ua.match(/Chrome\/((\d+)[\d.]*)/);
-    const clean = (list) => list?.map((b) => ({ brand: b.brand.replace(/^HeadlessChrome$/, 'Google Chrome'), version: b.version }));
-    if (real?.brands?.length) {
-      params.userAgentMetadata = {
-        brands: clean(real.brands),
-        fullVersionList: clean(real.fullVersionList || real.brands),
-        fullVersion: real.uaFullVersion || m?.[1] || '',
-        platform: real.platform || 'Linux',
-        platformVersion: real.platformVersion || '',
-        architecture: real.architecture || 'x86',
-        model: real.model || '',
-        mobile: !!real.mobile,
-        bitness: real.bitness || '64',
-      };
-    } else if (m) {
-      const [, full, major] = m;
-      const platform = /Windows/.test(ua) ? 'Windows' : /Mac OS X/.test(ua) ? 'macOS' : /Android/.test(ua) ? 'Android' : 'Linux';
-      params.userAgentMetadata = {
-        brands: greasedBrands(Number(major), major, major),
-        fullVersionList: greasedBrands(Number(major), full, full),
-        fullVersion: full,
-        platform,
-        platformVersion: '',
-        architecture: 'x86',
-        model: '',
-        mobile: /Mobile/.test(ua),
-        bitness: '64',
-      };
-    }
-    await this.send('Network.setUserAgentOverride', params);
+    await this.send('Network.setUserAgentOverride', userAgentOverride(ua, real));
   }
 
   /** Called once with a reason when the tab crashes or the socket drops. */

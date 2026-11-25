@@ -15,6 +15,24 @@
  *
  * BigBasket runs in a Chrome and profile of its own (<data>/profiles/bigbasket),
  * headless first and headed after repeated bot walls (src/engine/browser-mode.js).
+ *
+ * RULES THAT KEEP BIGBASKET'S BOT WALL AWAY (Akamai answers "Access Denied"; a refused page can
+ * start a block that lasts hours; learned 2026-11-24/25):
+ *   1. The only page ever loaded is the HOME page (ORIGIN): by the pool once per tab, and once more
+ *      here if the location picker needs a retry on a slow cold load. Every product, storefront and
+ *      (later) cart/offer read is an API call from that warm tab (pageFetch). Never navigate to
+ *      /basket/, /pd/, /ps/, /sp/ or any other page URL, not even to read it:
+ *      test/ua-guard.test.js fails if this file gains any other navigation.
+ *   2. The tab must report a real Chrome user-agent, never "HeadlessChrome". Headless Chrome says
+ *      HeadlessChrome unless something overrides it, and the override lasts only as long as the
+ *      connection that set it. The browser therefore holds it for every tab (ua-guard.js), the pool
+ *      sets it per tab and refuses to load the site if the tab still says HeadlessChrome
+ *      (assertRealUserAgent). A script that drives this Chrome gets the same protection.
+ *   3. Pace everything through the site's request budget (src/limits.js), one call at a time.
+ *   4. After a wall, stop: no retries, no probing (the runner rests the site, pool.js counts
+ *      walls and only then switches to a headed browser).
+ * The wall seen on 2026-11-25 was a page load (/basket/) made through a script connection that had
+ * lost the user-agent override: see docs/diagnosis/2026-11-25-zepto-instamart-cart-offers.md.
  */
 import { pageFetch, expectJson } from '../page-fetch.js';
 import { SiteError } from '../errors.js';
