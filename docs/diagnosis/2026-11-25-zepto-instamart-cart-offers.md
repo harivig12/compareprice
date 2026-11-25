@@ -37,8 +37,24 @@ Add an item from the search page: the page keeps a cart bar ("1 Item, ₹6 saved
 - **A live run of the real code** (23 s, 5 paced calls): cart empty before and after, **55 payment offers** and **4 coupons**, all "locked" at an ₹18 cart. The payment minimums start at ₹99 (BHIM app cashback).
 - **One lesson on the way:** the first probe's cleanup did not take the item out of the server-side cart (the page showed an empty cart, but offers still came back for ₹18). Only a cart update with no products did. The app therefore verifies the emptying through the cart answer, never through what the page shows.
 
-## BigBasket cart and instamart.in (2026-11-25, night)
+## Correction (2026-11-25, night): the failures below were the probe's user-agent, not the sites
 
-- **BigBasket, signed in.** The service's own Chrome showed the account (profile icon, saved address "Others: New Perungalathur…", **5 items already in the cart**). A profile *copy* showed a guest (no "Login", no address): BigBasket's session lives in the running Chrome, so it can only be read there. Because the cart already had items, nothing was added or removed.
-- **The cart page is walled.** Opening `/basket/` answered **Access Denied** (Akamai, reference #18.8c43c717…) after only two page loads that session. Checking stopped at once; BigBasket pages must not be loaded again for a few hours. The cart's offers are therefore **not read yet**. A cart-offers check for BigBasket should read an API call from the warm home tab (the page's own `basketService/get`), never open `/basket/`.
-- **instamart.in is a separate site, not the same session as swiggy.com/instamart.** It is Instamart's standalone web app: same API paths (`/api/instamart/home/v2`, `/api/instamart/checkout/v2/cart`), its own cookies, and as a guest it asks "Add your location" and shows "Sign in". Signing in or setting the address on swiggy.com does not carry over. Whether its cart works where swiggy.com's said "Cart not found" is **not tested**: that needs a sign-in there.
+Earlier in this note, Instamart's cart "failed" ("Cart not found", then "Something went wrong"), and BigBasket's cart page answered "Access Denied". **Both were caused by my probe scripts, not by the accounts or the sites.** A script that drives Chrome over the debugging port sets the real-Chrome user-agent with `Network.setUserAgentOverride`, but that override only lasts while the script's connection stays open. My helper reconnected for every step, so from the second step on the pages saw `HeadlessChrome` in the user-agent: Swiggy's pages errored out, and BigBasket's Akamai walled the cart page. The app itself sets the user-agent once per tab and keeps the connection, so its own tabs were never affected (AGENTS.md already says a user-agent mismatch makes BigBasket return 403). The earlier "Instamart cart is broken for this account" conclusion above is therefore wrong. BigBasket's cart offers still have to be read (carefully, with the user-agent held for the whole run).
+
+## Instamart cart offers, read correctly (2026-11-25, night)
+
+Same signed-in session as the app (swiggy.com/instamart, address Marutham Prestige, Bharathidasan Nagar, Tambaram 600045), one script, user-agent held all the way:
+
+- Entry: `https://www.swiggy.com/instamart?entryId=1234&entryName=mainTileEntry4&v=1`, then the page's own search box (a direct load of `/instamart/search` is not needed).
+- Add one item (Tata Salt Superlite 1 kg, ₹71) and open the cart: it loads. The cart page shows "SAVINGS CORNER: Add ₹328 more to get upto ₹100 cashback with APAY20" and a **View all coupons & offers** link.
+- **Apply Coupon sheet: 34 coupons.** 1 available at a ₹71 cart (LXMEUPI, Lxme UPI Digital Gold, for female users) and 33 locked ("Add items worth ₹N more to avail this offer"): UPI cashbacks from ₹99 (Paytm UPI, Navi UPI), ₹199 (MobiKwik, BHIM first payment, POP), ₹399 (Amazon Pay Later and Balance up to ₹100, MobiKwik wallet), bank card discounts from ₹299 (Indian Bank 15% up to ₹120) to ₹999 (SBI Visa debit 25% up to ₹300, SBI Mastercard debit ₹150, Axis MyZone 10% up to ₹200), a handful of brand coupons (Arata, plush items, Crossword), and RBL cards on phones and tablets over ₹10,000.
+- Each coupon has a code (APAY20, PAYTMUPI10, IDFCDC175 …), a title, the order minimum and terms; the "short by" amount is exactly what the cart lacks.
+- The probe item was taken out again with the cart's own "−" button; the page then shows "Your cart is getting lonely". The first cleanup attempt only looked for the wrong text, so the item sat in the cart for a few minutes before it was removed.
+- The store showed "Temporarily UNSERVICEABLE: you can still add items and order when the store re-opens" at the time (late evening); cart and coupons work regardless.
+- **instamart.in** is Instamart's separate standalone site (same API paths, its own cookies, asks for location and sign-in). It is not needed: swiggy.com/instamart gives the same data on the session the app already has.
+
+## BigBasket (2026-11-25, night)
+
+- The app's BigBasket Chrome (headless, user-agent held by the app) showed the signed-in account with its saved address and **5 items already in the cart**, so nothing was added or removed.
+- My probe then opened `/basket/` through a connection without the user-agent override and got **Access Denied** (Akamai). Probably the same cause as above, but it is not proven: the block is real and may last a few hours, and BigBasket's page walls are sensitive to repeat loads. BigBasket's cart offers are **not read yet**.
+- A profile *copy* showed a guest: BigBasket's login lives in the running Chrome (session cookies), so it can only be read there.

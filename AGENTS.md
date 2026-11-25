@@ -26,7 +26,7 @@ History:
 - **Generic lines get the raw product** (user decision 2026-11-20). Sweets and pooja items are refused unless the line names them; packaged foods sort after staples. Group words live in `src/categories.js`. Add a title word only if the saved products show no staple using it.
 - **AI labels only demote, and only titles are sent** (`src/ai/`). The key lives only in `<data>/secrets.json`; it is never returned, logged or committed.
 - **Every failure is a `SiteError` with a kind and a message that starts with the site id.** Never return `[]` to mean "something broke". `[]` means the site answered and had no match.
-- **Keep the UA matched to the real Chrome version** (`matchedUserAgent`). A mismatch makes BigBasket return 403.
+- **Keep the UA matched to the real Chrome version** (`matchedUserAgent`). A mismatch makes BigBasket return 403. A script that drives Chrome over the debugging port must hold ONE connection for the whole run: `Network.setUserAgentOverride` ends when its connection closes, and the pages then see `HeadlessChrome` (Swiggy errors out, BigBasket walls the page). This cost a false "Instamart cart is broken" finding and a BigBasket wall on 2026-11-25.
 - **Totals are goods only** unless the user set fees (`src/fees.js` holds no fee numbers).
 - **Location comes from config** (`location.lat/lng/pincode/searchText`). Never hardcode it in a site module.
 - **Be gentle with live sites.** Reuse one profile and pace requests. Recon burst traffic got the IP blocked by Akamai and rate-limited by Instamart.
