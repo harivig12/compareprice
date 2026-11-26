@@ -131,7 +131,11 @@ export async function startService({
         ? runOfferRulesJob(opts)
         : opts.trigger === 'same-product'
           ? runSameProductJob(opts)
-          : import('./compare.js').then((m) => m.compareBasket({ ...opts, accounts, poolSet, store, pool: poolSet.getMain() })));
+          : opts.trigger === 'scheduled-add'
+            ? runScheduledAddJob(opts)
+            : opts.trigger === 'mb-catalogue'
+              ? runCatalogueJob(opts)
+              : import('./compare.js').then((m) => m.compareBasket({ ...opts, accounts, poolSet, store, pool: poolSet.getMain() })));
   const runOfferCheck = async ({ signal, onProgress, platforms }) => {
     const [{ checkOffers, OFFER_SITES }, { SITES }, { getLimiter }] = await Promise.all([import('./offers.js'), import('./engine/sites/index.js'), import('./limits.js')]);
     const out = await checkOffers({
@@ -163,6 +167,49 @@ export async function startService({
     log(`offer-rules: ${out.error ? `FAILED ${out.error}` : `${out.read} read in ${out.calls} call(s)${out.skipped ? ` (${out.skipped})` : ''}`}`);
     if (out.error) throw new Error(`offer-rules: ${out.error}${out.read ? ` (after ${out.read} read)` : ''}`);
     return out;
+  };
+  // Scheduled adds (src/scheduled-adds.js): one account's due entries, in that account's own browser.
+  const runScheduledAddJob = async ({ data, signal }) => {
+    const sa = await import('./scheduled-adds.js');
+    const [{ SITES }, { getLimiter }] = await Promise.all([import('./engine/sites/index.js'), import('./limits.js')]);
+    const [site, accountId] = String(data?.key ?? '').split(':');
+    const impl = SITES[site];
+    if (!sa.ADD_SITES.includes(site) || !impl?.ensureInBasket) throw new Error(`scheduled-add: ${site || '?'} does not support scheduled adds`);
+    const state = sa.readAdds(dataDir);
+    const acc = accounts.get(site, accountId);
+    let lines;
+    if (!acc?.loggedInAt) {
+      lines = await sa.runAdds({ state, key: data.key, entryIds: data.ids, day: data.day, log, ensure: async () => { const e = new Error(`${site}: this account is not signed in; sign it in again from "Sign in…". Nothing was added`); e.kind = 'session'; throw e; } });
+    } else {
+      lines = await poolSet.with(site, acc, async (pool) => {
+        const tab = await pool.tab(site);
+        return sa.runAdds({
+          state, key: data.key, entryIds: data.ids, day: data.day, log,
+          ensure: async (item) => {
+            if (signal?.aborted) throw new Error('cancelled');
+            await getLimiter(getConfig().limits).acquire(site, { signal });
+            return impl.ensureInBasket(tab, item, { log });
+          },
+        });
+      });
+    }
+    // Written onto the latest saved list (an edit made meanwhile is kept): the log, and "once" entries done.
+    const fresh = sa.readAdds(dataDir);
+    fresh.log.push(...lines);
+    const done = new Set(state.accounts[data.key]?.entries.filter((e) => e.once && !e.enabled).map((e) => e.id) ?? []);
+    for (const e of fresh.accounts[data.key]?.entries ?? []) if (done.has(e.id)) e.enabled = false;
+    sa.writeAdds(dataDir, fresh);
+    return { kind: 'scheduled-add', generatedAt: new Date().toISOString(), platforms: [], lines };
+  };
+  // Read a Milkbasket account's catalogue (read-only, paced) so a scheduled-add product can be picked.
+  const runCatalogueJob = async ({ data }) => {
+    const [site, accountId] = String(data?.key ?? '').split(':');
+    const mb = await import('./engine/sites/milkbasket.js');
+    const acc = accounts.get(site, accountId);
+    if (site !== 'milkbasket' || !acc?.loggedInAt) throw new Error(`${site || 'milkbasket'}: sign this account in first`);
+    const rows = await poolSet.with(site, acc, async (pool) => mb.catalog(await pool.tab(site), { log }));
+    log(`mb-catalogue: ${rows.length} products read for ${data.key}`);
+    return { kind: 'mb-catalogue', generatedAt: new Date().toISOString(), platforms: [], products: rows.length };
   };
   // "Same product?" check on the latest comparison's borderline matches (titles only; it only demotes).
   const runSameProductJob = async ({ signal }) => {
@@ -253,7 +300,7 @@ export async function startService({
     }
     // After a basket run (search or schedule), judge its borderline matches (a no-op without a key).
     const trig = lastTrigger.get(jobId);
-    if (!run && trig && !['offers', 'ai-labels', 'offer-rules', 'same-product'].includes(trig) && !(outcome instanceof Error)
+    if (!run && trig && !['offers', 'ai-labels', 'offer-rules', 'same-product', 'scheduled-add', 'mb-catalogue'].includes(trig) && !(outcome instanceof Error)
       && !queue.pending().some((j) => j.trigger === 'same-product')) {
       queue.enqueue({ items: '', sites: null, trigger: 'same-product' });
     }
@@ -293,6 +340,8 @@ export async function startService({
   sweep.ref = startSweep({ queue, getConfig, store, log, ...(now ? { now } : {}), ...(sweepTimers ?? {}) });
   // Not with an injected test runner, which has no engine to check offers with.
   const offerSchedule = run ? null : startOfferSchedule({ queue, getConfig, store, log, ...(now ? { now } : {}), ...(tickMs ? { tickMs } : {}) });
+  // Scheduled adds (master switch off until the user turns it on in Settings).
+  const addSchedule = run ? null : (await import('./scheduled-adds.js')).startAddSchedule({ queue, dataDir, getConfig, store, log, ...(now ? { now } : {}), ...(tickMs ? { tickMs } : {}) });
   const sw = getConfig().sweep ?? {};
   const sched = getConfig().schedules.filter((s) => s.enabled !== false).map((s) => `${s.name} ${s.times.join('/')} [${s.sites.join(',')}]`);
   log(`Jhola service on ${server.url} (bind ${server.host}); data ${dataDir}; tz ${cfg.timezone}`);
@@ -316,6 +365,7 @@ export async function startService({
     poolSet,
     async close() {
       offerSchedule?.stop();
+      addSchedule?.stop();
       idleTimer?.stop();
       scheduler.stop();
       sweep.ref.stop();

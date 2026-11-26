@@ -591,3 +591,34 @@ test('✓ keep route saves the user\'s "same product" verdict, and refuses a bad
     await server.close();
   }
 });
+
+test('scheduled adds routes: off by default, entries checked and saved per account, limits, other sites refused', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'jhola-adds-srv-'));
+  const accounts = { labels: () => ({ names: { main: 'Main' }, hints: {} }), signedIn: () => [{ id: 'main' }] };
+  const queue = { enqueue: () => 1, current: () => null, pending: () => [], on: () => {}, off: () => {} };
+  const server = await startServer({ port: 0, compare: async () => FAKE_RESULT, queue, accounts, dataDir: dir, getConfig: () => ({ timezone: 'Asia/Kolkata', sites: [], schedules: [] }) });
+  const call = (method, p, body) => fetch(`${server.url}${p}`, { method, headers: { 'content-type': 'application/json' }, ...(body ? { body: JSON.stringify(body) } : {}) });
+  try {
+    const v = await (await call('GET', '/api/scheduled-adds')).json();
+    assert.equal(v.enabled, false);
+    assert.deepEqual(v.sites.map((s) => s.site), ['milkbasket']);
+    assert.equal(v.sites[0].accounts[0].key, 'milkbasket:main');
+    const bad = await call('POST', '/api/scheduled-adds/entries', { key: 'milkbasket:main', entry: { productId: 1, name: 'Milk', qty: 9, time: '05:30', days: [1] } });
+    assert.equal(bad.status, 400);
+    assert.equal((await bad.json()).field, 'qty');
+    assert.equal((await call('POST', '/api/scheduled-adds/entries', { key: 'bigbasket:main', entry: {} })).status, 400);
+    const ok = await (await call('POST', '/api/scheduled-adds/entries', { key: 'milkbasket:main', entry: { productId: 1, name: 'Milk', price: 29, qty: 2, time: '05:30', days: [1, 3] } })).json();
+    const e = ok.sites[0].accounts[0].entries[0];
+    assert.deepEqual([e.qty, e.days, e.enabled], [2, [1, 3], true]);
+    assert.equal((await call('PUT', '/api/scheduled-adds', { limits: { maxQty: 1 } })).status, 400);
+    const on = await (await call('PUT', '/api/scheduled-adds', { enabled: true, limits: { maxPerDay: 200 } })).json();
+    assert.deepEqual([on.enabled, on.limits.maxPerDay], [true, 200]);
+    const gone = await (await call('DELETE', '/api/scheduled-adds/entries', { key: 'milkbasket:main', id: e.id })).json();
+    assert.equal(gone.sites[0].accounts[0].entries.length, 0);
+    const search = await (await call('GET', '/api/scheduled-adds/search?q=milk')).json();
+    assert.deepEqual([search.catalogue, search.results], [0, []]);
+  } finally {
+    await server.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

@@ -28,10 +28,11 @@ export class JobQueue extends EventEmitter {
   }
 
   /** @returns {number} jobId */
-  enqueue({ items, sites, trigger = 'manual', only }) {
+  enqueue({ items, sites, trigger = 'manual', only, data }) {
     const id = this.store ? this.store.createJob({ sites, items, trigger }) : ++this.#localId;
     // `only`: { site: [queries] } — search just these pairs ("Get for missing only").
-    this.#pending.push({ id, items, sites, trigger, ...(only ? { only } : {}), status: 'queued', createdAt: new Date().toISOString() });
+    // `data`: what a non-search job needs (a scheduled add: account and entries).
+    this.#pending.push({ id, items, sites, trigger, ...(only ? { only } : {}), ...(data ? { data } : {}), status: 'queued', createdAt: new Date().toISOString() });
     // Start on the next turn so the caller has the id before any events fire.
     queueMicrotask(() => this.#next());
     return id;
@@ -77,6 +78,7 @@ export class JobQueue extends EventEmitter {
         // 'offers' jobs are the offer check (src/offers.js), not a basket run.
         trigger: job.trigger,
         ...(job.only ? { only: job.only } : {}),
+        ...(job.data ? { data: job.data } : {}),
         signal: controller.signal,
         onProgress: (...args) =>
           this.emit('progress', job.id, args.length === 1 ? args[0] : { platform: args[0], query: args[1] }),

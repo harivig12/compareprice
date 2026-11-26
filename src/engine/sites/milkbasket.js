@@ -22,7 +22,7 @@ import { apiFetch } from '../direct.js';
 import { SiteError } from '../errors.js';
 import { bestPack } from './_util.js';
 import { categoryPath } from '../../categories.js';
-import { CATEGORIES, CATALOG, MEGA_DEAL, MEGA_DEAL_PRODUCTS } from './milkbasket/queries.js';
+import { CATEGORIES, CATALOG, MEGA_DEAL, MEGA_DEAL_PRODUCTS, FETCH_BASKET, ADD_TO_BASKET } from './milkbasket/queries.js';
 import { collectResponses } from './_capture.js';
 import { DATA_DIR } from '../../paths.js';
 
@@ -228,8 +228,9 @@ export async function catalog(tab, { now = Date.now, dir = DATA_DIR, gap = CATAL
  * The catalogue already read today (memory, else the newest file in the cache),
  * without any call to Milkbasket; [] when there is none yet.
  */
-export function cachedRows({ dir = DATA_DIR, now = Date.now } = {}) {
-  const fresh = (c) => c && now() - c.fetchedAt < CATALOG_MAX_AGE_MS;
+export function cachedRows({ dir = DATA_DIR, now = Date.now, anyAge = false } = {}) {
+  // anyAge: picking a product for a scheduled add (ids don't change; the price is shown as "read on …").
+  const fresh = (c) => c && (anyAge || now() - c.fetchedAt < CATALOG_MAX_AGE_MS);
   for (const c of memory.values()) if (fresh(c)) return c.rows;
   try {
     const files = readdirSync(join(dir, 'cache')).filter((f) => /^milkbasket-catalog-\d+\.json$/.test(f));
@@ -295,6 +296,65 @@ export function feeInfo(responses) {
   return null;
 }
 
+// ── Scheduled adds (user decision 2026-11-25): put a listed product in the next basket, then stop ──
+
+/** Milkbasket's own refusal codes (from its web app) in words; any other code is shown as it came. */
+export const BASKET_ERRORS = {
+  cutoff_time_exceeded: 'past the cutoff for the next delivery',
+  time_recheck: 'past the cutoff for the next delivery',
+  time_recheck_get: 'past the cutoff for the next delivery',
+  holiday_off: 'deliveries are paused (holiday) for this account',
+  society_delivery_holiday: 'deliveries are paused for this society',
+  vendor_off: 'the product is not available from its vendor',
+  insufficient_credits: 'not enough money in the Milkbasket wallet',
+  insufficient_credits_unpaid: 'not enough money in the Milkbasket wallet',
+  max_quantity_exceeded: 'more than Milkbasket allows for this product',
+  limit_reached: 'the order limit is reached',
+  not_in_service_area: 'the address is not served',
+  delivery_not_started: 'deliveries have not started for this address',
+};
+
+/** The product's id from a catalogue row's url (`…/?product=<id>`), or null. */
+export const productIdOf = (row) => { const m = /[?&]product=(\d+)/.exec(row?.url ?? ''); return m ? Number(m[1]) : null; };
+
+/** The next basket: { id, date, items: Map productId -> quantity } (a read; changes nothing). */
+export async function readBasket(tab, { log } = {}) {
+  const s = await session(tab);
+  const b = (await gql(tab, s, 'fetchBasket', FETCH_BASKET, {}, { log })).getPrunedBasket;
+  if (!b) throw new SiteError('parse', `${ID}: fetchBasket returned no basket (payload shape changed?)`, { site: ID });
+  const items = new Map();
+  for (const p of b.products ?? []) {
+    const q = Number(p?.order?.quantity);
+    if (q > 0) items.set(Number(p.order.productId ?? p.id), q);
+  }
+  return { id: b.id ?? null, date: b.date ?? null, items, session: s };
+}
+
+/**
+ * Make sure the next basket holds at least `qty` of one product, and stop there: never more
+ * than asked, never fewer than already in it, never past the basket (no order, no payment).
+ * @returns {Promise<{ status: 'added'|'already'|'skipped', had: number, now: number, added: number, reason?: string, code?: string }>}
+ */
+export async function ensureInBasket(tab, { productId, qty, price }, { log } = {}) {
+  const id = Number(productId);
+  const want = Math.floor(Number(qty));
+  if (!(id > 0) || !(want >= 1)) throw new SiteError('parse', `${ID}: a scheduled add needs a product id and a quantity`, { site: ID });
+  const basket = await readBasket(tab, { log });
+  const had = basket.items.get(id) ?? 0;
+  if (had >= want) return { status: 'already', had, now: had, added: 0 };
+  if (!basket.date) return { status: 'skipped', had, now: had, added: 0, reason: 'the basket has no delivery date yet (no next delivery?)' };
+  const appVersion = lower(basket.session.headers).appversion ?? '';
+  const payload = { quantity: want, date: basket.date, productId: id, bypassTimeCheck: false, price: Number(price) || 0, appVersion: String(appVersion), offerIds: [], fetchOffers: false };
+  const r = (await gql(tab, basket.session, 'addToBasket', ADD_TO_BASKET, { payload }, { log })).addToBasket;
+  if (r?.error?.error) {
+    const code = String(r.error.error);
+    return { status: 'skipped', had, now: had, added: 0, code, reason: BASKET_ERRORS[code] ?? (String(r.error.errorMsg || code).slice(0, 120)) };
+  }
+  const after = (r?.prunedBasket?.products ?? []).find((p) => Number(p?.order?.productId ?? p?.id) === id);
+  const now = Number(after?.order?.quantity ?? want);
+  return { status: 'added', had, now, added: Math.max(0, now - had) };
+}
+
 export default {
   id: ID,
   label: 'Milkbasket',
@@ -306,6 +366,8 @@ export default {
   signedInOnly: true,
   parse: (json) => parseList(json?.data?.getCatalogProductList ?? json?.data?.getMegaFlashDealProducts).rows,
   cachedRows,
+  ensureInBasket,
+  productIdOf,
   async search(tab, query) {
     return matchCatalog(await catalog(tab), query);
   },

@@ -91,6 +91,25 @@
     </div>
   </form>
 
+  <section class="panel" id="adds" aria-labelledby="addh">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+      <h2 id="addh" style="margin:0">Scheduled adds <span class="hint">(Milkbasket)</span></h2>
+      <label style="display:flex;gap:8px;align-items:center;margin:0"><input type="checkbox" id="addon"> <span id="addonlbl">Master switch: off</span></label>
+    </div>
+    <p class="hint" style="margin:4px 0 10px">At the set time, the listed product is put in that account's next Milkbasket basket, and nothing else: no order, no payment, no other line changed. If it can't be added (out of stock, past the cutoff, signed out, low wallet), it is skipped and said so in the log; a time missed while this PC was off is not run late. This list is separate from the compare list. Times are in <span id="addtz">your time zone</span>.</p>
+    <div class="seg" id="addaccts" role="tablist" aria-label="Accounts" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px"></div>
+    <div id="addacct"></div>
+    <h3 style="font-size:13px;margin:12px 0 4px">Hard limits</h3>
+    <div class="row">
+      <div style="flex:0 1 180px"><label for="addmaxq">Max quantity per item</label><input id="addmaxq" type="number" min="1" max="20" step="1"></div>
+      <div style="flex:0 1 220px"><label for="addmaxr">Max ₹ added per day (all accounts)</label><input id="addmaxr" type="number" min="10" max="5000" step="10"></div>
+      <div style="flex:0 0 auto"><button type="button" class="secondary" id="addlimsave">Save limits</button></div>
+    </div>
+    <div class="err" id="adderr" role="alert"></div>
+    <h3 style="font-size:13px;margin:12px 0 4px">Run log</h3>
+    <div id="addlog" class="hint" aria-live="polite"></div>
+  </section>
+
   <section class="panel" id="payments" aria-labelledby="payh">
     <h2 id="payh">My payment methods</h2>
     <p class="hint" style="margin:0 0 10px">Your cards, UPI apps and wallets, e.g. “HDFC Credit Card” or “BHIM UPI”. Kept on this device only. They are used to pick the best payment offer for a basket; they are never sent anywhere. Only an offer's own text goes to the AI.</p>
@@ -228,6 +247,98 @@ $('airules').addEventListener('click', async () => {
   aiStatus(res.ok ? `Queued as job ${b.jobId}. It runs after any search in progress.` : b.error, res.ok ? 'ok' : 'bad');
 });
 fetch('/api/ai').then((r) => r.json()).then(aiShow).catch(() => aiStatus('Could not load AI settings', 'bad'));
+
+// ── Scheduled adds (Milkbasket) ──
+const DAYNAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+let ADDS = null, ADDKEY = null, PICK = null;
+const addErr = (t) => { $('adderr').textContent = t || ''; };
+const daysText = (e) => (e.once ? `once · ${e.once}` : e.days.length === 7 ? 'every day' : e.days.map((d) => DAYNAMES[d]).join(', '));
+const RES = { added: ['✓', 'Added'], already: ['=', 'Already in basket'], skipped: ['○', 'Skipped'], failed: ['✕', 'Failed'] };
+async function addsCall(method, path, body) {
+  const res = await fetch(path, { method, headers: { 'content-type': 'application/json' }, ...(body ? { body: JSON.stringify(body) } : {}) });
+  const b = await res.json();
+  if (!res.ok) { addErr(b.error || 'Could not save'); return null; }
+  addErr(''); ADDS = b; addsShow(); return b;
+}
+function addsShow() {
+  const v = ADDS;
+  $('addon').checked = v.enabled;
+  $('addonlbl').textContent = `Master switch: ${v.enabled ? 'on' : 'off'}`;
+  $('addtz').textContent = v.timezone;
+  $('addmaxq').value = v.limits.maxQty;
+  $('addmaxr').value = v.limits.maxPerDay;
+  const accts = v.sites.flatMap((s) => s.accounts);
+  if (!accts.some((a) => a.key === ADDKEY)) ADDKEY = accts[0]?.key ?? null;
+  $('addaccts').innerHTML = accts.length
+    ? accts.map((a) => `<button type="button" role="tab" class="${a.key === ADDKEY ? '' : 'secondary'}" aria-selected="${a.key === ADDKEY}" data-key="${esc(a.key)}">${esc(a.name)}${a.hint ? ` ${esc(a.hint)}` : ''} · ${a.signedIn ? 'signed in' : 'signed out'}</button>`).join('')
+    : '<p class="hint" style="margin:0">No Milkbasket account yet. Sign in from “Sign in…” on the Compare page first.</p>';
+  $('addaccts').querySelectorAll('button[data-key]').forEach((b) => b.addEventListener('click', () => { ADDKEY = b.dataset.key; PICK = null; addsShow(); }));
+  const a = accts.find((x) => x.key === ADDKEY);
+  if (!a) { $('addacct').innerHTML = ''; } else {
+    const last = (e) => v.log.find((l) => l.entryId === e.id);
+    const rows = a.entries.map((e) => {
+      const l = last(e); const r = l ? RES[l.status] : null;
+      return `<tr><td>${esc(e.name)}<div class="hint">${e.price ? `₹${e.price} each · ` : ''}picked ${esc(String(e.pickedAt).slice(0, 10))}</div></td><td>${e.qty}</td><td>${esc(daysText(e))}</td><td>${esc(e.time)}</td>
+        <td>${r ? `<b>${r[0]} ${r[1]}</b>${l.reason ? `<div class="hint">${esc(l.reason)}</div>` : ''}<div class="hint">${esc(String(l.at).slice(0, 16).replace('T', ' '))}</div>` : '<span class="hint">not run yet</span>'}</td>
+        <td><label style="font-weight:400;display:flex;gap:6px;align-items:center"><input type="checkbox" data-tog="${esc(e.id)}" ${e.enabled ? 'checked' : ''}> ${e.enabled ? 'on' : 'off'}</label></td>
+        <td><button type="button" class="danger" data-del="${esc(e.id)}" aria-label="Remove ${esc(e.name)}">Remove</button></td></tr>`;
+    }).join('');
+    $('addacct').innerHTML = `
+      ${a.signedIn ? '' : '<p class="err" style="margin:0 0 6px">This account is signed out: its entries are skipped until it is signed in again.</p>'}
+      <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="addacctOn" ${a.enabled ? 'checked' : ''}> This account's scheduled adds: ${a.enabled ? 'on' : 'off'}</label>
+      <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:6px"><thead><tr style="text-align:left;color:var(--dim);font-size:11px"><th scope="col">Product</th><th scope="col">Qty</th><th scope="col">Days</th><th scope="col">Time</th><th scope="col">Last run</th><th scope="col">On</th><th scope="col"><span class="sr">Remove</span></th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="7" class="hint">No entries yet.</td></tr>'}</tbody></table></div>
+      <h3 style="font-size:13px;margin:12px 0 4px">Add an entry</h3>
+      <div class="row"><div><label for="addq">Product</label><input id="addq" type="text" autocomplete="off" placeholder="Search Milkbasket, e.g. toned milk"></div><div style="flex:0 0 auto"><button type="button" class="secondary" id="addsearch">Search</button></div></div>
+      <div id="addpick" role="listbox" aria-label="Pick the product"></div>
+      <div class="row" style="margin-top:6px">
+        <div style="flex:0 1 90px"><label for="addqty">Qty</label><input id="addqty" type="number" min="1" step="1" value="1"></div>
+        <div style="flex:0 1 110px"><label for="addtime">Time</label><input id="addtime" type="text" placeholder="05:30" inputmode="numeric"></div>
+        <div style="flex:1 1 220px;min-width:0"><span style="display:block;font-weight:600;margin-bottom:4px">Days</span><div style="display:flex;flex-wrap:wrap;gap:4px 12px">${DAYNAMES.map((d, i) => `<label><input type="checkbox" class="addday" value="${i}" checked> ${d}</label>`).join('')}</div></div>
+        <div style="flex:0 1 170px"><label for="addonce">Or once on</label><input id="addonce" type="text" placeholder="YYYY-MM-DD"></div>
+        <div style="flex:0 0 auto"><button type="button" id="addsave">Save entry</button></div>
+      </div>`;
+    $('addacctOn').addEventListener('change', (ev) => addsCall('PUT', '/api/scheduled-adds', { account: { key: a.key, enabled: ev.target.checked } }));
+    $('addacct').querySelectorAll('[data-tog]').forEach((c) => c.addEventListener('change', () => {
+      const e = a.entries.find((x) => x.id === c.dataset.tog); addsCall('POST', '/api/scheduled-adds/entries', { key: a.key, entry: { ...e, enabled: c.checked } });
+    }));
+    $('addacct').querySelectorAll('[data-del]').forEach((b) => b.addEventListener('click', () => {
+      if (confirm('Remove this entry?')) addsCall('DELETE', '/api/scheduled-adds/entries', { key: a.key, id: b.dataset.del });
+    }));
+    const search = async () => {
+      const q = $('addq').value.trim(); if (!q) return;
+      const r = await (await fetch(`/api/scheduled-adds/search?q=${encodeURIComponent(q)}`)).json();
+      if (!r.catalogue) {
+        $('addpick').innerHTML = `<p class="hint">The Milkbasket catalogue hasn't been read on this PC yet. ${a.signedIn ? 'Read it once (about 4 minutes, read-only; nothing is added), then search again.' : 'Sign this account in first, then read it.'}</p>${a.signedIn ? '<button type="button" class="secondary" id="addcat">Read the Milkbasket catalogue now</button>' : ''}`;
+        $('addcat')?.addEventListener('click', async () => {
+          const res = await fetch('/api/scheduled-adds/catalogue', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ key: a.key }) });
+          const b = await res.json();
+          $('addpick').innerHTML = `<p class="hint">${res.ok ? `Queued as job ${b.jobId}. Search again in a few minutes.` : esc(b.error)}</p>`;
+        });
+        return;
+      }
+      $('addpick').innerHTML = r.results.length ? r.results.map((x, i) => `<label style="font-weight:400;display:flex;gap:8px;align-items:center;padding:3px 0"><input type="radio" name="addpick" value="${i}"> ${esc(x.name)} · ₹${x.price}${x.inStock ? '' : ' · out of stock now'}${x.maxQty ? ` · max ${x.maxQty}` : ''}</label>`).join('') : '<p class="hint">Nothing matches. Try fewer words.</p>';
+      $('addpick').querySelectorAll('input[name=addpick]').forEach((rb) => rb.addEventListener('change', () => { PICK = r.results[Number(rb.value)]; }));
+      PICK = null;
+    };
+    $('addsearch').addEventListener('click', search);
+    $('addq').addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); search(); } });
+    $('addsave').addEventListener('click', () => {
+      if (!PICK) { addErr('Search and pick the exact product first.'); return; }
+      const once = $('addonce').value.trim();
+      addsCall('POST', '/api/scheduled-adds/entries', { key: a.key, entry: { productId: PICK.productId, name: PICK.name, price: PICK.price, maxQty: PICK.maxQty, qty: Number($('addqty').value), time: $('addtime').value.trim(), once: once || null, days: once ? [] : [...document.querySelectorAll('.addday:checked')].map((x) => Number(x.value)) } });
+    });
+  }
+  $('addlog').innerHTML = v.log.length
+    ? v.log.slice(0, 20).map((l) => { const r = RES[l.status] ?? ['·', l.status]; return `<div>${esc(String(l.at).slice(0, 16).replace('T', ' '))} · <b>${r[0]} ${r[1]}</b> ${esc(l.name ?? '')}${l.qty ? ` × ${l.qty}` : ''}${l.spent ? ` · ₹${l.spent}` : ''}${l.reason ? ` · ${esc(l.reason)}` : ''}</div>`; }).join('')
+    : 'Nothing has run yet.';
+}
+$('addon').addEventListener('change', (ev) => {
+  if (ev.target.checked && !confirm('Turn scheduled adds on? From now on, switched-on entries are put in the Milkbasket basket at their times.')) { ev.target.checked = false; return; }
+  addsCall('PUT', '/api/scheduled-adds', { enabled: ev.target.checked });
+});
+$('addlimsave').addEventListener('click', () => addsCall('PUT', '/api/scheduled-adds', { limits: { maxQty: Number($('addmaxq').value), maxPerDay: Number($('addmaxr').value) } }));
+fetch('/api/scheduled-adds').then((r) => r.json()).then((b) => { ADDS = b; addsShow(); }).catch(() => addErr('Could not load scheduled adds'));
 
 // ── My payment methods (local only) ──
 let PAY = [];

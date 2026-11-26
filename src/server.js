@@ -163,7 +163,7 @@ export function startServer({
     if (j) Object.assign(j, { status: ok ? 'done' : outcome.message === 'cancelled' ? 'cancelled' : 'failed', finishedAt: new Date().toISOString(), error: ok ? null : outcome.message });
     // An offer check is not a basket result: it must not replace the table.
     // (Nor are the AI labels.)
-    const offers = ok && (outcome?.kind === 'offers' || outcome?.kind === 'ai-labels');
+    const offers = ok && ['offers', 'ai-labels', 'scheduled-add', 'mb-catalogue'].includes(outcome?.kind);
     if (ok && outcome) results.set(jobId, outcome);
     if (ok && outcome && !offers) {
       latestJobId = jobId;
@@ -176,8 +176,8 @@ export function startServer({
   q.on('progress', onProgress);
   q.on('done', onDone);
 
-  function enqueue({ items, sites, trigger = 'manual', only }) {
-    const id = q.enqueue({ items, sites, trigger, ...(only ? { only } : {}) });
+  function enqueue({ items, sites, trigger = 'manual', only, data }) {
+    const id = q.enqueue({ items, sites, trigger, ...(only ? { only } : {}), ...(data ? { data } : {}) });
     if (!store) jobs.set(id, { id, status: 'queued', trigger, sites: sites ?? [], createdAt: new Date().toISOString() });
     queueMicrotask(() => broadcast('job', jobInfo(id)));
     return id;
@@ -409,6 +409,83 @@ export function startServer({
           list.offers.forEach((o, i) => { o.read = l.offers[i].read; o.fits = pay.fitsMethods(l.offers[i].rule, mine); });
         }
         return json(res, 200, { minDiscountPct, ...deals });
+      }
+
+      // Scheduled adds (src/scheduled-adds.js): the list, switches, limits and the run log. Milkbasket only.
+      if (path === '/api/scheduled-adds' || path.startsWith('/api/scheduled-adds/')) {
+        const sa = await import('./scheduled-adds.js');
+        const view = () => {
+          const s = sa.readAdds(dataDir);
+          const sites = sa.ADD_SITES.map((site) => {
+            const { names = {}, hints = {} } = accounts?.labels?.(site) ?? {};
+            const signed = new Set((accounts?.signedIn?.(site) ?? []).map((a) => a.id));
+            const ids = [...new Set([...Object.keys(names), ...Object.keys(s.accounts).filter((k) => k.startsWith(`${site}:`)).map((k) => k.split(':')[1])])];
+            return { site, accounts: ids.map((id) => ({ id, key: sa.accountKey(site, id), name: names[id] ?? (id === 'main' ? 'Main' : id), hint: hints[id] ?? null, signedIn: signed.has(id), enabled: s.accounts[sa.accountKey(site, id)]?.enabled !== false, entries: s.accounts[sa.accountKey(site, id)]?.entries ?? [] })) };
+          });
+          return { enabled: s.enabled, limits: s.limits, sites, log: s.log.slice(-50).reverse(), timezone: getConfig().timezone };
+        };
+        const keyOk = (k) => typeof k === 'string' && /^[a-z_]+:[\w-]{1,40}$/.test(k) && sa.ADD_SITES.includes(k.split(':')[0]);
+        try {
+          if (req.method === 'GET' && path === '/api/scheduled-adds') return json(res, 200, view());
+          if (req.method === 'PUT' && path === '/api/scheduled-adds') {
+            const b = await readJson(req);
+            const s = sa.readAdds(dataDir);
+            if ('enabled' in b) s.enabled = b.enabled === true;
+            if (b.limits) {
+              s.limits = sa.cleanLimits({ ...s.limits, ...b.limits });
+              const over = Object.values(s.accounts).flatMap((a) => a.entries).filter((e) => e.qty > s.limits.maxQty);
+              if (over.length) return json(res, 400, { error: `${over.length} entr${over.length > 1 ? 'ies are' : 'y is'} above that quantity limit; lower them first`, field: 'maxQty' });
+            }
+            if (b.account) {
+              if (!keyOk(b.account.key)) return json(res, 400, { error: 'Unknown account', field: 'account' });
+              s.accounts[b.account.key] ??= { enabled: true, entries: [] };
+              s.accounts[b.account.key].enabled = b.account.enabled !== false;
+            }
+            sa.writeAdds(dataDir, s);
+            return json(res, 200, view());
+          }
+          if (path === '/api/scheduled-adds/entries' && (req.method === 'POST' || req.method === 'DELETE')) {
+            const b = await readJson(req);
+            if (!keyOk(b.key)) return json(res, 400, { error: 'Unknown account', field: 'account' });
+            const s = sa.readAdds(dataDir);
+            const acc = (s.accounts[b.key] ??= { enabled: true, entries: [] });
+            if (req.method === 'DELETE') {
+              acc.entries = acc.entries.filter((e) => e.id !== b.id);
+            } else {
+              const e = sa.cleanEntry(b.entry, s.limits);
+              const i = acc.entries.findIndex((x) => x.id === e.id);
+              if (i >= 0) acc.entries[i] = e; else acc.entries.push(e);
+            }
+            sa.writeAdds(dataDir, s);
+            return json(res, 200, view());
+          }
+          // Read the account's catalogue now (a queued, read-only job), so a product can be picked.
+          if (req.method === 'POST' && path === '/api/scheduled-adds/catalogue') {
+            const b = await readJson(req).catch(() => ({}));
+            if (!keyOk(b.key)) return json(res, 400, { error: 'Unknown account', field: 'account' });
+            const [site, id] = b.key.split(':');
+            if (!(accounts?.signedIn?.(site) ?? []).some((a) => a.id === id)) return json(res, 400, { error: 'Sign this account in first (“Sign in…” on the Compare page).' });
+            const cur = q.current();
+            const queued = q.pending().find((j) => j.trigger === 'mb-catalogue') ?? (cur?.trigger === 'mb-catalogue' ? cur : null);
+            if (queued) return json(res, 202, { jobId: queued.id, queued: true });
+            return json(res, 202, { jobId: enqueue({ items: '', sites: [site], trigger: 'mb-catalogue', data: { key: b.key } }), queued: Boolean(cur) });
+          }
+          if (req.method === 'GET' && path === '/api/scheduled-adds/search') {
+            // Only the catalogue already read (no call to the site from here).
+            const mb = (await import('./engine/sites/milkbasket.js'));
+            const q = String(url.searchParams.get('q') ?? '').slice(0, 80);
+            const rows = mb.cachedRows({ dir: dataDir, anyAge: true });
+            const hits = q.trim() ? mb.matchCatalog(rows, q, 12) : [];
+            return json(res, 200, {
+              catalogue: rows.length,
+              results: hits.map((r) => ({ productId: mb.productIdOf(r), name: r.name, price: r.price, mrp: r.mrp, inStock: r.inStock !== false, maxQty: r.maxQty ?? null })).filter((r) => r.productId),
+            });
+          }
+        } catch (err) {
+          if (err.status === 400) return json(res, 400, { error: err.message, field: err.field });
+          throw err;
+        }
+        return json(res, 404, { error: 'Unknown scheduled-adds route' });
       }
 
       // "My payment methods" (kept on this device) and the best offer per site for a basket's goods totals.
